@@ -3,264 +3,149 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vihara Attendance</title>
+  <title>Vihara Attendance - Modern Zen UI</title>
+  
+  <!-- Font Modern Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
   <link rel="stylesheet" href="style.css">
-  <!-- SheetJS untuk Export Excel -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
-  <!-- BACKGROUND SCENE ZEN VEHARA -->
-  <div class="scene">
-    <div class="sun"></div>
-    <div class="mountain mountain-back"></div>
-    <div class="mountain mountain-front"></div>
-    <div class="cloud cloud-one"></div>
-    <div class="cloud cloud-two"></div>
-    <div class="temple">
-      <div class="temple-body"></div>
-      <div class="temple-door"></div>
-      <div class="temple-roof roof-one"></div>
-      <div class="temple-roof roof-two"></div>
-    </div>
-    <div class="tree tree-left"></div>
-    <div class="tree tree-right"></div>
-  </div>
-
   <div class="app">
 
-    <!-- ========================
-         1. LOGIN / REGISTER SECTION
-    ========================= -->
+    <!-- LOGIN PANEL -->
     <section id="login-section" class="panel login-panel">
-      <div class="brand">
+      <div class="brand-header">
         <div class="dharma-wheel">☸</div>
-        <div>
-          <p id="form-eyebrow" class="brand-small">WELCOME BACK</p>
-          <h1 id="form-title">Stay present.</h1>
-        </div>
+        <span class="brand-title">Vihara Zen</span>
       </div>
 
-      <div class="welcome">
-        <p id="form-subtitle" class="subtitle">Log in to continue your attendance journey.</p>
+      <h2 style="font-weight: 800; margin-bottom: 6px;">Selamat Datang</h2>
+      <p class="subtitle">Silakan masuk untuk mencatatkan kehadiran Anda.</p>
+
+      <div class="form-group" id="name-group" style="display: none;">
+        <label>Nama Lengkap</label>
+        <input type="text" id="register-name" placeholder="Masukkan nama Anda" class="custom-input">
       </div>
 
-      <div class="form">
-        <div class="form-group" id="name-group" style="display: none;">
-          <label for="register-name">NAMA LENGKAP</label>
-          <input type="text" id="register-name" placeholder="Masukkan nama lengkap" class="custom-input">
-        </div>
-
-        <div class="form-group">
-          <label for="email">EMAIL</label>
-          <input type="email" id="email" placeholder="nama@vihara.org" class="custom-input">
-        </div>
-
-        <div class="form-group">
-          <label for="password">PASSWORD</label>
-          <input type="password" id="password" placeholder="••••••••" class="custom-input">
-        </div>
-
-        <button id="auth-main-button" class="main-button">
-          <span id="auth-button-text">LOGIN</span>
-          <span class="button-arrow">→</span>
-        </button>
-
-        <div class="auth-toggle-box">
-          <span id="toggle-auth-text">Belum punya akun?</span>
-          <button id="toggle-auth-btn" class="link-button">Daftar di sini</button>
-        </div>
-
-        <p id="message" class="status-message"></p>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="email" placeholder="nama@vihara.org" class="custom-input">
       </div>
 
-      <div class="quote">
-        <span>☸</span>
-        <p>PEACE BEGINS WITHIN</p>
-        <span>☸</span>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="••••••••" class="custom-input">
       </div>
+
+      <button id="auth-main-button" class="main-button">
+        <span id="auth-button-text">LOGIN</span>
+      </button>
+
+      <div style="margin-top: 20px; font-size: 13px; color: var(--text-sub);">
+        <span id="toggle-auth-text">Belum punya akun?</span>
+        <button id="toggle-auth-btn" class="link-button">Daftar di sini</button>
+      </div>
+
+      <p id="message" style="margin-top: 12px; font-size: 12px; color: var(--primary);"></p>
     </section>
 
-    <!-- ========================
-         2. USER DASHBOARD SECTION
-    ========================= -->
-    <section id="user-section" class="panel dashboard-panel" style="display: none;">
+    <!-- USER DASHBOARD -->
+    <section id="user-section" class="panel" style="display: none;">
       <div class="dashboard-header">
-        <div class="brand compact">
-          <div class="dharma-wheel">☸</div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="dharma-wheel" style="width: 40px; height: 40px; font-size: 20px;">☸</div>
           <div>
-            <p class="brand-small">VIHARA</p>
-            <h1>ATTENDANCE</h1>
+            <h3 style="font-weight: 800; font-size: 18px;">Vihara Presence</h3>
+            <span id="user-code" style="font-size: 11px; color: var(--text-sub); font-weight: 700;">-</span>
           </div>
         </div>
-        <div class="header-actions">
-          <button id="switch-to-admin" class="admin-action-btn" style="display: none;">MODE ADMIN</button>
-          <div class="profile">
-            <div class="profile-text">
-              <strong id="user-name">-</strong>
-              <span id="user-code">-</span>
-            </div>
-            <div class="profile-icon">☸</div>
-          </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <button id="switch-to-admin" class="secondary-button" style="display: none;">Mode Admin</button>
+          <button id="logout-button" class="secondary-button" style="color: #a82e2e; border-color: rgba(168,46,46,0.2);">Logout</button>
         </div>
       </div>
 
-      <div class="dashboard-greeting">
-        <p class="eyebrow">GOOD DAY</p>
-        <h2>Welcome back, <span id="user-name-display">Member</span>.</h2>
-        <p>Take a moment. Stay present.</p>
+      <div style="margin-bottom: 24px;">
+        <h2 style="font-size: 24px; font-weight: 800;">Halo, <span id="user-name-display" style="color: var(--primary);">Member</span> 👋</h2>
+        <p style="color: var(--text-sub); font-size: 13px;">Semoga harimu penuh ketenangan dan kedamaian.</p>
       </div>
 
       <div class="today-grid">
-        <!-- STATUS HARI INI -->
-        <div class="today-card">
-          <p class="card-label">TODAY</p>
-          <div class="today-icon">☸</div>
-          <div id="today-status">
+        <div class="card-box">
+          <span class="card-badge">Hari Ini</span>
+          <div id="today-status" style="margin-top: 10px;">
             <p>Memuat status...</p>
           </div>
         </div>
 
-        <!-- ACTION ABSEN MANUAL (BACKUP) -->
-        <div class="checkin-card">
+        <div class="card-box" style="display: flex; flex-direction: column; justify-content: space-between;">
           <div>
-            <p class="card-label">ATTENDANCE</p>
-            <h3>Ready?</h3>
-            <p>Record your presence for today.</p>
+            <span class="card-badge">Kehadiran</span>
+            <h4 style="font-size: 18px; margin-top: 4px;">Siap Absen?</h4>
           </div>
-          <button id="check-in-button" class="main-button checkin-button">
+          <button id="check-in-button" class="main-button" style="margin-top: 16px;">
             ABSEN SEKARANG
           </button>
-          <p id="attendance-message"></p>
+          <p id="attendance-message" style="font-size: 12px; margin-top: 8px; color: var(--text-sub);"></p>
         </div>
       </div>
 
-      <!-- RIWAYAT -->
-      <div class="history-section">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">YOUR JOURNEY</p>
-            <h2>Riwayat Absensi</h2>
-          </div>
-          <div class="lotus-decoration">🌸</div>
-        </div>
-        <div id="attendance-history">
+      <div>
+        <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 14px;">Riwayat Absensi</h3>
+        <div id="attendance-history" class="history-list">
           <p>Memuat riwayat...</p>
         </div>
       </div>
-
-      <footer>
-        <span>VIHARA ZEN PRESENCE</span>
-        <button id="logout-button">LOGOUT</button>
-      </footer>
     </section>
 
-    <!-- ========================
-         3. ADMIN PANEL SECTION
-    ========================= -->
-    <section id="admin-section" class="panel admin-panel" style="display: none;">
-      <div class="panel-header">
-        <div class="brand compact">
-          <div class="dharma-wheel">☸</div>
+    <!-- ADMIN DASHBOARD -->
+    <section id="admin-section" class="panel" style="display: none;">
+      <div class="dashboard-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="dharma-wheel" style="width: 40px; height: 40px; font-size: 20px;">☸</div>
           <div>
-            <p class="brand-small">ADMIN</p>
-            <h1>MANAGEMENT</h1>
+            <h3 style="font-weight: 800; font-size: 18px;">Admin Panel</h3>
+            <span style="font-size: 11px; color: var(--text-sub); font-weight: 700;">MANAGEMENT</span>
           </div>
         </div>
-        <div class="header-actions">
-          <button id="switch-to-user" class="admin-action-btn">MODE USER</button>
-          <button id="admin-logout-button" class="admin-action-btn logout-variant">LOGOUT</button>
-        </div>
-      </div>
-
-      <div class="admin-welcome">
-        <p class="eyebrow">OVERVIEW & DATA</p>
-        <h2>Rekap & Pengelolaan Data</h2>
-        <p class="subtitle">Pantau kehadiran dan kelola akun member Vihara.</p>
-      </div>
-
-      <div class="stats-grid">
-        <div class="stat-card">
-          <span class="stat-label">TOTAL MEMBER</span>
-          <span id="stat-total" class="stat-value">0</span>
-        </div>
-        <div class="stat-card stat-card-green">
-          <span class="stat-label">HADIR HARI INI</span>
-          <span id="stat-present" class="stat-value">0</span>
+        <div style="display: flex; gap: 10px;">
+          <button id="switch-to-user" class="secondary-button">Mode User</button>
+          <button id="admin-logout-button" class="secondary-button" style="color: #a82e2e;">Logout</button>
         </div>
       </div>
 
       <div class="admin-tabs">
-        <button id="tab-rekap-btn" class="tab-btn active" type="button">📋 Rekap Absensi</button>
-        <button id="tab-karyawan-btn" class="tab-btn" type="button">👥 Kelola Member</button>
+        <button id="tab-rekap-btn" class="tab-btn active">📋 Rekap Absensi</button>
+        <button id="tab-karyawan-btn" class="tab-btn">👥 Kelola Member</button>
       </div>
 
       <div id="admin-view-rekap">
-        <div class="admin-filter-bar">
-          <div class="filter-inputs">
-            <input type="date" id="admin-filter-date" class="custom-input">
-            <select id="admin-filter-status" class="custom-select">
-              <option value="ALL">Semua Status</option>
-              <option value="present">Present (Tepat Waktu)</option>
-              <option value="late">Late (Terlambat)</option>
-            </select>
-          </div>
-          <button id="export-csv-btn" class="export-btn" type="button">📥 Export Excel (.xlsx)</button>
+        <div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+          <input type="date" id="admin-filter-date" class="custom-input" style="flex: 1;">
+          <select id="admin-filter-status" class="custom-select" style="flex: 1;">
+            <option value="ALL">Semua Status</option>
+            <option value="present">Present (Tepat Waktu)</option>
+            <option value="late">Late (Terlambat)</option>
+          </select>
+          <button id="export-csv-btn" class="secondary-button" style="background: var(--primary); color: white;">📥 Export Excel</button>
         </div>
-        <div id="admin-attendance-list">
-          <p>Memuat rekap absensi...</p>
+        <div id="admin-attendance-list" class="history-list">
+          <p>Memuat data...</p>
         </div>
       </div>
 
       <div id="admin-view-karyawan" style="display: none;">
-        <h3 class="section-subtitle">Daftar Member</h3>
-        <div id="admin-employee-list">
+        <div id="admin-employee-list" class="history-list">
           <p>Memuat daftar member...</p>
         </div>
       </div>
     </section>
 
-  </div>
-
-  <!-- MODAL EDIT MEMBER -->
-  <div id="edit-emp-modal" class="modal" style="display: none;">
-    <div class="modal-content">
-      <h3>Edit Profil Member</h3>
-      <input type="hidden" id="edit-emp-id">
-
-      <div class="form-group">
-        <label>Nama Member</label>
-        <input type="text" id="edit-emp-name" class="custom-input">
-      </div>
-
-      <div class="form-group">
-        <label>Kode Member</label>
-        <input type="text" id="edit-emp-code" class="custom-input">
-      </div>
-
-      <div class="form-group">
-        <label>Role / Hak Akses</label>
-        <select id="edit-emp-role" class="custom-select" style="width: 100%;">
-          <option value="user">Member (User biasa)</option>
-          <option value="admin">Admin</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>Status Akun</label>
-        <select id="edit-emp-active" class="custom-select" style="width: 100%;">
-          <option value="true">Aktif</option>
-          <option value="false">Nonaktif</option>
-        </select>
-      </div>
-
-      <p id="edit-modal-msg" class="status-message"></p>
-
-      <div style="display: flex; gap: 10px; margin-top: 15px;">
-        <button id="cancel-edit-emp" class="secondary-button" type="button">Batal</button>
-        <button id="save-edit-emp" class="main-button" type="button" style="margin:0;">Simpan</button>
-      </div>
-    </div>
   </div>
 
   <script type="module" src="app.js"></script>
