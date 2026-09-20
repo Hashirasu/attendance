@@ -524,24 +524,19 @@ async function loadEmployeeManagement() {
       ? `<span class="role-badge role-admin">ADMIN</span>`
       : `<span class="role-badge role-user">MEMBER</span>`;
 
-    const initial = emp.name ? emp.name.charAt(0).toUpperCase() : "M";
-
     const card = document.createElement("div");
     card.className = "emp-card-item";
     
     card.innerHTML = `
-      <div class="emp-info-wrapper">
-        <div class="emp-avatar">${initial}</div>
-        <div class="emp-details">
-          <div class="emp-name-row">
-            <span class="emp-name-text">${emp.name}</span>
-            ${roleBadge}
-            ${statusBadge}
-          </div>
-          <div class="emp-code-sub">Kode Member: <strong>${emp.employee_code}</strong></div>
+      <div>
+        <div class="emp-name-title">
+          ${emp.name}
+          ${roleBadge}
+          ${statusBadge}
         </div>
+        <div class="emp-code-sub">Kode Member: <strong>${emp.employee_code}</strong></div>
       </div>
-      <button class="edit-btn-style" type="button">Edit</button>
+      <button class="secondary-button edit-btn-style" type="button" style="padding: 6px 16px; font-size: 12px;">Edit</button>
     `;
 
     const editBtn = card.querySelector(".edit-btn-style");
@@ -558,7 +553,6 @@ async function loadEmployeeManagement() {
     adminEmployeeList.appendChild(card);
   });
 }
-
 // ==============================
 // MODAL ACTIONS (EDIT MEMBER)
 // ==============================

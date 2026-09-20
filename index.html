@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vihara Attendance - Modern Zen UI</title>
+  <title>Mudiviverse Attendance</title>
   
-  <!-- Font Modern Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -18,61 +17,61 @@
   <div class="app">
 
     <!-- LOGIN PANEL -->
-    <section id="login-section" class="panel login-panel">
+    <section id="login-section" class="panel" style="max-width: 440px; margin: 0 auto; text-align: center;">
       <div class="brand-header">
         <div class="dharma-wheel">☸</div>
-        <span class="brand-title">Vihara Zen</span>
+        <span class="brand-title">Mudiviverse</span>
       </div>
 
-      <h2 style="font-weight: 800; margin-bottom: 6px;">Selamat Datang</h2>
-      <p class="subtitle">Silakan masuk untuk mencatatkan kehadiran Anda.</p>
+      <h2 style="font-weight: 800; margin-bottom: 6px; color: var(--text-main);">Selamat Datang</h2>
+      <p class="subtitle">Silakan masuk untuk pencatatan kehadiran harian.</p>
 
       <div class="form-group" id="name-group" style="display: none;">
         <label>Nama Lengkap</label>
-        <input type="text" id="register-name" placeholder="Masukkan nama Anda" class="custom-input">
+        <input type="text" id="register-name" placeholder="Enter your full name" class="custom-input">
       </div>
 
       <div class="form-group">
         <label>Email</label>
-        <input type="email" id="email" placeholder="nama@vihara.org" class="custom-input">
+        <input type="email" id="email" placeholder="nama@mudiviverse.org" class="custom-input">
       </div>
 
       <div class="form-group">
         <label>Password</label>
-        <input type="password" id="password" placeholder="••••••••" class="custom-input">
+        <input type="password" id="password" placeholder="Enter your password" class="custom-input">
       </div>
 
       <button id="auth-main-button" class="main-button">
         <span id="auth-button-text">LOGIN</span>
       </button>
 
-      <div style="margin-top: 20px; font-size: 13px; color: var(--text-sub);">
+      <div style="margin-top: 22px; font-size: 13px; color: var(--text-sub);">
         <span id="toggle-auth-text">Belum punya akun?</span>
         <button id="toggle-auth-btn" class="link-button">Daftar di sini</button>
       </div>
 
-      <p id="message" style="margin-top: 12px; font-size: 12px; color: var(--primary);"></p>
+      <p id="message" style="margin-top: 14px; font-size: 12px; color: var(--primary); font-weight: 700;"></p>
     </section>
 
     <!-- USER DASHBOARD -->
     <section id="user-section" class="panel" style="display: none;">
-      <div class="dashboard-header">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <div class="dharma-wheel" style="width: 40px; height: 40px; font-size: 20px;">☸</div>
+      <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 24px; border-bottom: 1px solid rgba(0,0,0,0.06); margin-bottom: 28px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div class="dharma-wheel" style="width: 42px; height: 42px; font-size: 22px;">☸</div>
           <div>
-            <h3 style="font-weight: 800; font-size: 18px;">Vihara Presence</h3>
+            <h3 style="font-weight: 800; font-size: 18px; color: var(--primary-dark);">Mudiviverse Presence</h3>
             <span id="user-code" style="font-size: 11px; color: var(--text-sub); font-weight: 700;">-</span>
           </div>
         </div>
         <div style="display: flex; gap: 10px; align-items: center;">
           <button id="switch-to-admin" class="secondary-button" style="display: none;">Mode Admin</button>
-          <button id="logout-button" class="secondary-button" style="color: #a82e2e; border-color: rgba(168,46,46,0.2);">Logout</button>
+          <button id="logout-button" class="secondary-button" style="color: #a82e2e; border-color: rgba(168,46,46,0.3);">Logout</button>
         </div>
       </div>
 
-      <div style="margin-bottom: 24px;">
-        <h2 style="font-size: 24px; font-weight: 800;">Halo, <span id="user-name-display" style="color: var(--primary);">Member</span> 👋</h2>
-        <p style="color: var(--text-sub); font-size: 13px;">Semoga harimu penuh ketenangan dan kedamaian.</p>
+      <div style="margin-bottom: 28px;">
+        <h2 style="font-size: 26px; font-weight: 800;">Selamat Datang, <span id="user-name-display" style="color: var(--primary);">Member</span> 👋</h2>
+        <p style="color: var(--text-sub); font-size: 14px; margin-top: 4px;">Tetap fokus dan berdaya bersama Mudiviverse.</p>
       </div>
 
       <div class="today-grid">
@@ -86,66 +85,108 @@
         <div class="card-box" style="display: flex; flex-direction: column; justify-content: space-between;">
           <div>
             <span class="card-badge">Kehadiran</span>
-            <h4 style="font-size: 18px; margin-top: 4px;">Siap Absen?</h4>
+            <h4 style="font-size: 18px; margin-top: 4px; font-weight: 800;">Catat Presensi</h4>
           </div>
           <button id="check-in-button" class="main-button" style="margin-top: 16px;">
             ABSEN SEKARANG
           </button>
-          <p id="attendance-message" style="font-size: 12px; margin-top: 8px; color: var(--text-sub);"></p>
+          <p id="attendance-message" style="font-size: 12px; margin-top: 8px; color: var(--text-sub); text-align: center;"></p>
         </div>
       </div>
 
       <div>
-        <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 14px;">Riwayat Absensi</h3>
-        <div id="attendance-history" class="history-list">
+        <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 16px; color: var(--primary-dark);">Riwayat Absensi</h3>
+        <div id="attendance-history" style="display: flex; flex-direction: column; gap: 10px;">
           <p>Memuat riwayat...</p>
         </div>
       </div>
     </section>
 
-    <!-- ADMIN DASHBOARD -->
+    <!-- ADMIN PANEL -->
     <section id="admin-section" class="panel" style="display: none;">
-      <div class="dashboard-header">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <div class="dharma-wheel" style="width: 40px; height: 40px; font-size: 20px;">☸</div>
+      <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 24px; border-bottom: 1px solid rgba(0,0,0,0.06); margin-bottom: 28px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div class="dharma-wheel" style="width: 42px; height: 42px; font-size: 22px;">☸</div>
           <div>
-            <h3 style="font-weight: 800; font-size: 18px;">Admin Panel</h3>
-            <span style="font-size: 11px; color: var(--text-sub); font-weight: 700;">MANAGEMENT</span>
+            <h3 style="font-weight: 800; font-size: 18px; color: var(--primary-dark);">Admin Dashboard</h3>
+            <span style="font-size: 10px; color: var(--gold); font-weight: 800; letter-spacing: 1px;">MUDIVIVERSE MANAGEMENT</span>
           </div>
         </div>
         <div style="display: flex; gap: 10px;">
           <button id="switch-to-user" class="secondary-button">Mode User</button>
-          <button id="admin-logout-button" class="secondary-button" style="color: #a82e2e;">Logout</button>
+          <button id="admin-logout-button" class="secondary-button" style="color: #a82e2e; border-color: rgba(168,46,46,0.3);">Logout</button>
         </div>
       </div>
 
       <div class="admin-tabs">
-        <button id="tab-rekap-btn" class="tab-btn active">📋 Rekap Absensi</button>
-        <button id="tab-karyawan-btn" class="tab-btn">👥 Kelola Member</button>
+        <button id="tab-rekap-btn" class="tab-btn active" type="button">📋 Rekap Absensi</button>
+        <button id="tab-karyawan-btn" class="tab-btn" type="button">👥 Kelola Member</button>
       </div>
 
       <div id="admin-view-rekap">
-        <div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
-          <input type="date" id="admin-filter-date" class="custom-input" style="flex: 1;">
-          <select id="admin-filter-status" class="custom-select" style="flex: 1;">
+        <div style="display: flex; gap: 12px; margin-bottom: 22px; flex-wrap: wrap;">
+          <input type="date" id="admin-filter-date" class="custom-input" style="flex: 1; min-width: 150px;">
+          <select id="admin-filter-status" class="custom-select" style="flex: 1; min-width: 150px;">
             <option value="ALL">Semua Status</option>
             <option value="present">Present (Tepat Waktu)</option>
             <option value="late">Late (Terlambat)</option>
           </select>
-          <button id="export-csv-btn" class="secondary-button" style="background: var(--primary); color: white;">📥 Export Excel</button>
+          <button id="export-csv-btn" class="secondary-button" style="background: var(--primary); color: white; border: none;" type="button">📥 Export Excel</button>
         </div>
-        <div id="admin-attendance-list" class="history-list">
-          <p>Memuat data...</p>
+        <div id="admin-attendance-list" style="display: flex; flex-direction: column; gap: 10px;">
+          <p>Memuat rekap absensi...</p>
         </div>
       </div>
 
       <div id="admin-view-karyawan" style="display: none;">
-        <div id="admin-employee-list" class="history-list">
+        <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 16px; color: var(--primary-dark);">Daftar Seluruh Member</h3>
+        <div id="admin-employee-list">
           <p>Memuat daftar member...</p>
         </div>
       </div>
     </section>
 
+  </div>
+
+  <!-- MODAL EDIT MEMBER -->
+  <div id="edit-emp-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <h3 style="font-weight: 800; font-size: 20px; margin-bottom: 18px; color: var(--primary-dark);">Edit Profil Member</h3>
+      <input type="hidden" id="edit-emp-id">
+
+      <div class="form-group">
+        <label>Nama Member</label>
+        <input type="text" id="edit-emp-name" class="custom-input">
+      </div>
+
+      <div class="form-group">
+        <label>Kode Member</label>
+        <input type="text" id="edit-emp-code" class="custom-input">
+      </div>
+
+      <div class="form-group">
+        <label>Role / Hak Akses</label>
+        <select id="edit-emp-role" class="custom-select">
+          <option value="user">Member (User biasa)</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Status Akun</label>
+        <select id="edit-emp-active" class="custom-select">
+          <option value="true">Aktif</option>
+          <option value="false">Nonaktif</option>
+        </select>
+      </div>
+
+      <p id="edit-modal-msg" style="font-size: 12px; color: var(--primary); font-weight: 700; margin-top: 10px;"></p>
+
+      <div style="display: flex; gap: 10px; margin-top: 22px;">
+        <button id="cancel-edit-emp" class="secondary-button" type="button" style="flex: 1;">Batal</button>
+        <button id="save-edit-emp" class="main-button" type="button" style="flex: 1; margin: 0;">Simpan</button>
+      </div>
+    </div>
   </div>
 
   <script type="module" src="app.js"></script>
