@@ -1,5 +1,5 @@
 // Konfigurasi Kios
-const KIOSK_SECRET = "VIHARA_ZEN_SECRET_2026"; // Key rahasia
+const KIOSK_SECRET = "MUDIVIVAVVBN"; // Key rahasia
 const INTERVAL_SECONDS = 15; // Berubah tiap 15 detik
 
 const qrContainer = document.getElementById("qrcode");

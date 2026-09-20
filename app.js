@@ -1,12 +1,15 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
 // ==============================
-// SUPABASE CONFIG
+// CONFIG SUPABASE
 // ==============================
 const SUPABASE_URL = "https://njdrnrnnlsrxdyugmsww.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qZHJucm5ubHNyeGR5dWdtc3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5MDExNDEsImV4cCI6MjEwNTQ3NzE0MX0.F65pU2A3XjyEaisye2GfzLPF9DCaQF1fklMxgSTRhs8";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Secret Key Kios (Harus sama dengan di kiosk.js)
+const KIOSK_SECRET = "MUDIVIVAVVBN";
 
 // ==============================
 // ELEMENT HTML
@@ -44,7 +47,7 @@ const userName = document.getElementById("user-name");
 const userCode = document.getElementById("user-code");
 const userRole = document.getElementById("user-role");
 
-// Element Admin
+// Admin Elements
 const adminAttendanceList = document.getElementById("admin-attendance-list");
 const adminFilterDate = document.getElementById("admin-filter-date");
 const adminFilterStatus = document.getElementById("admin-filter-status");
@@ -54,11 +57,6 @@ const statPresent = document.getElementById("stat-present");
 const switchToUserBtn = document.getElementById("switch-to-user");
 const switchToAdminBtn = document.getElementById("switch-to-admin");
 
-let isRegisterMode = false; // Status awal = Mode Login
-
-// ==============================
-// DOM ELEMENTS FOR ADMIN MANAGEMENT
-// ==============================
 const tabRekapBtn = document.getElementById("tab-rekap-btn");
 const tabKaryawanBtn = document.getElementById("tab-karyawan-btn");
 const adminViewRekap = document.getElementById("admin-view-rekap");
@@ -66,7 +64,7 @@ const adminViewKaryawan = document.getElementById("admin-view-karyawan");
 const adminEmployeeList = document.getElementById("admin-employee-list");
 const exportCsvBtn = document.getElementById("export-csv-btn");
 
-// Modal Elements
+// Modal Edit Member
 const editEmpModal = document.getElementById("edit-emp-modal");
 const editEmpId = document.getElementById("edit-emp-id");
 const editEmpName = document.getElementById("edit-emp-name");
@@ -76,6 +74,14 @@ const editEmpActive = document.getElementById("edit-emp-active");
 const cancelEditEmp = document.getElementById("cancel-edit-emp");
 const saveEditEmp = document.getElementById("save-edit-emp");
 const editModalMsg = document.getElementById("edit-modal-msg");
+
+// Modal Scanner QR
+const openScannerBtn = document.getElementById("open-scanner-btn");
+const closeScannerBtn = document.getElementById("close-scanner-btn");
+const scannerModal = document.getElementById("scanner-modal");
+let html5QrcodeScanner = null;
+
+let isRegisterMode = false;
 
 // ==============================
 // AUTO CHECK SESSION ON REFRESH
@@ -96,7 +102,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 // ==============================
 if (toggleAuthBtn) {
   toggleAuthBtn.addEventListener("click", (e) => {
-    e.preventDefault(); // Menahan refresh browser
+    e.preventDefault();
     isRegisterMode = !isRegisterMode;
 
     if (isRegisterMode) {
@@ -135,7 +141,6 @@ if (authMainButton) {
     }
 
     if (isRegisterMode) {
-      // --- REGISTRATION ---
       const fullName = registerNameInput ? registerNameInput.value.trim() : "";
       if (!fullName) {
         if (message) message.textContent = "Mohon isi nama lengkap kamu.";
@@ -147,11 +152,7 @@ if (authMainButton) {
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: email,
         password: password,
-        options: {
-          data: {
-            name: fullName
-          }
-        }
+        options: { data: { name: fullName } }
       });
 
       if (signUpError) {
@@ -163,11 +164,7 @@ if (authMainButton) {
         if (message) message.textContent = "Pendaftaran berhasil! Memuat profil...";
         await loadUserProfile();
       } else {
-        const { error: loginError } = await supabase.auth.signInWithPassword({
-          email: email,
-          password: password
-        });
-
+        const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
         if (loginError) {
           if (message) message.textContent = "Akun terbuat, silakan coba login manual.";
         } else {
@@ -177,13 +174,9 @@ if (authMainButton) {
       }
 
     } else {
-      // --- LOGIN ---
       if (message) message.textContent = "Logging in...";
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password
-      });
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
 
       if (error) {
         if (message) message.textContent = "Login gagal: " + error.message;
@@ -202,7 +195,6 @@ if (authMainButton) {
 async function loadUserProfile() {
   try {
     const { data: { user } } = await supabase.auth.getUser();
-
     if (!user) return;
 
     const { data, error } = await supabase
@@ -213,18 +205,15 @@ async function loadUserProfile() {
 
     if (error || !data) {
       if (message) message.textContent = "Data profil member belum ditemukan.";
-      console.error("Error profile:", error);
       return;
     }
 
-    // Cek Soft Delete (is_active)
     if (data.is_active === false) {
       if (message) message.textContent = "Akun kamu sedang dinonaktifkan. Hubungi Admin.";
       await supabase.auth.signOut();
       return;
     }
 
-    // Set Text Profil
     if (userName) userName.textContent = data.name;
     if (userCode) userCode.textContent = data.employee_code;
     if (userRole) userRole.textContent = data.role;
@@ -232,7 +221,6 @@ async function loadUserProfile() {
 
     if (loginSection) loginSection.style.display = "none";
 
-    // Pembeda Hak Akses Role
     if (data.role === "admin") {
       if (switchToAdminBtn) switchToAdminBtn.style.display = "inline-block";
       if (userSection) userSection.style.display = "none";
@@ -283,7 +271,6 @@ async function loadTodayStatus() {
     .maybeSingle();
 
   if (error) {
-    console.error("Error loadTodayStatus:", error);
     todayStatus.innerHTML = "<p>Gagal memuat status hari ini.</p>";
     return;
   }
@@ -291,17 +278,14 @@ async function loadTodayStatus() {
   if (!data) {
     todayStatus.innerHTML = "<p>Belum melakukan absensi hari ini.</p>";
     if (checkInButton) {
-      checkInButton.textContent = "ABSEN SEKARANG";
+      checkInButton.textContent = "ABSEN MANUAL";
       checkInButton.disabled = false;
     }
     return;
   }
 
   const time = new Date(data.check_in).toLocaleTimeString("id-ID", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    timeZone: "Asia/Jakarta"
+    hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: "Asia/Jakarta"
   });
 
   const statusText = data.status === "late" ? "Late" : "Present";
@@ -334,13 +318,7 @@ async function loadAttendanceHistory() {
     .eq("employee_id", user.id)
     .order("attendance_date", { ascending: false });
 
-  if (error) {
-    console.error(error);
-    attendanceHistory.innerHTML = "<p>Gagal memuat riwayat absensi.</p>";
-    return;
-  }
-
-  if (!data || data.length === 0) {
+  if (error || !data || data.length === 0) {
     attendanceHistory.innerHTML = "<p>Belum ada riwayat absensi.</p>";
     return;
   }
@@ -349,21 +327,14 @@ async function loadAttendanceHistory() {
 
   data.forEach((row) => {
     const date = new Date(row.attendance_date + "T00:00:00").toLocaleDateString("id-ID", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      timeZone: "Asia/Jakarta"
+      day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Asia/Jakarta"
     });
 
     const time = new Date(row.check_in).toLocaleTimeString("id-ID", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      timeZone: "Asia/Jakarta"
+      hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: "Asia/Jakarta"
     });
 
     const status = row.status === "late" ? "Late" : "Present";
-
     const item = document.createElement("p");
     item.textContent = `${date} | ${time} WIB | ${status}`;
 
@@ -372,40 +343,103 @@ async function loadAttendanceHistory() {
 }
 
 // ==============================
-// CHECK IN (RPC)
+// LOGIKA SCANNER KAMERA & FETCHING ABSENSI
+// ==============================
+if (openScannerBtn) {
+  openScannerBtn.addEventListener("click", () => {
+    if (scannerModal) scannerModal.style.display = "flex";
+    
+    html5QrcodeScanner = new Html5Qrcode("reader");
+    html5QrcodeScanner.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 220, height: 220 } },
+      onScanSuccess,
+      onScanFailure
+    );
+  });
+}
+
+if (closeScannerBtn) {
+  closeScannerBtn.addEventListener("click", () => {
+    stopScanner();
+  });
+}
+
+function stopScanner() {
+  if (html5QrcodeScanner) {
+    html5QrcodeScanner.stop().then(() => {
+      html5QrcodeScanner.clear();
+      if (scannerModal) scannerModal.style.display = "none";
+    }).catch(() => {
+      if (scannerModal) scannerModal.style.display = "none";
+    });
+  } else {
+    if (scannerModal) scannerModal.style.display = "none";
+  }
+}
+
+async function onScanSuccess(decodedText) {
+  stopScanner();
+  
+  try {
+    const data = JSON.parse(decodedText);
+    const currentUnix = Math.floor(Date.now() / 1000);
+    const currentBlock = Math.floor(currentUnix / 15);
+
+    // Verifikasi Token QR Kios & Toleransi Waktu (1 block / 15 detik)
+    if (data.secret === KIOSK_SECRET && Math.abs(currentBlock - data.block) <= 1) {
+      if (attendanceMessage) attendanceMessage.textContent = "Verifikasi QR Berhasil! Memproses absensi...";
+      
+      // FETCHING LANGSUNG KE SUPABASE RPC
+      const { data: rpcData, error } = await supabase.rpc("check_in");
+
+      if (error) {
+        alert("Absensi gagal: " + error.message);
+        return;
+      }
+
+      if (!rpcData.success) {
+        alert(rpcData.message);
+        return;
+      }
+
+      alert("Absensi Berhasil!");
+      await loadTodayStatus();
+      await loadAttendanceHistory();
+
+    } else {
+      alert("QR Code tidak valid atau sudah kedaluwarsa! Silakan scan ulang di layar lokasi.");
+    }
+  } catch (err) {
+    alert("Format QR Code tidak dikenali!");
+  }
+}
+
+function onScanFailure(error) {
+  // Biarkan kosong untuk pencarian frame konstan
+}
+
+// ==============================
+// CHECK IN MANUAL (BACKUP)
 // ==============================
 if (checkInButton) {
   checkInButton.addEventListener("click", async () => {
     checkInButton.disabled = true;
-    attendanceMessage.textContent = "Memproses absensi...";
+    if (attendanceMessage) attendanceMessage.textContent = "Memproses absensi...";
 
     const { data, error } = await supabase.rpc("check_in");
 
-    if (error) {
-      console.error(error);
-      attendanceMessage.textContent = "Absensi gagal: " + error.message;
-      checkInButton.disabled = false;
-      return;
-    }
-
-    if (!data.success) {
-      attendanceMessage.textContent = data.message;
+    if (error || !data.success) {
+      if (attendanceMessage) attendanceMessage.textContent = data ? data.message : error.message;
       checkInButton.disabled = false;
       return;
     }
 
     const time = new Date(data.check_in).toLocaleTimeString("id-ID", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      timeZone: "Asia/Jakarta"
+      hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: "Asia/Jakarta"
     });
 
-    if (data.already_checked_in) {
-      attendanceMessage.textContent = "Kamu sudah absen hari ini. Waktu: " + time;
-    } else {
-      attendanceMessage.textContent = "Absensi berhasil! Waktu: " + time + " | Status: " + data.status;
-    }
+    if (attendanceMessage) attendanceMessage.textContent = "Absensi berhasil! Waktu: " + time;
 
     await loadTodayStatus();
     await loadAttendanceHistory();
@@ -420,7 +454,6 @@ if (tabRekapBtn && tabKaryawanBtn) {
     e.preventDefault();
     adminViewRekap.style.display = "block";
     adminViewKaryawan.style.display = "none";
-    
     tabRekapBtn.classList.add("active");
     tabKaryawanBtn.classList.remove("active");
   });
@@ -429,16 +462,14 @@ if (tabRekapBtn && tabKaryawanBtn) {
     e.preventDefault();
     adminViewRekap.style.display = "none";
     adminViewKaryawan.style.display = "block";
-    
     tabKaryawanBtn.classList.add("active");
     tabRekapBtn.classList.remove("active");
-    
     await loadEmployeeManagement();
   });
 }
 
 // ==============================
-// RENDER KELOLA MEMBER (TUNGGAL)
+// RENDER KELOLA MEMBER
 // ==============================
 async function loadEmployeeManagement() {
   if (!adminEmployeeList) return;
@@ -563,22 +594,14 @@ if (exportCsvBtn) {
       return;
     }
 
-    const { data: empData } = await supabase
-      .from("employees")
-      .select("id, name, employee_code");
-
+    const { data: empData } = await supabase.from("employees").select("id, name, employee_code");
     const empMap = {};
-    if (empData) {
-      empData.forEach(e => empMap[e.id] = e);
-    }
+    if (empData) empData.forEach(e => empMap[e.id] = e);
 
     const excelRows = attData.map((row, index) => {
       const emp = empMap[row.employee_id] || { name: "Unknown", employee_code: "-" };
       const time = new Date(row.check_in).toLocaleTimeString("id-ID", { 
-        hour: "2-digit", 
-        minute: "2-digit", 
-        second: "2-digit", 
-        timeZone: "Asia/Jakarta" 
+        hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: "Asia/Jakarta" 
       });
 
       return {
@@ -594,15 +617,7 @@ if (exportCsvBtn) {
     const worksheet = XLSX.utils.json_to_sheet(excelRows);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Rekap Absensi");
-
-    worksheet["!cols"] = [
-      { wch: 6 },
-      { wch: 14 },
-      { wch: 16 },
-      { wch: 25 },
-      { wch: 20 },
-      { wch: 12 }
-    ];
+    worksheet["!cols"] = [{ wch: 6 }, { wch: 14 }, { wch: 16 }, { wch: 25 }, { wch: 20 }, { wch: 12 }];
 
     XLSX.writeFile(workbook, `Rekap_Absensi_Vihara_${selectedDate}.xlsx`);
   });
@@ -621,13 +636,11 @@ async function loadAdminDashboard() {
 
   const selectedStatus = adminFilterStatus ? adminFilterStatus.value : "ALL";
 
-  const { count: totalEmpCount, error: empCountError } = await supabase
+  const { count: totalEmpCount } = await supabase
     .from("employees")
     .select("*", { count: "exact", head: true });
 
-  if (!empCountError && statTotal) {
-    statTotal.textContent = totalEmpCount || 0;
-  }
+  if (statTotal) statTotal.textContent = totalEmpCount || 0;
 
   let query = supabase
     .from("attendance")
@@ -635,46 +648,31 @@ async function loadAdminDashboard() {
     .eq("attendance_date", selectedDate)
     .order("check_in", { ascending: true });
 
-  if (selectedStatus !== "ALL") {
-    query = query.eq("status", selectedStatus);
-  }
+  if (selectedStatus !== "ALL") query = query.eq("status", selectedStatus);
 
   const { data: attendanceData, error: attError } = await query;
 
   if (attError) {
-    console.error("Error admin attendance:", attError);
     adminAttendanceList.innerHTML = "<p>Gagal memuat rekap absensi.</p>";
     return;
   }
 
-  if (statPresent) {
-    statPresent.textContent = attendanceData ? attendanceData.length : 0;
-  }
+  if (statPresent) statPresent.textContent = attendanceData ? attendanceData.length : 0;
 
   if (!attendanceData || attendanceData.length === 0) {
     adminAttendanceList.innerHTML = `<p>Belum ada data absensi untuk tanggal <strong>${selectedDate}</strong>.</p>`;
     return;
   }
 
-  const { data: employeesData } = await supabase
-    .from("employees")
-    .select("id, name, employee_code");
-
+  const { data: employeesData } = await supabase.from("employees").select("id, name, employee_code");
   const empMap = {};
-  if (employeesData) {
-    employeesData.forEach((emp) => {
-      empMap[emp.id] = emp;
-    });
-  }
+  if (employeesData) employeesData.forEach((emp) => empMap[emp.id] = emp);
 
   adminAttendanceList.innerHTML = "";
 
   attendanceData.forEach((row) => {
     const time = new Date(row.check_in).toLocaleTimeString("id-ID", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      timeZone: "Asia/Jakarta"
+      hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: "Asia/Jakarta"
     });
 
     const isLate = row.status === "late";
@@ -734,24 +732,9 @@ const handleLogout = async () => {
 if (logoutButton) logoutButton.addEventListener("click", handleLogout);
 if (adminLogoutBtn) adminLogoutBtn.addEventListener("click", handleLogout);
 
-// ==============================
-// EVENT LISTENERS FILTER ADMIN
-// ==============================
-if (adminFilterDate) {
-  adminFilterDate.addEventListener("change", async () => {
-    await loadAdminDashboard();
-  });
-}
+if (adminFilterDate) adminFilterDate.addEventListener("change", async () => await loadAdminDashboard());
+if (adminFilterStatus) adminFilterStatus.addEventListener("change", async () => await loadAdminDashboard());
 
-if (adminFilterStatus) {
-  adminFilterStatus.addEventListener("change", async () => {
-    await loadAdminDashboard();
-  });
-}
-
-// ==============================
-// AUTO REFRESH STATUS TIAP 1 MENIT
-// ==============================
 setInterval(async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (session && userSection && userSection.style.display !== "none") {
