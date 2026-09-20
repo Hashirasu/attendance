@@ -94,7 +94,7 @@
         </div>
       </div>
 
-      <!-- BOX TATAKAN KHUSUS RIWAYAT ABSENSI -->
+      <!-- BOX TATAKAN RIWAYAT ABSENSI MEMBER -->
       <div class="card-box" style="margin-top: 24px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(45, 90, 56, 0.12);">
           <div>
@@ -131,25 +131,46 @@
         <button id="tab-karyawan-btn" class="tab-btn" type="button">👥 Kelola Member</button>
       </div>
 
+      <!-- TAB REKAP ABSENSI TERBUNGKUS CARD-BOX -->
       <div id="admin-view-rekap">
-        <div style="display: flex; gap: 12px; margin-bottom: 22px; flex-wrap: wrap;">
-          <input type="date" id="admin-filter-date" class="custom-input" style="flex: 1; min-width: 150px;">
-          <select id="admin-filter-status" class="custom-select" style="flex: 1; min-width: 150px;">
-            <option value="ALL">Semua Status</option>
-            <option value="present">Present (Tepat Waktu)</option>
-            <option value="late">Late (Terlambat)</option>
-          </select>
-          <button id="export-csv-btn" class="secondary-button" style="background: var(--primary); color: white; border: none;" type="button">📥 Export Excel</button>
-        </div>
-        <div id="admin-attendance-list" style="display: flex; flex-direction: column; gap: 10px;">
-          <p>Memuat rekap absensi...</p>
+        <div class="card-box">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid rgba(45, 90, 56, 0.12);">
+            <div>
+              <span class="card-badge" style="margin-bottom: 4px;">OVERVIEW</span>
+              <h3 style="font-size: 18px; font-weight: 800; color: var(--primary-dark);">Data Rekap Kehadiran</h3>
+            </div>
+            <button id="export-csv-btn" class="secondary-button" style="background: var(--primary); color: white; border: none; font-size: 12px;" type="button">📥 Export Excel</button>
+          </div>
+
+          <div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+            <input type="date" id="admin-filter-date" class="custom-input" style="flex: 1; min-width: 150px;">
+            <select id="admin-filter-status" class="custom-select" style="flex: 1; min-width: 150px;">
+              <option value="ALL">Semua Status</option>
+              <option value="present">Present (Tepat Waktu)</option>
+              <option value="late">Late (Terlambat)</option>
+            </select>
+          </div>
+
+          <div id="admin-attendance-list" style="display: flex; flex-direction: column; gap: 10px;">
+            <p>Memuat rekap absensi...</p>
+          </div>
         </div>
       </div>
 
+      <!-- TAB KELOLA MEMBER TERBUNGKUS CARD-BOX -->
       <div id="admin-view-karyawan" style="display: none;">
-        <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 16px; color: var(--primary-dark);">Daftar Seluruh Member</h3>
-        <div id="admin-employee-list">
-          <p>Memuat daftar member...</p>
+        <div class="card-box">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid rgba(45, 90, 56, 0.12);">
+            <div>
+              <span class="card-badge" style="margin-bottom: 4px;">MEMBERSHIP</span>
+              <h3 style="font-size: 18px; font-weight: 800; color: var(--primary-dark);">Daftar Seluruh Member</h3>
+            </div>
+            <span style="font-size: 18px; opacity: 0.8;">👥</span>
+          </div>
+
+          <div id="admin-employee-list" style="display: flex; flex-direction: column; gap: 10px;">
+            <p>Memuat daftar member...</p>
+          </div>
         </div>
       </div>
     </section>
