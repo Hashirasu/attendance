@@ -3,18 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vihara Attendance Application</title>
-  
-  <!-- CSS Utama -->
+  <title>Vihara Attendance</title>
   <link rel="stylesheet" href="style.css">
-  
-  <!-- Library SheetJS (Export Excel) -->
+  <!-- SheetJS untuk Export Excel -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
-  <!-- Library HTML5 QR Code Scanner (Untuk HP Member) -->
-  <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
 <body>
+
   <!-- BACKGROUND SCENE ZEN VEHARA -->
   <div class="scene">
     <div class="sun"></div>
@@ -32,62 +27,66 @@
     <div class="tree tree-right"></div>
   </div>
 
-  <div class="app-container">
-     <!-- Panel login, user dashboard, admin dashboard ... -->
-  </div>
-  <div class="app-container">
+  <div class="app">
 
     <!-- ========================
          1. LOGIN / REGISTER SECTION
     ========================= -->
-    <section id="login-section" class="panel auth-panel">
-      <div class="panel-header">
-        <div class="brand">
-          <div class="dharma-wheel">☸</div>
-          <div>
-            <p id="form-eyebrow" class="brand-small">WELCOME BACK</p>
-            <h1 id="form-title">Stay present.</h1>
-          </div>
+    <section id="login-section" class="panel login-panel">
+      <div class="brand">
+        <div class="dharma-wheel">☸</div>
+        <div>
+          <p id="form-eyebrow" class="brand-small">WELCOME BACK</p>
+          <h1 id="form-title">Stay present.</h1>
         </div>
       </div>
 
-      <p id="form-subtitle" class="subtitle">Log in to continue your attendance journey.</p>
-
-      <div class="form-group" id="name-group" style="display: none;">
-        <label for="register-name">NAMA LENGKAP</label>
-        <input type="text" id="register-name" placeholder="Masukkan nama lengkap" class="custom-input">
+      <div class="welcome">
+        <p id="form-subtitle" class="subtitle">Log in to continue your attendance journey.</p>
       </div>
 
-      <div class="form-group">
-        <label for="email">EMAIL</label>
-        <input type="email" id="email" placeholder="nama@vihara.org" class="custom-input">
+      <div class="form">
+        <div class="form-group" id="name-group" style="display: none;">
+          <label for="register-name">NAMA LENGKAP</label>
+          <input type="text" id="register-name" placeholder="Masukkan nama lengkap" class="custom-input">
+        </div>
+
+        <div class="form-group">
+          <label for="email">EMAIL</label>
+          <input type="email" id="email" placeholder="nama@vihara.org" class="custom-input">
+        </div>
+
+        <div class="form-group">
+          <label for="password">PASSWORD</label>
+          <input type="password" id="password" placeholder="••••••••" class="custom-input">
+        </div>
+
+        <button id="auth-main-button" class="main-button">
+          <span id="auth-button-text">LOGIN</span>
+          <span class="button-arrow">→</span>
+        </button>
+
+        <div class="auth-toggle-box">
+          <span id="toggle-auth-text">Belum punya akun?</span>
+          <button id="toggle-auth-btn" class="link-button">Daftar di sini</button>
+        </div>
+
+        <p id="message" class="status-message"></p>
       </div>
 
-      <div class="form-group">
-        <label for="password">PASSWORD</label>
-        <input type="password" id="password" placeholder="••••••••" class="custom-input">
+      <div class="quote">
+        <span>☸</span>
+        <p>PEACE BEGINS WITHIN</p>
+        <span>☸</span>
       </div>
-
-      <button id="auth-main-button" class="main-button">
-        <span id="auth-button-text">LOGIN</span>
-      </button>
-
-      <div class="auth-toggle-box">
-        <span id="toggle-auth-text">Belum punya akun?</span>
-        <button id="toggle-auth-btn" class="link-button">Daftar di sini</button>
-      </div>
-
-      <p id="message" class="status-message"></p>
     </section>
-
 
     <!-- ========================
          2. USER DASHBOARD SECTION
     ========================= -->
-    <section id="user-section" class="panel user-panel" style="display: none;">
-      
-      <div class="panel-header">
-        <div class="brand">
+    <section id="user-section" class="panel dashboard-panel" style="display: none;">
+      <div class="dashboard-header">
+        <div class="brand compact">
           <div class="dharma-wheel">☸</div>
           <div>
             <p class="brand-small">VIHARA</p>
@@ -96,79 +95,75 @@
         </div>
         <div class="header-actions">
           <button id="switch-to-admin" class="admin-action-btn" style="display: none;">MODE ADMIN</button>
-          <div class="user-profile-badge">
-            <span id="user-name" class="profile-name">-</span>
-            <span id="user-code" class="profile-code">-</span>
-            <span id="user-role" style="display:none;">user</span>
+          <div class="profile">
+            <div class="profile-text">
+              <strong id="user-name">-</strong>
+              <span id="user-code">-</span>
+            </div>
+            <div class="profile-icon">☸</div>
           </div>
         </div>
       </div>
 
-      <div class="welcome-box">
+      <div class="dashboard-greeting">
         <p class="eyebrow">GOOD DAY</p>
         <h2>Welcome back, <span id="user-name-display">Member</span>.</h2>
-        <p class="subtitle">Take a moment. Stay present.</p>
+        <p>Take a moment. Stay present.</p>
       </div>
 
-      <!-- CARDS STATUS & ABSENSI -->
-      <div class="dashboard-grid">
-        
-        <!-- CARD STATUS HARI INI -->
-        <div class="zen-card today-card">
+      <div class="today-grid">
+        <!-- STATUS HARI INI -->
+        <div class="today-card">
           <p class="card-label">TODAY</p>
-          <div class="card-icon">☸</div>
-          <div id="today-status" class="status-content">
+          <div class="today-icon">☸</div>
+          <div id="today-status">
             <p>Memuat status...</p>
           </div>
         </div>
 
-        <!-- CARD TOMBOL ABSENSI / SCANNER -->
-        <div class="zen-card action-card">
-          <p class="card-label">ATTENDANCE</p>
-          <h3>Ready?</h3>
-          <p class="card-desc">Record your presence for today.</p>
-
-          <!-- TOMBOL SCANNER KAMERA HIKES -->
-          <button id="open-scanner-btn" class="main-button" style="margin-bottom: 10px; background: #3d5a45;">
-            📷 SCAN QR KIOS
-          </button>
-
-          <!-- TOMBOL ABSEN MANUAL (BACKUP) -->
-          <button id="check-in-button" class="secondary-button">
+        <!-- ACTION ABSEN MANUAL (BACKUP) -->
+        <div class="checkin-card">
+          <div>
+            <p class="card-label">ATTENDANCE</p>
+            <h3>Ready?</h3>
+            <p>Record your presence for today.</p>
+          </div>
+          <button id="check-in-button" class="main-button checkin-button">
             ABSEN SEKARANG
           </button>
-          
-          <p id="attendance-message" class="status-message"></p>
+          <p id="attendance-message"></p>
         </div>
-
       </div>
 
-      <!-- RIWAYAT ABSENSI MEMBER -->
-      <div class="journey-section">
-        <p class="eyebrow">YOUR JOURNEY</p>
-        <h3>Riwayat Absensi</h3>
-        <div id="attendance-history" class="history-list">
+      <!-- RIWAYAT -->
+      <div class="history-section">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">YOUR JOURNEY</p>
+            <h2>Riwayat Absensi</h2>
+          </div>
+          <div class="lotus-decoration">🌸</div>
+        </div>
+        <div id="attendance-history">
           <p>Memuat riwayat...</p>
         </div>
       </div>
 
-      <div class="panel-footer">
-        <button id="logout-button" class="logout-button">Logout</button>
-      </div>
-
+      <footer>
+        <span>VIHARA ZEN PRESENCE</span>
+        <button id="logout-button">LOGOUT</button>
+      </footer>
     </section>
-
 
     <!-- ========================
          3. ADMIN PANEL SECTION
     ========================= -->
     <section id="admin-section" class="panel admin-panel" style="display: none;">
-      
       <div class="panel-header">
-        <div class="brand">
+        <div class="brand compact">
           <div class="dharma-wheel">☸</div>
           <div>
-            <p class="brand-small">ADMIN DASHBOARD</p>
+            <p class="brand-small">ADMIN</p>
             <h1>MANAGEMENT</h1>
           </div>
         </div>
@@ -180,14 +175,13 @@
 
       <div class="admin-welcome">
         <p class="eyebrow">OVERVIEW & DATA</p>
-        <h2>Rekap & Pengelolaan Data.</h2>
+        <h2>Rekap & Pengelolaan Data</h2>
         <p class="subtitle">Pantau kehadiran dan kelola akun member Vihara.</p>
       </div>
 
-      <!-- STATISTIK RINGKAS -->
       <div class="stats-grid">
         <div class="stat-card">
-          <span class="stat-label">TOTAL MEMBER AKTIF</span>
+          <span class="stat-label">TOTAL MEMBER</span>
           <span id="stat-total" class="stat-value">0</span>
         </div>
         <div class="stat-card stat-card-green">
@@ -196,13 +190,11 @@
         </div>
       </div>
 
-      <!-- TAB NAVIGASI ADMIN -->
       <div class="admin-tabs">
         <button id="tab-rekap-btn" class="tab-btn active" type="button">📋 Rekap Absensi</button>
         <button id="tab-karyawan-btn" class="tab-btn" type="button">👥 Kelola Member</button>
       </div>
 
-      <!-- VIEW 1: REKAP ABSENSI -->
       <div id="admin-view-rekap">
         <div class="admin-filter-bar">
           <div class="filter-inputs">
@@ -213,32 +205,24 @@
               <option value="late">Late (Terlambat)</option>
             </select>
           </div>
-          <button id="export-csv-btn" class="admin-action-btn export-btn" type="button">
-            📥 Export Excel (.xlsx)
-          </button>
+          <button id="export-csv-btn" class="export-btn" type="button">📥 Export Excel (.xlsx)</button>
         </div>
-
-        <div id="admin-attendance-list" class="history-list">
+        <div id="admin-attendance-list">
           <p>Memuat rekap absensi...</p>
         </div>
       </div>
 
-      <!-- VIEW 2: KELOLA MEMBER -->
       <div id="admin-view-karyawan" style="display: none;">
-        <h3 class="section-subtitle">Daftar Seluruh Member</h3>
-        <div id="admin-employee-list" class="history-list">
+        <h3 class="section-subtitle">Daftar Member</h3>
+        <div id="admin-employee-list">
           <p>Memuat daftar member...</p>
         </div>
       </div>
-
     </section>
 
   </div>
 
-
-  <!-- ========================
-       4. MODAL EDIT MEMBER (POPUP ADMIN)
-  ========================= -->
+  <!-- MODAL EDIT MEMBER -->
   <div id="edit-emp-modal" class="modal" style="display: none;">
     <div class="modal-content">
       <h3>Edit Profil Member</h3>
@@ -266,37 +250,19 @@
         <label>Status Akun</label>
         <select id="edit-emp-active" class="custom-select" style="width: 100%;">
           <option value="true">Aktif</option>
-          <option value="false">Nonaktif (Soft Delete)</option>
+          <option value="false">Nonaktif</option>
         </select>
       </div>
 
       <p id="edit-modal-msg" class="status-message"></p>
 
-      <div class="modal-actions">
+      <div style="display: flex; gap: 10px; margin-top: 15px;">
         <button id="cancel-edit-emp" class="secondary-button" type="button">Batal</button>
-        <button id="save-edit-emp" class="main-button" type="button">Simpan Perubahan</button>
+        <button id="save-edit-emp" class="main-button" type="button" style="margin:0;">Simpan</button>
       </div>
     </div>
   </div>
 
-
-  <!-- ========================
-       5. MODAL SCANNER KAMERA (POPUP HP MEMBER)
-  ========================= -->
-  <div id="scanner-modal" class="modal" style="display: none;">
-    <div class="modal-content" style="max-width: 400px; text-align: center;">
-      <h3>Scan QR Absensi Vihara</h3>
-      <p style="font-size: 12px; color: #666; margin-bottom: 12px;">Arahkan kamera HP ke layar Tablet/TV Kios</p>
-      
-      <div id="reader" style="width: 100%; min-height: 250px; border-radius: 12px; overflow: hidden; background: #000;"></div>
-      
-      <button id="close-scanner-btn" class="secondary-button" style="margin-top: 16px;" type="button">Tutup Kamera</button>
-    </div>
-  </div>
-
-
-  <!-- SCRIPT JAVASCRIPT UTAMA -->
   <script type="module" src="app.js"></script>
-
 </body>
 </html>

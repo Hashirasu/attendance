@@ -1,16 +1,14 @@
-// Konfigurasi Kios
-const KIOSK_SECRET = "MUDIVIVAVVBN"; // Key rahasia
-const INTERVAL_SECONDS = 15; // Berubah tiap 15 detik
+const KIOSK_SECRET = "VIHARA_ZEN_SECRET_2026";
+const INTERVAL_SECONDS = 15;
 
 const qrContainer = document.getElementById("qrcode");
 const timerBar = document.getElementById("timer-bar");
 const timerText = document.getElementById("timer-text");
 
-// Init QRCode JS Library
 const qrcode = new QRCode(qrContainer, {
   width: 220,
   height: 220,
-  colorDark: "#2d4334",
+  colorDark: "#30452d",
   colorLight: "#ffffff",
   correctLevel: QRCode.CorrectLevel.H
 });
@@ -21,35 +19,30 @@ function updateQRCode() {
   const unixTimestamp = Math.floor(Date.now() / 1000);
   const timeBlock = Math.floor(unixTimestamp / INTERVAL_SECONDS);
   
-  // Buat Payload Unik per 15 detik
-  const payload = JSON.stringify({
-    secret: KIOSK_SECRET,
-    block: timeBlock,
-    ts: unixTimestamp
-  });
+  // Dapatkan URL Domain utama kamu (cth: https://namadomain.vercel.app)
+  const baseUrl = window.location.origin;
+  
+  // Buat URL lengkap dengan query parameter token
+  const qrUrl = `${baseUrl}/?secret=${KIOSK_SECRET}&block=${timeBlock}`;
 
   qrcode.clear();
-  qrcode.makeCode(payload);
+  qrcode.makeCode(qrUrl);
 }
 
-// Timer Loop
 function startTimer() {
   updateQRCode();
   
   setInterval(() => {
     countdown--;
-    
-    // Update visual progress bar
     const percentage = (countdown / INTERVAL_SECONDS) * 100;
-    timerBar.style.width = `${percentage}%`;
-    timerText.textContent = `Memperbarui dalam ${countdown}s`;
+    if (timerBar) timerBar.style.width = `${percentage}%`;
+    if (timerText) timerText.textContent = `Memperbarui dalam ${countdown}s`;
 
     if (countdown <= 0) {
       countdown = INTERVAL_SECONDS;
-      updateQRCode(); // QR Otomatis berganti gambar!
+      updateQRCode();
     }
   }, 1000);
 }
 
-// Jalankan saat halaman dibuka
 window.addEventListener("DOMContentLoaded", startTimer);

@@ -192,6 +192,33 @@ if (authMainButton) {
 // ==============================
 // LOAD MEMBER PROFILE
 // ==============================
+async function checkUrlAutoAttendance() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const secret = urlParams.get("secret");
+  const block = urlParams.get("block");
+
+  if (secret && block) {
+    const currentUnix = Math.floor(Date.now() / 1000);
+    const currentBlock = Math.floor(currentUnix / 15);
+
+    // Cek secret & toleransi waktu 15 detik
+    if (secret === "VIHARA_ZEN_SECRET_2026" && Math.abs(currentBlock - parseInt(block)) <= 1) {
+      const { data, error } = await supabase.rpc("check_in");
+      if (!error && data.success) {
+        alert("✓ Absensi Berhasil via Scan Kamera!");
+      } else if (data) {
+        alert(data.message);
+      }
+    } else {
+      alert("QR Code sudah kedaluwarsa, silakan scan ulang di layar Kios.");
+    }
+
+    // Bersihkan URL parameter agar tidak re-trigger saat di-refresh
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+}
+
+
 async function loadUserProfile() {
   try {
     const { data: { user } } = await supabase.auth.getUser();
