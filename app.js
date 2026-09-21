@@ -1,7 +1,8 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
 // CONFIG SUPABASE (Pastikan URL & Anon Key ini tetap sesuai dengan punyamu)
-const SUPABASE_URL = "https://njdrnrnnlsrxdyugmsww.supabase.co"; // Ganti dengan URL Supabase kamu const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qZHJucm5ubHNyeGR5dWdtc3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5MDExNDEsImV4cCI6MjEwNTQ3NzE0MX0.F65pU2A3XjyEaisye2GfzLPF9DCaQF1fklMxgSTRhs8";             // Ganti dengan Anon Key kamu
+const SUPABASE_URL = "https://njdrnrnnlsrxdyugmsww.supabase.co"; // Ganti dengan URL Supabase kamu 
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qZHJucm5ubHNyeGR5dWdtc3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5MDExNDEsImV4cCI6MjEwNTQ3NzE0MX0.F65pU2A3XjyEaisye2GfzLPF9DCaQF1fklMxgSTRhs8";             // Ganti dengan Anon Key kamu
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const KIOSK_SECRET = "VIHARA_ZEN_SECRET_2026";
