@@ -503,6 +503,28 @@ if (saveEditEmp) {
       return;
     }
 
+    // PROTEKSI: Cek apakah user yang sedang login adalah Super Admin
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data: currentUserData } = await supabase
+      .from("employees")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    // Jika bukan super_admin dan mencoba ubah role orang lain
+    if (currentUserData.role !== "super_admin") {
+      const { data: targetUserData } = await supabase
+        .from("employees")
+        .select("role")
+        .eq("id", id)
+        .single();
+
+      if (targetUserData.role !== role) {
+        editModalMsg.textContent = "⛔ Hanya Super Admin yang bisa mengubah Role / Pangkat!";
+        return;
+      }
+    }
+
     editModalMsg.textContent = "Menyimpan...";
 
     const { error } = await supabase
@@ -521,6 +543,7 @@ if (saveEditEmp) {
     }
   });
 }
+
 
 // EXPORT EXCEL (.XLSX)
 if (exportCsvBtn) {
