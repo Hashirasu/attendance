@@ -512,7 +512,7 @@ if (saveEditEmp) {
       .single();
 
     // Jika bukan super_admin dan mencoba ubah role orang lain
-    if (currentUserData.role !== "super_admin") {
+    if (currentUserData.role !== "adm1n") {
       const { data: targetUserData } = await supabase
         .from("employees")
         .select("role")
@@ -520,7 +520,7 @@ if (saveEditEmp) {
         .single();
 
       if (targetUserData.role !== role) {
-        editModalMsg.textContent = "⛔ Hanya ADMiN yang bisa mengubah Role / Pangkat!";
+        editModalMsg.textContent = "⛔ Hanya ADM1N yang bisa mengubah Role / Pangkat!";
         return;
       }
     }
