@@ -1,9 +1,7 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-// CONFIG SUPABASE (SESUAIKAN APABILA ADA URL/KEY KHUSUS KAMU)
-const SUPABASE_URL = "https://njdrnrnnlsrxdyugmsww.supabase.co"; // Ganti dengan URL Supabase kamu
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qZHJucm5ubHNyeGR5dWdtc3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5MDExNDEsImV4cCI6MjEwNTQ3NzE0MX0.F65pU2A3XjyEaisye2GfzLPF9DCaQF1fklMxgSTRhs8";                   // Ganti dengan Anon Key kamu
-
+// CONFIG SUPABASE (Pastikan URL & Anon Key ini tetap sesuai dengan punyamu)
+const SUPABASE_URL = "https://njdrnrnnlsrxdyugmsww.supabase.co"; // Ganti dengan URL Supabase kamu const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qZHJucm5ubHNyeGR5dWdtc3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5MDExNDEsImV4cCI6MjEwNTQ3NzE0MX0.F65pU2A3XjyEaisye2GfzLPF9DCaQF1fklMxgSTRhs8";             // Ganti dengan Anon Key kamu
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const KIOSK_SECRET = "VIHARA_ZEN_SECRET_2026";
@@ -74,7 +72,7 @@ async function checkUrlAutoAttendance() {
     if (secret === KIOSK_SECRET && Math.abs(currentBlock - parseInt(block)) <= 1) {
       const { data, error } = await supabase.rpc("check_in");
       if (!error && data && data.success) {
-        alert("✓ Absensi Berhasil via Scan Kamera!");
+        alert("Absensi Berhasil via Scan Kamera!");
       } else if (data && data.message) {
         alert(data.message);
       }
@@ -103,12 +101,12 @@ toggleAuthBtn.addEventListener("click", () => {
   isRegisterMode = !isRegisterMode;
   if (isRegisterMode) {
     nameGroup.style.display = "block";
-    authButtonText.textContent = "DAFTAR";
+    authButtonText.textContent = "Daftar";
     toggleAuthText.textContent = "Sudah punya akun?";
     toggleAuthBtn.textContent = "Login di sini";
   } else {
     nameGroup.style.display = "none";
-    authButtonText.textContent = "LOGIN";
+    authButtonText.textContent = "Masuk";
     toggleAuthText.textContent = "Belum punya akun?";
     toggleAuthBtn.textContent = "Daftar di sini";
   }
@@ -189,7 +187,7 @@ async function loadUserProfile() {
     userCodeEl.textContent = `Kode: ${empData.employee_code}`;
     currentUserRole = empData.role;
 
-    if (currentUserRole === "admin"|| currentUserRole === "adm1n") {
+    if (currentUserRole === "admin" || currentUserRole === "adm1n") {
       switchToAdminBtn.style.display = "inline-block";
     } else {
       switchToAdminBtn.style.display = "none";
@@ -206,7 +204,7 @@ async function loadUserProfile() {
 
 async function loadTodayStatus() {
   if (!todayStatusEl) return;
-  todayStatusEl.innerHTML = "<p style='color: var(--text-sub);'>Memuat status hari ini...</p>";
+  todayStatusEl.innerHTML = "<p style='color: var(--text-sub);'>Memuat status...</p>";
 
   const { data: { user } } = await supabase.auth.getUser();
   const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
@@ -219,7 +217,7 @@ async function loadTodayStatus() {
     .maybeSingle();
 
   if (error) {
-    todayStatusEl.innerHTML = "<p style='color: #a82e2e;'>Gagal memuat status.</p>";
+    todayStatusEl.innerHTML = "<p style='color: var(--ios-red);'>Gagal memuat status.</p>";
     return;
   }
 
@@ -232,31 +230,31 @@ async function loadTodayStatus() {
       : `<span class="badge-present">Tepat Waktu</span>`;
 
     todayStatusEl.innerHTML = `
-      <div style="font-size: 16px; font-weight: 800; color: var(--primary-dark); margin-bottom: 4px;">Sudah Absen</div>
-      <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 8px;">Pukul ${time} WIB</div>
+      <div style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">Sudah Absen</div>
+      <div style="font-size: 12px; color: var(--text-sub); margin-bottom: 8px;">Pukul ${time} WIB</div>
       <div>${badge}</div>
     `;
     checkInButton.disabled = true;
-    checkInButton.textContent = "SUDAH ABSEN HARI INI";
+    checkInButton.textContent = "Sudah Absen";
   } else {
     todayStatusEl.innerHTML = `
-      <div style="font-size: 16px; font-weight: 800; color: #a82e2e; margin-bottom: 4px;">Belum Absen</div>
-      <div style="font-size: 13px; color: var(--text-sub);">Silakan tekan tombol untuk presensi.</div>
+      <div style="font-size: 15px; font-weight: 700; color: var(--ios-red); margin-bottom: 4px;">Belum Absen</div>
+      <div style="font-size: 12px; color: var(--text-sub);">Silakan tekan tombol di samping.</div>
     `;
     checkInButton.disabled = false;
-    checkInButton.textContent = "ABSEN SEKARANG";
+    checkInButton.textContent = "Hadir";
   }
 }
 
 if (checkInButton) {
   checkInButton.addEventListener("click", async () => {
     checkInButton.disabled = true;
-    attendanceMessage.textContent = "Memproses absensi...";
+    attendanceMessage.textContent = "Memproses...";
 
     const { data, error } = await supabase.rpc("check_in");
 
     if (error) {
-      attendanceMessage.textContent = "Gagal absen: " + error.message;
+      attendanceMessage.textContent = "Gagal: " + error.message;
       checkInButton.disabled = false;
     } else if (data) {
       attendanceMessage.textContent = data.message;
@@ -281,8 +279,7 @@ async function loadAttendanceHistory() {
 
   if (error || !data || data.length === 0) {
     attendanceHistory.innerHTML = `
-      <div style="text-align: center; padding: 24px 10px;">
-        <svg width="32" height="32" stroke="#d1d5db" viewBox="0 0 24 24" fill="none" stroke-width="2" style="margin-bottom: 8px;"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/></svg>
+      <div style="text-align: center; padding: 16px 10px;">
         <p style="font-size: 13px; color: var(--text-sub); margin: 0; font-weight: 500;">Belum ada riwayat.</p>
       </div>
     `;
@@ -330,7 +327,7 @@ if (switchToAdminBtn) {
     userSection.style.display = "none";
     adminSection.style.display = "block";
 
-    // PAKSA SET TANGGAL HARI INI SESUAI WIB
+    // Set otomatis tanggal hari ini berdasarkan WIB
     const todayWIB = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
     if (adminFilterDate) {
       adminFilterDate.value = todayWIB;
@@ -369,23 +366,10 @@ if (adminFilterStatus) adminFilterStatus.addEventListener("change", loadAdminAtt
 
 async function loadAdminAttendance() {
   if (!adminAttendanceList) return;
-  adminAttendanceList.innerHTML = "<p style='color: var(--text-sub);'>Memuat rekap absensi...</p>";
+  adminAttendanceList.innerHTML = "<p style='color: var(--text-sub);'>Memuat rekap...</p>";
 
   const selectedDate = adminFilterDate.value;
   const selectedStatus = adminFilterStatus.value;
-   // Ganti cara mendapatkan tanggal hari ini dengan trik ini:
-  const now = new Date();
-  // Geser waktu mentah ke zona waktu WIB (UTC+7) secara manual
-  const wibTime = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (7 * 3600000));
-  const todayWIB = wibTime.toISOString().split("T")[0];
-
-// Masukkan ke input filter tanggal
-if (adminFilterDate && !adminFilterDate.value) {
-  adminFilterDate.value = todayWIB;
-  // Jika input filter tanggal kosong saat pertama kali dibuka, set default-nya ke hari ini (WIB)
-  if (adminFilterDate && !adminFilterDate.value) {
-  adminFilterDate.value = todayWIB;
-  }
 
   let query = supabase
     .from("attendance")
@@ -403,12 +387,12 @@ if (adminFilterDate && !adminFilterDate.value) {
   const { data, error } = await query;
 
   if (error || !data) {
-    adminAttendanceList.innerHTML = "<p style='color: #a82e2e;'>Gagal memuat data rekap absensi.</p>";
+    adminAttendanceList.innerHTML = "<p style='color: var(--ios-red);'>Gagal memuat rekap.</p>";
     return;
   }
 
   if (data.length === 0) {
-    adminAttendanceList.innerHTML = "<p style='color: var(--text-sub); text-align: center; padding: 20px;'>Tidak ada data absensi untuk filter ini.</p>";
+    adminAttendanceList.innerHTML = "<p style='color: var(--text-sub); text-align: center; padding: 15px;'>Tidak ada data.</p>";
     return;
   }
 
@@ -446,10 +430,9 @@ if (adminFilterDate && !adminFilterDate.value) {
   });
 }
 
-// RENDER DAFTAR MEMBER (CLEAN / TANPA AVATAR BULAT NAMA DEPAN)
 async function loadEmployeeManagement() {
   if (!adminEmployeeList) return;
-  adminEmployeeList.innerHTML = "<p style='color: var(--text-sub);'>Memuat daftar member...</p>";
+  adminEmployeeList.innerHTML = "<p style='color: var(--text-sub);'>Memuat anggota...</p>";
 
   const { data, error } = await supabase
     .from("employees")
@@ -457,7 +440,7 @@ async function loadEmployeeManagement() {
     .order("name", { ascending: true });
 
   if (error) {
-    adminEmployeeList.innerHTML = "<p style='color: #a82e2e;'>Gagal memuat data member.</p>";
+    adminEmployeeList.innerHTML = "<p style='color: var(--ios-red);'>Gagal memuat anggota.</p>";
     return;
   }
 
@@ -469,8 +452,8 @@ async function loadEmployeeManagement() {
       ? `<span class="badge-active">Aktif</span>` 
       : `<span class="badge-inactive">Nonaktif</span>`;
 
-    const roleBadge = emp.role === "admin"
-      ? `<span class="role-badge role-admin">ADMIN</span>`
+    const roleBadge = (emp.role === "admin" || emp.role === "adm1n")
+      ? `<span class="role-badge role-admin">${emp.role.toUpperCase()}</span>`
       : `<span class="role-badge role-user">MEMBER</span>`;
 
     const card = document.createElement("div");
@@ -483,9 +466,9 @@ async function loadEmployeeManagement() {
           ${roleBadge}
           ${statusBadge}
         </div>
-        <div class="emp-code-sub">Kode Member: <strong>${emp.employee_code}</strong></div>
+        <div class="emp-code-sub">Kode: <strong>${emp.employee_code}</strong></div>
       </div>
-      <button class="secondary-button edit-btn-style" type="button" style="padding: 6px 16px; font-size: 12px;">Edit</button>
+      <button class="secondary-button edit-btn-style" type="button" style="padding: 6px 14px; font-size: 12px;">Edit</button>
     `;
 
     const editBtn = card.querySelector(".edit-btn-style");
@@ -503,7 +486,6 @@ async function loadEmployeeManagement() {
   });
 }
 
-// MODAL EDIT ACTION
 if (cancelEditEmp) {
   cancelEditEmp.addEventListener("click", () => {
     editEmpModal.style.display = "none";
@@ -519,11 +501,10 @@ if (saveEditEmp) {
     const isActive = editEmpActive.value === "true";
 
     if (!name || !code) {
-      editModalMsg.textContent = "Nama dan Kode tidak boleh kosong!";
+      editModalMsg.textContent = "Nama dan Kode wajib diisi!";
       return;
     }
 
-    // PROTEKSI: Cek apakah user yang sedang login adalah Super Admin
     const { data: { user } } = await supabase.auth.getUser();
     const { data: currentUserData } = await supabase
       .from("employees")
@@ -531,7 +512,6 @@ if (saveEditEmp) {
       .eq("id", user.id)
       .single();
 
-    // Jika bukan super_admin dan mencoba ubah role orang lain
     if (currentUserData.role !== "adm1n") {
       const { data: targetUserData } = await supabase
         .from("employees")
@@ -540,7 +520,7 @@ if (saveEditEmp) {
         .single();
 
       if (targetUserData.role !== role) {
-        editModalMsg.textContent = "⛔ Hanya ADM1N yang bisa mengubah Role & Status!";
+        editModalMsg.textContent = "Hanya Adm1n yang bisa mengubah Role!";
         return;
       }
     }
@@ -553,9 +533,9 @@ if (saveEditEmp) {
       .eq("id", id);
 
     if (error) {
-      editModalMsg.textContent = "Gagal menyimpan: " + error.message;
+      editModalMsg.textContent = "Gagal: " + error.message;
     } else {
-      editModalMsg.textContent = "Berhasil diperbarui!";
+      editModalMsg.textContent = "Berhasil!";
       setTimeout(() => {
         editEmpModal.style.display = "none";
         loadEmployeeManagement();
@@ -564,8 +544,6 @@ if (saveEditEmp) {
   });
 }
 
-
-// EXPORT EXCEL (.XLSX)
 if (exportCsvBtn) {
   exportCsvBtn.addEventListener("click", async () => {
     const { data, error } = await supabase
@@ -574,14 +552,14 @@ if (exportCsvBtn) {
       .order("attendance_date", { ascending: false });
 
     if (error || !data) {
-      alert("Gagal mengambil data untuk ekspor.");
+      alert("Gagal mengambil data ekspor.");
       return;
     }
 
     const excelData = data.map((row) => ({
       Tanggal: row.attendance_date,
-      "Nama Member": row.employees ? row.employees.name : "N/A",
-      "Kode Member": row.employees ? row.employees.employee_code : "N/A",
+      "Nama Anggota": row.employees ? row.employees.name : "N/A",
+      "Kode Anggota": row.employees ? row.employees.employee_code : "N/A",
       "Jam Absen": new Date(row.check_in).toLocaleTimeString("id-ID", { timeZone: "Asia/Jakarta" }),
       Status: row.status === "late" ? "Terlambat" : "Tepat Waktu",
     }));
