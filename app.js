@@ -189,7 +189,7 @@ async function loadUserProfile() {
     userCodeEl.textContent = `Kode: ${empData.employee_code}`;
     currentUserRole = empData.role;
 
-    if (currentUserRole === "admin") {
+    if (currentUserRole === "admin"|| currentUserRole === "adm1n") {
       switchToAdminBtn.style.display = "inline-block";
     } else {
       switchToAdminBtn.style.display = "none";
