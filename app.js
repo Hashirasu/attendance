@@ -520,7 +520,7 @@ if (saveEditEmp) {
         .single();
 
       if (targetUserData.role !== role) {
-        editModalMsg.textContent = "⛔ Hanya Super Admin yang bisa mengubah Role / Pangkat!";
+        editModalMsg.textContent = "⛔ Hanya ADMiN yang bisa mengubah Role / Pangkat!";
         return;
       }
     }
