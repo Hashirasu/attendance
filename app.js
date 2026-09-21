@@ -281,9 +281,9 @@ async function loadAttendanceHistory() {
 
   if (error || !data || data.length === 0) {
     attendanceHistory.innerHTML = `
-      <div style="text-align: center; padding: 24px 10px; background: rgba(255,255,255,0.6); border-radius: 12px;">
-        <span style="font-size: 28px; display: block; margin-bottom: 6px;">🌱</span>
-        <p style="font-size: 13px; color: var(--text-sub); margin: 0; font-weight: 600;">Belum ada riwayat absensi. Mulai catat presensimu!</p>
+      <div style="text-align: center; padding: 24px 10px;">
+        <svg width="32" height="32" stroke="#d1d5db" viewBox="0 0 24 24" fill="none" stroke-width="2" style="margin-bottom: 8px;"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/></svg>
+        <p style="font-size: 13px; color: var(--text-sub); margin: 0; font-weight: 500;">Belum ada riwayat.</p>
       </div>
     `;
     return;
@@ -309,7 +309,7 @@ async function loadAttendanceHistory() {
     item.className = "history-item";
     item.innerHTML = `
       <div style="display: flex; align-items: center; gap: 12px;">
-        <span style="color: var(--gold); font-size: 16px;">☸</span>
+        <svg width="18" height="18" stroke="var(--ios-blue)" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
         <div>
           <strong style="font-size: 14px; color: var(--text-main);">${date}</strong>
           <div style="font-size: 11px; color: var(--text-sub); margin-top: 2px;">Pukul ${time} WIB</div>
