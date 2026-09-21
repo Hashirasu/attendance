@@ -373,8 +373,15 @@ async function loadAdminAttendance() {
 
   const selectedDate = adminFilterDate.value;
   const selectedStatus = adminFilterStatus.value;
-  const todayWIB = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
+   // Ganti cara mendapatkan tanggal hari ini dengan trik ini:
+  const now = new Date();
+  // Geser waktu mentah ke zona waktu WIB (UTC+7) secara manual
+  const wibTime = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (7 * 3600000));
+  const todayWIB = wibTime.toISOString().split("T")[0];
 
+// Masukkan ke input filter tanggal
+if (adminFilterDate && !adminFilterDate.value) {
+  adminFilterDate.value = todayWIB;
   // Jika input filter tanggal kosong saat pertama kali dibuka, set default-nya ke hari ini (WIB)
   if (adminFilterDate && !adminFilterDate.value) {
   adminFilterDate.value = todayWIB;
