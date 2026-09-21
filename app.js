@@ -366,6 +366,12 @@ async function loadAdminAttendance() {
 
   const selectedDate = adminFilterDate.value;
   const selectedStatus = adminFilterStatus.value;
+  const todayWIB = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
+
+  // Jika input filter tanggal kosong saat pertama kali dibuka, set default-nya ke hari ini (WIB)
+  if (adminFilterDate && !adminFilterDate.value) {
+  adminFilterDate.value = todayWIB;
+  }
 
   let query = supabase
     .from("attendance")
