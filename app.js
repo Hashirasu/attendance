@@ -369,6 +369,16 @@ async function loadAdminAttendance() {
   if (!adminAttendanceList) return;
   adminAttendanceList.innerHTML = "<p style='color: var(--text-sub);'>Memuat rekap...</p>";
 
+  // --- PAKSA AMBIL TANGGAL HARI INI SESUAI FORMAT INDONESIA (WIB) ---
+  const options = { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' };
+  const formatter = new Intl.DateTimeFormat('en-CA', options);
+  const todayWIB = formatter.format(new Date()); // Format pasti YYYY-MM-DD waktu Indonesia
+
+  // Set nilai default filter jika kosong
+  if (adminFilterDate && !adminFilterDate.value) {
+    adminFilterDate.value = todayWIB;
+  }
+
   const selectedDate = adminFilterDate.value;
   const selectedStatus = adminFilterStatus.value;
 
