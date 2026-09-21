@@ -1,29 +1,33 @@
 /* =========================================
-   MUDIVIVERSE - LIVELY ZEN GLASSMORPHISM
-   Full Overhaul: Vibrant Bodhi Gold & Deep Green
+   MUDIVIVERSE - ETHEREAL SKY GLASSMORPHISM
+   Vibe: Adem, Biru Muda Soft, Clean Premium
 ========================================= */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 :root {
-  /* Vibrant & Lively Colors */
-  --primary: #1e5631;
-  --primary-dark: #0a2e13;
-  --gold-glow: #ffc107;
-  --gold-deep: #d4af37;
+  /* Soft Pastel Sky Gradient */
+  --bg-1: #a1c4fd; /* Soft Blue */
+  --bg-2: #c2e9fb; /* Light Cyan */
+  --bg-3: #e2d1c3; /* Faint Warm Peach */
+  --bg-4: #fdfbfb; /* Cloud White */
   
-  /* Glass Text Colors */
-  --text-main: #112a18;
-  --text-sub: #4b6b52;
-  
-  /* Glassmorphism Variables */
+  /* Glass Panel */
   --glass-bg: rgba(255, 255, 255, 0.65);
-  --glass-border: rgba(255, 255, 255, 0.8);
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  --glass-border: rgba(255, 255, 255, 0.85);
+  --glass-shadow: 0 12px 40px rgba(31, 38, 135, 0.1);
+  
+  /* Typography */
+  --text-main: #1e293b; /* Dark Slate */
+  --text-sub: #64748b;  /* Cool Gray */
+  
+  /* Elements */
+  --primary-dark: #0f172a;
+  --accent-soft: rgba(255, 255, 255, 0.7);
   
   --radius-xl: 32px;
-  --radius-lg: 20px;
-  --radius-pill: 50px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
 }
 
 * {
@@ -34,20 +38,19 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-/* =========================================
-   LIVELY ANIMATED BACKGROUND
-========================================= */
 html, body {
   width: 100%;
   min-height: 100vh;
   overflow-x: hidden;
 }
 
+/* =========================================
+   ANIMATED SKY BACKGROUND
+========================================= */
 body {
-  /* Animated Mesh Gradient: Hijau Alam & Emas Bodhi */
-  background: linear-gradient(-45deg, #0d361c, #2e7d32, #d4af37, #f5af19);
-  background-size: 400% 400%;
-  animation: gradientBG 15s ease infinite;
+  background: linear-gradient(-45deg, var(--bg-1), var(--bg-2), var(--bg-3), var(--bg-4));
+  background-size: 300% 300%;
+  animation: skyGradient 16s ease infinite;
   color: var(--text-main);
   display: flex;
   justify-content: center;
@@ -56,65 +59,58 @@ body {
   position: relative;
 }
 
-@keyframes gradientBG {
+@keyframes skyGradient {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
 
-/* ORNAMEN CAHAYA MELAYANG (FLOATING ORBS) */
+/* FLOATING CLOUDS / SOFT ORBS */
 body::before, body::after {
   content: "";
   position: fixed;
   border-radius: 50%;
-  filter: blur(60px);
+  filter: blur(70px);
   z-index: 0;
-  animation: floatOrb 10s ease-in-out infinite alternate;
+  animation: floatCloud 12s ease-in-out infinite alternate;
 }
 
 body::before {
-  width: 300px;
-  height: 300px;
-  background: rgba(255, 215, 0, 0.5); /* Gold Glow */
-  top: -10%;
-  right: -5%;
+  width: 450px;
+  height: 450px;
+  background: rgba(255, 255, 255, 0.7);
+  top: -10%; right: -10%;
 }
 
 body::after {
-  width: 400px;
-  height: 400px;
-  background: rgba(100, 255, 130, 0.3); /* Bright Leaf Green */
-  bottom: -15%;
-  left: -10%;
-  animation-delay: -5s;
-}
-
-@keyframes floatOrb {
-  0% { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(-30px, 30px) scale(1.1); }
+  width: 500px;
+  height: 500px;
+  background: rgba(161, 196, 253, 0.4);
+  bottom: -15%; left: -10%;
+  animation-delay: -6s;
 }
 
 .app {
   width: 100%;
-  max-width: 520px;
+  max-width: 480px;
   position: relative;
-  z-index: 1; /* Di atas animasi background */
+  z-index: 1;
 }
 
 /* =========================================
-   PANEL GLASSMORPHISM UTAMA
+   PANEL (FROSTED GLASS)
 ========================================= */
 .panel {
   background: var(--glass-bg);
-  backdrop-filter: blur(25px) saturate(180%);
-  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  backdrop-filter: blur(25px) saturate(150%);
+  -webkit-backdrop-filter: blur(25px) saturate(150%);
   border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
+  box-shadow: var(--glass-shadow), inset 0 0 20px rgba(255, 255, 255, 0.5);
   border-radius: var(--radius-xl);
-  padding: 36px 28px;
+  padding: 40px 32px;
 }
 
-/* HEADER & LOGO */
+/* BRAND HEADER */
 .brand-header {
   display: flex;
   flex-direction: column;
@@ -125,105 +121,107 @@ body::after {
 }
 
 .dharma-wheel {
-  width: 60px;
-  height: 60px;
-  border-radius: 20px;
-  background: linear-gradient(135deg, #ffffff, #f0f0f0);
-  border: 1px solid #fff;
-  color: var(--gold-deep);
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 1);
+  color: var(--text-main);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
-  box-shadow: 0 10px 25px rgba(212, 175, 55, 0.4);
-  transform: rotate(0deg);
-  transition: transform 0.5s ease;
-}
-
-.dharma-wheel:hover {
-  transform: rotate(45deg);
+  font-size: 28px;
+  box-shadow: 0 8px 20px rgba(161, 196, 253, 0.3);
 }
 
 .brand-title {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 800;
-  color: var(--primary-dark);
-  text-shadow: 0 2px 10px rgba(255,255,255,0.8);
+  color: var(--text-main);
 }
 
 /* =========================================
-   INPUTS & BUTTONS
+   INPUTS & BUTTONS (CLEAN PREMIUM)
 ========================================= */
+.form-group {
+  margin-bottom: 16px;
+}
+
 .form-group label {
   font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
+  font-weight: 700;
   color: var(--text-sub);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   display: block;
+  margin-left: 2px;
 }
 
 .custom-input, .custom-select {
   width: 100%;
-  padding: 16px 20px;
-  background: rgba(255, 255, 255, 0.85);
-  border: 2px solid transparent;
+  padding: 15px 18px;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.8);
   border-radius: var(--radius-lg);
   font-size: 14px;
-  font-weight: 700;
-  color: var(--primary-dark);
-  box-shadow: inset 0 2px 5px rgba(0,0,0,0.03);
+  font-weight: 600;
+  color: var(--text-main);
   transition: all 0.3s ease;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.custom-input::placeholder {
+  color: #94a3b8;
+  font-weight: 500;
 }
 
 .custom-input:focus, .custom-select:focus {
   outline: none;
   background: #ffffff;
-  border-color: var(--gold-glow);
-  box-shadow: 0 0 0 4px rgba(255, 193, 7, 0.2);
+  border-color: #a1c4fd;
+  box-shadow: 0 0 0 4px rgba(161, 196, 253, 0.3);
 }
 
 .main-button {
   width: 100%;
   padding: 16px;
+  margin-top: 8px;
   border: none;
-  border-radius: var(--radius-pill);
-  background: linear-gradient(135deg, var(--gold-deep), var(--gold-glow));
-  color: #5c3a00;
-  font-weight: 800;
+  border-radius: var(--radius-lg);
+  background: #1e293b; /* Premium Dark Slate */
+  color: #ffffff;
+  font-weight: 700;
   font-size: 15px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
   cursor: pointer;
-  box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4);
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 8px 16px rgba(30, 41, 59, 0.2);
+  transition: all 0.3s ease;
 }
 
 .main-button:hover {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 12px 25px rgba(212, 175, 55, 0.6);
+  background: #0f172a;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 20px rgba(30, 41, 59, 0.3);
 }
 
 .secondary-button {
   padding: 8px 16px;
   border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(255, 255, 255, 1);
-  color: var(--primary-dark);
-  font-weight: 800;
+  color: var(--text-main);
+  font-weight: 700;
   font-size: 12px;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   transition: all 0.2s ease;
 }
 
 .secondary-button:hover {
   background: #ffffff;
-  transform: scale(1.05);
+  transform: scale(1.02);
 }
 
 /* =========================================
-   DASHBOARD CARDS (GRID & LIST)
+   DASHBOARD CARDS
 ========================================= */
 .today-grid {
   display: grid;
@@ -233,99 +231,99 @@ body::after {
 }
 
 .card-box {
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.55);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.9);
-  border-radius: 24px;
+  border-radius: 20px;
   padding: 20px;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 24px rgba(110, 136, 161, 0.08);
   transition: transform 0.3s ease, background 0.3s ease;
 }
 
 .card-box:hover {
-  transform: translateY(-4px);
-  background: rgba(255, 255, 255, 0.7);
+  transform: translateY(-3px);
+  background: rgba(255, 255, 255, 0.75);
 }
 
 .card-badge {
   display: inline-block;
   padding: 6px 12px;
   border-radius: var(--radius-pill);
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-  color: #fff;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--text-main);
   font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.03);
 }
 
 /* =========================================
    LIST ITEMS (HISTORY & ADMIN KELOLA)
 ========================================= */
 .history-item, .emp-card-item {
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid #ffffff;
-  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
   padding: 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+  box-shadow: 0 4px 12px rgba(110, 136, 161, 0.05);
   transition: all 0.3s ease;
   margin-bottom: 10px;
 }
 
 .history-item:hover, .emp-card-item:hover {
-  background: #ffffff;
-  transform: scale(1.02);
-  box-shadow: 0 8px 25px rgba(30, 86, 49, 0.15);
+  background: rgba(255, 255, 255, 0.9);
+  transform: scale(1.01);
+  box-shadow: 0 6px 16px rgba(110, 136, 161, 0.1);
 }
 
-/* PERBAIKAN FONT KODE MEMBER ADMIN (AGAR TIDAK KEBESARAN) */
+/* Teks List & Kode Member */
 .emp-name-title {
   font-size: 15px;
-  font-weight: 800;
-  color: var(--primary-dark);
+  font-weight: 700;
+  color: var(--text-main);
   margin-bottom: 4px;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
 .emp-code-sub {
   font-size: 12px !important;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-sub);
 }
 
 .emp-code-sub strong {
-  font-size: 12px !important;
-  color: var(--primary);
-  background: rgba(30, 86, 49, 0.1);
+  font-size: 11px !important;
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.8);
   padding: 2px 6px;
   border-radius: 6px;
+  border: 1px solid rgba(0,0,0,0.05);
 }
 
 /* BADGES STYLING */
 .badge-present, .badge-active {
-  background: #e6f4ea;
-  color: #137333;
-  font-weight: 800;
+  background: rgba(220, 252, 231, 0.8);
+  color: #166534;
+  font-weight: 700;
   font-size: 11px;
-  padding: 6px 14px;
+  padding: 6px 12px;
   border-radius: var(--radius-pill);
-  box-shadow: inset 0 0 0 1px #137333;
 }
 
 .badge-late, .badge-inactive {
-  background: #fce8e6;
-  color: #c5221f;
-  font-weight: 800;
+  background: rgba(254, 226, 226, 0.8);
+  color: #991b1b;
+  font-weight: 700;
   font-size: 11px;
-  padding: 6px 14px;
+  padding: 6px 12px;
   border-radius: var(--radius-pill);
-  box-shadow: inset 0 0 0 1px #c5221f;
 }
 
 .role-badge {
@@ -335,19 +333,18 @@ body::after {
   border-radius: 8px;
 }
 
-.role-admin { background: #fff0c2; color: #b07d00; }
-.role-user { background: #e2f0e4; color: #1e5631; }
+.role-admin { background: #fef3c7; color: #92400e; }
+.role-user { background: #e0f2fe; color: #075985; }
 
 /* =========================================
    ADMIN TABS
 ========================================= */
 .admin-tabs {
   display: flex;
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.4);
   padding: 6px;
   border-radius: var(--radius-pill);
   margin-bottom: 24px;
-  box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
 }
 
 .tab-btn {
@@ -356,7 +353,7 @@ body::after {
   border: none;
   border-radius: var(--radius-pill);
   background: transparent;
-  font-weight: 800;
+  font-weight: 700;
   font-size: 13px;
   color: var(--text-sub);
   cursor: pointer;
@@ -365,8 +362,8 @@ body::after {
 
 .tab-btn.active {
   background: #ffffff;
-  color: var(--primary-dark);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  color: var(--text-main);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 /* =========================================
@@ -375,8 +372,8 @@ body::after {
 .modal {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(10, 46, 19, 0.4);
-  backdrop-filter: blur(12px);
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -402,7 +399,7 @@ body::after {
     padding: 12px;
   }
   .panel {
-    padding: 24px 16px;
+    padding: 28px 20px;
     border-radius: 28px;
   }
   .today-grid {
