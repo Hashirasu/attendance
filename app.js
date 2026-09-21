@@ -1,8 +1,8 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-// CONFIG SUPABASE (SESUAIKAN APABILA ADA URL/KEY KHUSUS KAMU)
-const SUPABASE_URL = "https://njdrnrnnlsrxdyugmsww.supabase.co"; // Ganti dengan URL Supabase kamu
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qZHJucm5ubHNyeGR5dWdtc3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5MDExNDEsImV4cCI6MjEwNTQ3NzE0MX0.F65pU2A3XjyEaisye2GfzLPF9DCaQF1fklMxgSTRhs8";                   // Ganti dengan Anon Key kamu
+// CONFIG SUPABASE (Ganti dengan URL & Anon Key asli proyek Supabase kamu)
+const SUPABASE_URL = "https://your-supabase-url.supabase.co"; 
+const SUPABASE_ANON_KEY = "your-anon-key";                   
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -189,7 +189,8 @@ async function loadUserProfile() {
     userCodeEl.textContent = `Kode: ${empData.employee_code}`;
     currentUserRole = empData.role;
 
-    if (currentUserRole === "admin"|| currentUserRole === "adm1n") {
+    // CEK AKSES ADMIN UNTUK 'admin' DAN 'adm1n'
+    if (currentUserRole === "admin" || currentUserRole === "adm1n") {
       switchToAdminBtn.style.display = "inline-block";
     } else {
       switchToAdminBtn.style.display = "none";
@@ -426,7 +427,7 @@ async function loadAdminAttendance() {
   });
 }
 
-// RENDER DAFTAR MEMBER (CLEAN / TANPA AVATAR BULAT NAMA DEPAN)
+// RENDER KELOLA MEMBER
 async function loadEmployeeManagement() {
   if (!adminEmployeeList) return;
   adminEmployeeList.innerHTML = "<p style='color: var(--text-sub);'>Memuat daftar member...</p>";
@@ -449,8 +450,8 @@ async function loadEmployeeManagement() {
       ? `<span class="badge-active">Aktif</span>` 
       : `<span class="badge-inactive">Nonaktif</span>`;
 
-    const roleBadge = emp.role === "admin"
-      ? `<span class="role-badge role-admin">ADMIN</span>`
+    const roleBadge = (emp.role === "admin" || emp.role === "adm1n")
+      ? `<span class="role-badge role-admin">${emp.role.toUpperCase()}</span>`
       : `<span class="role-badge role-user">MEMBER</span>`;
 
     const card = document.createElement("div");
@@ -483,7 +484,6 @@ async function loadEmployeeManagement() {
   });
 }
 
-// MODAL EDIT ACTION
 if (cancelEditEmp) {
   cancelEditEmp.addEventListener("click", () => {
     editEmpModal.style.display = "none";
@@ -503,7 +503,7 @@ if (saveEditEmp) {
       return;
     }
 
-    // PROTEKSI: Cek apakah user yang sedang login adalah Super Admin
+    // PROTEKSI: Cek apakah user yang login adalah 'adm1n'
     const { data: { user } } = await supabase.auth.getUser();
     const { data: currentUserData } = await supabase
       .from("employees")
@@ -511,7 +511,6 @@ if (saveEditEmp) {
       .eq("id", user.id)
       .single();
 
-    // Jika bukan super_admin dan mencoba ubah role orang lain
     if (currentUserData.role !== "adm1n") {
       const { data: targetUserData } = await supabase
         .from("employees")
@@ -520,7 +519,7 @@ if (saveEditEmp) {
         .single();
 
       if (targetUserData.role !== role) {
-        editModalMsg.textContent = "⛔ Hanya ADM1N yang bisa mengubah Role / Pangkat!";
+        editModalMsg.textContent = "⛔ Hanya Adm1n yang bisa mengubah Role / Pangkat!";
         return;
       }
     }
@@ -544,8 +543,7 @@ if (saveEditEmp) {
   });
 }
 
-
-// EXPORT EXCEL (.XLSX)
+// EXPORT EXCEL
 if (exportCsvBtn) {
   exportCsvBtn.addEventListener("click", async () => {
     const { data, error } = await supabase
