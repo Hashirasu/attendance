@@ -329,6 +329,13 @@ if (switchToAdminBtn) {
   switchToAdminBtn.addEventListener("click", async () => {
     userSection.style.display = "none";
     adminSection.style.display = "block";
+
+    // PAKSA SET TANGGAL HARI INI SESUAI WIB
+    const todayWIB = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
+    if (adminFilterDate) {
+      adminFilterDate.value = todayWIB;
+    }
+
     await loadAdminAttendance();
   });
 }
