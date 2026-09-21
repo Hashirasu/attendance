@@ -209,7 +209,7 @@ async function loadTodayStatus() {
   todayStatusEl.innerHTML = "<p style='color: var(--text-sub);'>Memuat status hari ini...</p>";
 
   const { data: { user } } = await supabase.auth.getUser();
-  const todayStr = new Date().toISOString().split("T")[0];
+  const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
 
   const { data, error } = await supabase
     .from("attendance")

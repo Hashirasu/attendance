@@ -1,37 +1,31 @@
 /* =========================================
    MUDIVIVERSE - iOS / APPLE GLASS AESTHETIC
+   (Optimized for Laptop & Mobile)
 ========================================= */
 
 :root {
-  /* Soft Sky Background */
   --bg-1: #e0eafc;
   --bg-2: #cfdef3;
   --bg-3: #eef2f3;
   
-  /* Glass Panel */
   --glass-bg: rgba(255, 255, 255, 0.65);
   --glass-border: rgba(255, 255, 255, 0.8);
-  --glass-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  --glass-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
   
-  /* Typography & Colors (iOS Vibe) */
-  --text-main: #1c1c1e; /* Apple Dark */
-  --text-sub: #8e8e93;  /* Apple Gray */
+  --text-main: #1c1c1e;
+  --text-sub: #8e8e93;
   --ios-blue: #007aff;
-  --ios-blue-hover: #005bb5;
   --ios-green: #34c759;
   --ios-red: #ff3b30;
   
-  /* Apple Standard Radius */
   --radius-xl: 24px;
   --radius-lg: 14px;
-  --radius-sm: 10px;
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  /* FONT APPLE (SF Pro) */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   -webkit-tap-highlight-color: transparent;
 }
@@ -50,7 +44,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px 14px;
+  padding: 30px 16px; /* Padding ditambah untuk laptop */
   position: relative;
 }
 
@@ -62,14 +56,11 @@ body {
 
 .app {
   width: 100%;
-  max-width: 440px;
+  max-width: 540px; /* DIPERLEBAR AGAR LEBIH BAGUS DI LAPTOP */
   position: relative;
   z-index: 1;
 }
 
-/* =========================================
-   PANEL GLASS (iOS Frosted Glass)
-========================================= */
 .panel {
   background: var(--glass-bg);
   backdrop-filter: blur(20px) saturate(180%);
@@ -77,7 +68,7 @@ body {
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
   border-radius: var(--radius-xl);
-  padding: 32px 24px;
+  padding: 36px 30px; /* Padding disesuaikan */
 }
 
 /* HEADER LOGO */
@@ -90,10 +81,10 @@ body {
 }
 
 .logo-box {
-  width: 54px;
-  height: 54px;
+  width: 58px;
+  height: 58px;
   background: #ffffff;
-  border-radius: 14px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -102,20 +93,18 @@ body {
 }
 
 .brand-title {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 700;
   letter-spacing: -0.5px;
 }
 
-/* =========================================
-   INPUTS & BUTTONS (APPLE STYLE)
-========================================= */
+/* FORM INPUTS & BUTTONS */
 .form-group {
   margin-bottom: 16px;
 }
 
 .form-group label {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-sub);
   margin-bottom: 6px;
@@ -156,8 +145,7 @@ body {
 }
 
 .main-button:active {
-  transform: scale(0.96);
-  opacity: 0.9;
+  transform: scale(0.97);
 }
 
 .secondary-button {
@@ -178,7 +166,6 @@ body {
   font-weight: 600;
 }
 
-/* LINK BUTTON (APPLE BLUE) */
 .auth-toggle-box {
   margin-top: 24px;
   text-align: center;
@@ -200,22 +187,20 @@ body {
   text-decoration: underline;
 }
 
-/* =========================================
-   DASHBOARD CARDS
-========================================= */
+/* CARDS & GRIDS */
 .today-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 16px;
   margin-bottom: 24px;
 }
 
 .card-box {
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.9);
   border-radius: var(--radius-xl);
-  padding: 18px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+  padding: 20px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.04);
 }
 
 .card-badge {
@@ -230,28 +215,26 @@ body {
   text-transform: uppercase;
 }
 
-/* =========================================
-   LIST ITEMS
-========================================= */
+/* LIST ITEMS */
 .history-item, .emp-card-item {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.85);
   border-radius: var(--radius-lg);
-  padding: 14px 16px;
+  padding: 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 8px;
-  border: 1px solid rgba(0,0,0,0.03);
+  border: 1px solid rgba(0,0,0,0.04);
 }
 
 .emp-name-title {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--text-main);
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
 /* BADGES STYLING */
@@ -273,19 +256,28 @@ body {
   border-radius: 8px;
 }
 
+/* BADGE ADMIN KUNING SUPERIOR */
 .role-badge {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 3px 6px;
-  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 8px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
 }
 
-.role-admin { background: #f2f2f7; color: var(--text-main); }
-.role-user { background: #e5f0ff; color: var(--ios-blue); }
+.role-admin { 
+  background: #fff8d6; 
+  color: #b8860b; 
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
+}
+.role-user { 
+  background: #e5f0ff; 
+  color: var(--ios-blue); 
+}
 
-/* =========================================
-   TABS & MODAL
-========================================= */
+/* TABS & MODAL */
 .admin-tabs {
   display: flex;
   background: rgba(118, 118, 128, 0.12);
@@ -296,12 +288,12 @@ body {
 
 .tab-btn {
   flex: 1;
-  padding: 8px;
+  padding: 10px;
   border: none;
   border-radius: 10px;
   background: transparent;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-sub);
   cursor: pointer;
 }
@@ -329,6 +321,28 @@ body {
   border-radius: var(--radius-xl);
   padding: 24px;
   width: 100%;
-  max-width: 360px;
+  max-width: 400px;
   box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+/* RESPONSIVE MOBILE FIX */
+@media (max-width: 600px) {
+  body {
+    padding: 16px 12px;
+  }
+  .panel {
+    padding: 28px 20px;
+  }
+  .today-grid {
+    grid-template-columns: 1fr;
+  }
+  .history-item, .emp-card-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .history-item > div:last-child, 
+  .emp-card-item > button {
+    align-self: flex-end;
+  }
 }
