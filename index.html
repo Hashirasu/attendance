@@ -17,37 +17,40 @@
   <div class="app">
 
     <!-- 1. LOGIN PANEL -->
-    <section id="login-section" class="panel">
+    <section id="login-section" class="panel" style="max-width: 440px; margin: 0 auto; text-align: center;">
       <div class="brand-header">
-        <div class="logo-box">
-          <!-- Pastikan gambar logomu diberi nama 'logo.png' dan ditaruh di folder yang sama -->
-          <img src="logo.png" alt="Mudiviva Logo" class="brand-img">
-        </div>
-        <span class="brand-title">MUDIVIVERSE</span>
+        <div class="dharma-wheel">☸</div>
+        <span class="brand-title">Mudiviverse</span>
       </div>
+
+      <h2 style="font-weight: 800; margin-bottom: 6px; color: var(--text-main);">Selamat Datang</h2>
+      <p class="subtitle">Silakan masuk untuk pencatatan kehadiran harian.</p>
 
       <div class="form-group" id="name-group" style="display: none;">
-        <input type="text" id="register-name" placeholder="Nama Lengkap" class="custom-input">
+        <label>Nama Lengkap</label>
+        <input type="text" id="register-name" placeholder="Enter your full name" class="custom-input">
       </div>
 
       <div class="form-group">
-        <input type="email" id="email" placeholder="Email (contoh@email.com)" class="custom-input">
+        <label>Email</label>
+        <input type="email" id="email" placeholder="nama@mudiviverse.org" class="custom-input">
       </div>
 
       <div class="form-group">
-        <input type="password" id="password" placeholder="Password (••••••••)" class="custom-input">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="Enter your password" class="custom-input">
       </div>
 
       <button id="auth-main-button" class="main-button">
-        <span id="auth-button-text">Masuk</span>
+        <span id="auth-button-text">LOGIN</span>
       </button>
 
-      <div class="auth-toggle-box">
+      <div style="margin-top: 22px; font-size: 13px; color: var(--text-sub);">
         <span id="toggle-auth-text">Belum punya akun?</span>
         <button id="toggle-auth-btn" class="link-button">Daftar di sini</button>
       </div>
 
-      <p id="message" style="margin-top: 14px; font-size: 13px; color: var(--ios-red); text-align: center; font-weight: 600;"></p>
+      <p id="message" style="margin-top: 14px; font-size: 12px; color: var(--primary); font-weight: 700;"></p>
     </section>
 
     <!-- 2. USER DASHBOARD -->
