@@ -159,36 +159,29 @@ authMainButton.addEventListener("click", async () => {
       return;
     }
 
-    // Cek apakah halaman dibuka dari scan QR
+    // Cek apakah halaman ini dibuka dari scan QR Kios
     const hasQrParam = sessionStorage.getItem("pending_secret");
 
     if (hasQrParam) {
-      messageEl.textContent = "Pendaftaran berhasil, mencatat kehadiran...";
+      // Jika dari QR, arahkan user untuk login secara instan karena data QR sudah aman di session
+      messageEl.textContent = "Pendaftaran berhasil! Silakan masukkan ulang password untuk absen.";
       
-      const { error: loginError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+      // Pindahkan otomatis ke mode login
+      isRegisterMode = false;
+      nameGroup.style.display = "none";
+      authButtonText.textContent = "Masuk";
+      toggleAuthText.textContent = "Belum punya akun?";
+      toggleAuthBtn.textContent = "Daftar di sini";
+      
+      passwordInput.value = "";
+      passwordInput.focus();
 
-      if (loginError) {
-        messageEl.textContent = "Gagal otomatis masuk: " + loginError.message;
-        return;
-      }
-
-      // --- UBAH DARI SINI: Alih-alih langsung panggil rpc, kita biarkan halaman reload ---
-      messageEl.textContent = "Berhasil! Memuat ulang halaman...";
-      
-      // Berikan jeda singkat 1 detik lalu reload halaman browser secara total
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-      
     } else {
       messageEl.textContent = "Pendaftaran berhasil! Silakan login.";
       toggleAuthBtn.click();
-    
     }
   } else {
+    // --- INI BAGIAN LOGIN MANUAL YANG DIBAWAH ---
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
