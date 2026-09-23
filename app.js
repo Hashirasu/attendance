@@ -160,8 +160,6 @@ authMainButton.addEventListener("click", async () => {
     }
 
     // Cek apakah halaman dibuka dari scan QR
-    const hasQrParam = sessionStorage.getItem("pending_secret");
-
     if (hasQrParam) {
       messageEl.textContent = "Pendaftaran berhasil, masuk otomatis...";
       
@@ -177,6 +175,11 @@ authMainButton.addEventListener("click", async () => {
 
       messageEl.textContent = "";
       await loadUserProfile();
+      
+      // ===== TAMBAHKAN JEDA 1 DETIK DI SINI =====
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      // ===========================================
+
       await checkUrlAutoAttendance();
       
     } else {
