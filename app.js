@@ -598,92 +598,40 @@ if (exportCsvBtn) {
 
 
 // ==========================================
-// HANDLE POS SEMENTARA (UNVERIFIED EMAIL)
-// ==========================================
-
-// Tombol kembali ke halaman login biasa
-const btnBackLogin = document.getElementById('btn-back-login');
-if (btnBackLogin) {
-  btnBackLogin.addEventListener('click', () => {
-    // Sembunyikan kotak unverified, tampilkan lagi form login
-    const unverifiedSection = document.getElementById('unverified-section');
-    const loginFormContainer = document.getElementById('login-form-container');
-    
-    if (unverifiedSection) unverifiedSection.style.display = 'none';
-    if (loginFormContainer) loginFormContainer.style.display = 'block';
-  });
-}
-
-// ==========================================
 // HANDLE LOGIN & CEK VERIFIKASI EMAIL
 // ==========================================
-const loginForm = document.getElementById('login-form');
-if (loginForm) {
-  loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const emailInput = document.getElementById('login-email').value;
-    const passwordInput = document.getElementById('login-password').value;
+const loginForm = document.getElementById('login-form'); // Sesuaikan dengan ID form login aslimu (atau auth-main-button)
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: emailInput,
-      password: passwordInput
-    });
+// Pastikan mendeklarasikan variabel dengan let/var jika ingin dipakai ulang, 
+// atau langsung pasang event listener tanpa mendeklarasikan ulang variabelnya:
 
-    if (error) {
-      alert("Login Gagal: " + error.message);
-      return;
-    }
+document.getElementById('btn-back-login')?.addEventListener('click', () => {
+  // Sembunyikan bagian unverified, tampilkan kembali form login utama
+  const unverifiedSection = document.getElementById('unverified-section');
+  const emailInputGroup = document.getElementById('email')?.closest('.form-group'); // atau container input login
+  
+  if (unverifiedSection) unverifiedSection.style.display = 'none';
+  
+  // Munculkan kembali elemen input login yang disembunyikan
+  document.getElementById('email').style.display = 'block';
+  document.getElementById('password').style.display = 'block';
+  document.getElementById('auth-main-button').style.display = 'block';
+});
 
-    const user = data.user;
-    
-    // CEK APAKAH EMAIL SUDAH DIVERIFIKASI
-    if (user && !user.email_confirmed_at) {
-      // Logout paksa agar sesi tidak nyangkut
-      await supabase.auth.signOut();
-
-      // Sembunyikan form login biasa, tampilkan pos sementara
-      document.getElementById('login-form-container').style.display = 'none';
-      document.getElementById('unverified-section').style.display = 'block';
-      
-      // Simpan email sementara untuk tombol kirim ulang
-      window.pendingVerificationEmail = emailInput;
-      return;
-    }
-
-    // Jika sudah terverifikasi, arahkan ke dashboard (sesuaikan fungsi navigasimu)
-    alert("Login Berhasil!");
-    // location.reload(); atau panggil fungsi load dashboard di sini
+document.getElementById('btn-resend')?.addEventListener('click', async () => {
+  if (!window.pendingVerificationEmail) {
+    alert("Email tidak ditemukan. Silakan coba login ulang.");
+    return;
+  }
+  
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email: window.pendingVerificationEmail,
   });
-}
 
-// Tombol Kembali ke Halaman Login dari Pos Sementara
-const btnBackLogin = document.getElementById('btn-back-login');
-if (btnBackLogin) {
-  btnBackLogin.addEventListener('click', () => {
-    document.getElementById('unverified-section').style.display = 'none';
-    document.getElementById('login-form-container').style.display = 'block';
-  });
-}
-
-// Tombol Kirim Ulang Email Verifikasi
-const btnResend = document.getElementById('btn-resend');
-if (btnResend) {
-  btnResend.addEventListener('click', async () => {
-    if (!window.pendingVerificationEmail) {
-      alert("Email tidak ditemukan. Silakan coba login ulang.");
-      return;
-    }
-    
-    const { error } = await supabase.auth.resend({
-      type: 'signup',
-      email: window.pendingVerificationEmail,
-    });
-
-    if (error) {
-      alert("Gagal mengirim ulang: " + error.message);
-    } else {
-      alert("Email verifikasi baru telah dikirim! Silakan cek inbox/spam kamu.");
-    }
-  });
-}
+  if (error) {
+    alert("Gagal mengirim ulang: " + error.message);
+  } else {
+    alert("Email verifikasi baru telah dikirim! Silakan cek inbox/spam kamu.");
+  }
+});
