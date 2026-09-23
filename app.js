@@ -160,8 +160,10 @@ authMainButton.addEventListener("click", async () => {
     }
 
     // Cek apakah halaman dibuka dari scan QR
+    const hasQrParam = sessionStorage.getItem("pending_secret");
+
     if (hasQrParam) {
-      messageEl.textContent = "Pendaftaran berhasil, masuk otomatis...";
+      messageEl.textContent = "Pendaftaran berhasil, mencatat kehadiran...";
       
       const { error: loginError } = await supabase.auth.signInWithPassword({
         email,
@@ -173,18 +175,18 @@ authMainButton.addEventListener("click", async () => {
         return;
       }
 
-      messageEl.textContent = "";
-      await loadUserProfile();
+      // --- UBAH DARI SINI: Alih-alih langsung panggil rpc, kita biarkan halaman reload ---
+      messageEl.textContent = "Berhasil! Memuat ulang halaman...";
       
-      // ===== TAMBAHKAN JEDA 1 DETIK DI SINI =====
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      // ===========================================
-
-      await checkUrlAutoAttendance();
+      // Berikan jeda singkat 1 detik lalu reload halaman browser secara total
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
       
     } else {
       messageEl.textContent = "Pendaftaran berhasil! Silakan login.";
       toggleAuthBtn.click();
+    
     }
   } else {
     const { data, error } = await supabase.auth.signInWithPassword({
