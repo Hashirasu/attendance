@@ -82,9 +82,23 @@ async function checkUrlAutoAttendance() {
     const currentBlock = Math.floor(currentUnix / 15);
 
     if (savedSecret === KIOSK_SECRET && Math.abs(currentBlock - parseInt(savedBlock)) <= 4) {
+      
+      // Cek apakah user sudah login atau belum
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        // Jika belum login, arahkan otomatis ke mode Register supaya buat akun
+        if (!isRegisterMode) {
+          toggleAuthBtn.click();
+        }
+        messageEl.textContent = "Silakan buat akun terlebih dahulu untuk menyelesaikan absensi Anda.";
+        return; 
+      }
+
+      // Jika sudah login, eksekusi absen
       const { data, error } = await supabase.rpc("check_in");
       
-      console.log("DEBUG CHECK-IN RESULT:", { data, error }); // Catat ke console untuk monitoring
+      console.log("DEBUG CHECK-IN RESULT:", { data, error });
 
       if (!error && data && data.success) {
         alert("Absensi Berhasil via Scan Kamera!");
@@ -94,12 +108,15 @@ async function checkUrlAutoAttendance() {
         const errorMsg = error ? error.message : (data ? data.message : "Terjadi kesalahan sistem.");
         alert("Gagal Absen: " + errorMsg);
       }
-    } else {
-      alert("Sesi QR Code sudah kedaluwarsa (terlalu lama sejak scan). Silakan scan ulang di kios.");
-    }
+      
+      sessionStorage.removeItem("pending_secret");
+      sessionStorage.removeItem("pending_block");
 
-    sessionStorage.removeItem("pending_secret");
-    sessionStorage.removeItem("pending_block");
+    } else {
+      alert("Sesi QR Code sudah kedaluwarsa. Silakan scan ulang di kios.");
+      sessionStorage.removeItem("pending_secret");
+      sessionStorage.removeItem("pending_block");
+    }
   }
 }
 
@@ -165,16 +182,24 @@ authMainButton.addEventListener("click", async () => {
     const hasQrParam = sessionStorage.getItem("pending_secret");
 
     if (hasQrParam) {
-      messageEl.textContent = "Pendaftaran berhasil! Silakan masukkan ulang password untuk absen.";
+      messageEl.textContent = "Pendaftaran berhasil, masuk otomatis...";
       
-      isRegisterMode = false;
-      nameGroup.style.display = "none";
-      authButtonText.textContent = "Masuk";
-      toggleAuthText.textContent = "Belum punya akun?";
-      toggleAuthBtn.textContent = "Daftar di sini";
+      const { error: loginError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (loginError) {
+        messageEl.textContent = "Gagal otomatis masuk: " + loginError.message;
+        return;
+      }
+
+      messageEl.textContent = "";
+      await loadUserProfile();
       
-      passwordInput.value = "";
-      passwordInput.focus();
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      await checkUrlAutoAttendance();
+      
     } else {
       messageEl.textContent = "Pendaftaran berhasil! Silakan login.";
       toggleAuthBtn.click();
