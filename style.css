@@ -346,3 +346,99 @@ body {
     align-self: flex-end;
   }
 }
+
+
+/* ==========================================================
+   THEME UPGRADE: MODERN BUDDHIST GLASSMORPHISM & GOLD ACCENTS
+   ========================================================== */
+
+:root {
+  --buddhist-gold: #d4af37;
+  --buddhist-gold-glow: rgba(212, 175, 55, 0.25);
+  --buddhist-maroon: #800020;
+  --ios-glass-bg: rgba(255, 255, 255, 0.75);
+  --ios-glass-border: rgba(212, 175, 55, 0.3);
+}
+
+/* Background Utama dengan nuansa lembut/subtle pattern teratai */
+body {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Efek Cahaya / Ornamen Mandala Abstrak di Background */
+body::before {
+  content: "";
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.05) 0%, transparent 60%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Mempercantik Card dengan Border Emas & Efek Glassmorphism */
+.login-card, .user-card, .admin-card, .history-item {
+  background: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--ios-glass-border) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15), 0 0 15px var(--buddhist-gold-glow) !important;
+  border-radius: 20px !important;
+  transition: all 0.3s ease;
+}
+
+/* Efek Hover Cantik pada Item Riwayat & Kartu */
+.history-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 25px rgba(212, 175, 55, 0.2) !important;
+  border-color: var(--buddhist-gold) !important;
+}
+
+/* Tombol Utama dengan Gradasi Emas / Marun yang Elegan */
+.auth-button, #auth-main-button {
+  background: linear-gradient(135deg, #d4af37 0%, #aa771c 100%) !important;
+  color: #fff !important;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+  border: none !important;
+  transition: all 0.2s ease;
+}
+
+.auth-button:active, #auth-main-button:active {
+  transform: scale(0.98);
+}
+
+/* Badge Status dengan Nuansa Saffron/Gold */
+.badge-present {
+  background: rgba(40, 167, 69, 0.15);
+  color: #28a745;
+  border: 1px solid rgba(40, 167, 69, 0.3);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.badge-late {
+  background: rgba(212, 175, 55, 0.15);
+  color: #b8860b;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+/* Judul & Header dengan Aksen Tipografi Lembut */
+h1, h2, h3, .user-name-title {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: -0.3px;
+}
+
+/* Hiasan Simbol / Lotus Kecil di Judul (Opsional via CSS content) */
+.login-card h2::before {
+  content: "🪷 ";
+}
