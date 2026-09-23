@@ -1,8 +1,8 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-// CONFIG SUPABASE (Pastikan URL & Anon Key ini tetap sesuai dengan punyamu)
-const SUPABASE_URL = "https://njdrnrnnlsrxdyugmsww.supabase.co"; // Ganti dengan URL Supabase kamu 
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qZHJucm5ubHNyeGR5dWdtc3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5MDExNDEsImV4cCI6MjEwNTQ3NzE0MX0.F65pU2A3XjyEaisye2GfzLPF9DCaQF1fklMxgSTRhs8";             // Ganti dengan Anon Key kamu
+// CONFIG SUPABASE
+const SUPABASE_URL = "https://njdrnrnnlsrxdyugmsww.supabase.co"; 
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qZHJucm5ubHNyeGR5dWdtc3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5MDExNDEsImV4cCI6MjEwNTQ3NzE0MX0.F65pU2A3XjyEaisye2GfzLPF9DCaQF1fklMxgSTRhs8";
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const KIOSK_SECRET = "VIHARA_ZEN_SECRET_2026";
@@ -21,6 +21,8 @@ const authButtonText = document.getElementById("auth-button-text");
 const toggleAuthBtn = document.getElementById("toggle-auth-btn");
 const toggleAuthText = document.getElementById("toggle-auth-text");
 const messageEl = document.getElementById("message");
+
+const unverifiedSection = document.getElementById("unverified-section");
 
 const userNameDisplay = document.getElementById("user-name-display");
 const userCodeEl = document.getElementById("user-code");
@@ -141,35 +143,45 @@ authMainButton.addEventListener("click", async () => {
     if (error) {
       messageEl.textContent = "Gagal mendaftar: " + error.message;
     } else {
-      messageEl.textContent = "Pendaftaran berhasil! Silakan login.";
+      messageEl.textContent = "Pendaftaran berhasil! Silakan periksa email untuk verifikasi.";
       toggleAuthBtn.click();
     }
   } else {
-    // Di dalam fungsi penanganan login:
+    // Proses Login
     const { data, error } = await supabase.auth.signInWithPassword({
-      email: emailInput,
-      password: passwordInput
+      email,
+      password
     });
 
     if (error) {
-      showError(error.message); // Fungsi error kamu sebelumnya
+      messageEl.textContent = "Login Gagal: " + error.message;
       return;
     }
 
     const user = data.user;
+    
+    // Cek apakah email sudah dikonfirmasi/verifikasi
     if (user && !user.email_confirmed_at) {
-      // 1. Logout paksa dari sesi aktif agar tidak nyangkut
-      await supabase.auth.signOut();
+      await supabase.auth.signOut(); // Logout paksa supaya sesi tidak nyangkut
 
-      // 2. Sembunyikan form login biasa, tampilkan pos sementara unverified-section
-      document.getElementById('login-form-container').style.display = 'none';
-      document.getElementById('unverified-section').style.display = 'block';
-  
-      // Simpan email sementara kalau mau dipakai untuk tombol "Kirim Ulang"
-      window.pendingVerificationEmail = emailInput;
+      // Sembunyikan elemen input login dan tombol utama, tampilkan unverified box
+      emailInput.style.display = "none";
+      passwordInput.style.display = "none";
+      authMainButton.style.display = "none";
+      document.querySelector(".auth-toggle-box").style.display = "none";
+      
+      if (unverifiedSection) {
+        unverifiedSection.style.display = "block";
+      }
+      
+      window.pendingVerificationEmail = email;
+      messageEl.textContent = "";
       return;
     }
 
+    messageEl.textContent = "";
+    await loadUserProfile();
+    await checkUrlAutoAttendance();
   }
 });
 
@@ -185,6 +197,14 @@ function showLoginSection() {
   loginSection.style.display = "block";
   userSection.style.display = "none";
   adminSection.style.display = "none";
+  
+  // Reset tampilan login form jika dari unverified
+  if (unverifiedSection) unverifiedSection.style.display = "none";
+  emailInput.style.display = "block";
+  passwordInput.style.display = "block";
+  authMainButton.style.display = "block";
+  document.querySelector(".auth-toggle-box").style.display = "block";
+  messageEl.textContent = "";
 }
 
 // ==============================
@@ -225,6 +245,8 @@ async function loadTodayStatus() {
   todayStatusEl.innerHTML = "<p style='color: var(--text-sub);'>Memuat status...</p>";
 
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  
   const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
 
   const { data, error } = await supabase
@@ -252,34 +274,12 @@ async function loadTodayStatus() {
       <div style="font-size: 12px; color: var(--text-sub); margin-bottom: 8px;">Pukul ${time} WIB</div>
       <div>${badge}</div>
     `;
-    checkInButton.disabled = true;
-    checkInButton.textContent = "Sudah Absen";
   } else {
     todayStatusEl.innerHTML = `
       <div style="font-size: 15px; font-weight: 700; color: var(--ios-red); margin-bottom: 4px;">Belum Absen</div>
-      <div style="font-size: 12px; color: var(--text-sub);">Silakan tekan tombol di samping.</div>
+      <div style="font-size: 12px; color: var(--text-sub);">Silakan scan QR di lokasi.</div>
     `;
-    checkInButton.disabled = false;
-    checkInButton.textContent = "Hadir";
   }
-}
-
-if (checkInButton) {
-  checkInButton.addEventListener("click", async () => {
-    checkInButton.disabled = true;
-    attendanceMessage.textContent = "Memproses...";
-
-    const { data, error } = await supabase.rpc("check_in");
-
-    if (error) {
-      attendanceMessage.textContent = "Gagal: " + error.message;
-      checkInButton.disabled = false;
-    } else if (data) {
-      attendanceMessage.textContent = data.message;
-      await loadTodayStatus();
-      await loadAttendanceHistory();
-    }
-  });
 }
 
 async function loadAttendanceHistory() {
@@ -345,7 +345,6 @@ if (switchToAdminBtn) {
     userSection.style.display = "none";
     adminSection.style.display = "block";
 
-    // Set otomatis tanggal hari ini berdasarkan WIB
     const todayWIB = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
     if (adminFilterDate) {
       adminFilterDate.value = todayWIB;
@@ -388,7 +387,6 @@ async function loadAdminAttendance() {
 
   const todayWIB = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
 
-  // Set nilai default filter jika kosong
   if (adminFilterDate && !adminFilterDate.value) {
     adminFilterDate.value = todayWIB;
   }
@@ -596,26 +594,16 @@ if (exportCsvBtn) {
   });
 }
 
-
 // ==========================================
-// HANDLE LOGIN & CEK VERIFIKASI EMAIL
+// 5. EVENT LISTENER POS SEMENTARA (UNVERIFIED)
 // ==========================================
-const loginForm = document.getElementById('login-form'); // Sesuaikan dengan ID form login aslimu (atau auth-main-button)
-
-// Pastikan mendeklarasikan variabel dengan let/var jika ingin dipakai ulang, 
-// atau langsung pasang event listener tanpa mendeklarasikan ulang variabelnya:
-
 document.getElementById('btn-back-login')?.addEventListener('click', () => {
-  // Sembunyikan bagian unverified, tampilkan kembali form login utama
-  const unverifiedSection = document.getElementById('unverified-section');
-  const emailInputGroup = document.getElementById('email')?.closest('.form-group'); // atau container input login
-  
-  if (unverifiedSection) unverifiedSection.style.display = 'none';
-  
-  // Munculkan kembali elemen input login yang disembunyikan
-  document.getElementById('email').style.display = 'block';
-  document.getElementById('password').style.display = 'block';
-  document.getElementById('auth-main-button').style.display = 'block';
+  if (unverifiedSection) unverifiedSection.style.display = "none";
+  emailInput.style.display = "block";
+  passwordInput.style.display = "block";
+  authMainButton.style.display = "block";
+  document.querySelector(".auth-toggle-box").style.display = "block";
+  messageEl.textContent = "";
 });
 
 document.getElementById('btn-resend')?.addEventListener('click', async () => {
