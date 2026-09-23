@@ -147,7 +147,6 @@ authMainButton.addEventListener("click", async () => {
       toggleAuthBtn.click();
     }
   } else {
-    // Proses Login
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
@@ -160,11 +159,10 @@ authMainButton.addEventListener("click", async () => {
 
     const user = data.user;
     
-    // Cek apakah email sudah dikonfirmasi/verifikasi
+    // Cek apakah email belum diverifikasi
     if (user && !user.email_confirmed_at) {
-      await supabase.auth.signOut(); // Logout paksa supaya sesi tidak nyangkut
+      await supabase.auth.signOut();
 
-      // Sembunyikan elemen input login dan tombol utama, tampilkan unverified box
       emailInput.style.display = "none";
       passwordInput.style.display = "none";
       authMainButton.style.display = "none";
@@ -198,12 +196,12 @@ function showLoginSection() {
   userSection.style.display = "none";
   adminSection.style.display = "none";
   
-  // Reset tampilan login form jika dari unverified
   if (unverifiedSection) unverifiedSection.style.display = "none";
   emailInput.style.display = "block";
   passwordInput.style.display = "block";
   authMainButton.style.display = "block";
-  document.querySelector(".auth-toggle-box").style.display = "block";
+  const toggleBox = document.querySelector(".auth-toggle-box");
+  if (toggleBox) toggleBox.style.display = "block";
   messageEl.textContent = "";
 }
 
@@ -602,7 +600,8 @@ document.getElementById('btn-back-login')?.addEventListener('click', () => {
   emailInput.style.display = "block";
   passwordInput.style.display = "block";
   authMainButton.style.display = "block";
-  document.querySelector(".auth-toggle-box").style.display = "block";
+  const toggleBox = document.querySelector(".auth-toggle-box");
+  if (toggleBox) toggleBox.style.display = "block";
   messageEl.textContent = "";
 });
 
