@@ -1,444 +1,142 @@
-/* =========================================
-   MUDIVIVERSE - iOS / APPLE GLASS AESTHETIC
-   (Optimized for Laptop & Mobile)
-========================================= */
-
-:root {
-  --bg-1: #e0eafc;
-  --bg-2: #cfdef3;
-  --bg-3: #eef2f3;
-  
-  --glass-bg: rgba(255, 255, 255, 0.65);
-  --glass-border: rgba(255, 255, 255, 0.8);
-  --glass-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-  
-  --text-main: #1c1c1e;
-  --text-sub: #8e8e93;
-  --ios-blue: #007aff;
-  --ios-green: #34c759;
-  --ios-red: #ff3b30;
-  
-  --radius-xl: 24px;
-  --radius-lg: 14px;
-}
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  -webkit-tap-highlight-color: transparent;
-}
-
-html, body {
-  width: 100%;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
-
-body {
-  background: linear-gradient(135deg, var(--bg-1), var(--bg-2), var(--bg-3));
-  background-size: 200% 200%;
-  animation: skyGradient 12s ease infinite;
-  color: var(--text-main);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 30px 16px; /* Padding ditambah untuk laptop */
-  position: relative;
-}
-
-@keyframes skyGradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-.app {
-  width: 100%;
-  max-width: 540px; /* DIPERLEBAR AGAR LEBIH BAGUS DI LAPTOP */
-  position: relative;
-  z-index: 1;
-}
-
-.panel {
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
-  border-radius: var(--radius-xl);
-  padding: 36px 30px; /* Padding disesuaikan */
-}
-
-/* HEADER LOGO */
-.brand-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 28px;
-}
-
-.logo-box {
-  width: 58px;
-  height: 58px;
-  background: #ffffff;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--ios-blue);
-  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
-}
-
-.brand-title {
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-}
-
-/* FORM INPUTS & BUTTONS */
-.form-group {
-  margin-bottom: 16px;
-}
-
-.form-group label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-sub);
-  margin-bottom: 6px;
-  display: block;
-  margin-left: 4px;
-}
-
-.custom-input, .custom-select {
-  width: 100%;
-  padding: 14px 16px;
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: var(--radius-lg);
-  font-size: 15px;
-  color: var(--text-main);
-  transition: all 0.2s ease;
-}
-
-.custom-input:focus, .custom-select:focus {
-  outline: none;
-  background: #ffffff;
-  border-color: var(--ios-blue);
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
-}
-
-.main-button {
-  width: 100%;
-  padding: 16px;
-  margin-top: 8px;
-  border: none;
-  border-radius: var(--radius-lg);
-  background: var(--text-main);
-  color: #ffffff;
-  font-weight: 600;
-  font-size: 15px;
-  cursor: pointer;
-  transition: transform 0.1s ease;
-}
-
-.main-button:active {
-  transform: scale(0.97);
-}
-
-.secondary-button {
-  padding: 8px 14px;
-  border-radius: var(--radius-lg);
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  color: var(--text-main);
-  font-weight: 600;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.btn-export {
-  background: var(--ios-blue) !important;
-  color: white !important;
-  border: none !important;
-  font-weight: 600;
-}
-
-.auth-toggle-box {
-  margin-top: 24px;
-  text-align: center;
-  font-size: 14px;
-  color: var(--text-sub);
-}
-
-.link-button {
-  background: none;
-  border: none;
-  color: var(--ios-blue);
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  margin-left: 4px;
-}
-
-.link-button:hover {
-  text-decoration: underline;
-}
-
-/* CARDS & GRIDS */
-.today-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.card-box {
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  border-radius: var(--radius-xl);
-  padding: 20px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.04);
-}
-
-.card-badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 8px;
-  background: rgba(0,0,0,0.04);
-  color: var(--text-sub);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-
-/* LIST ITEMS */
-.history-item, .emp-card-item {
-  background: rgba(255, 255, 255, 0.85);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  border: 1px solid rgba(0,0,0,0.04);
-}
-
-.emp-name-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-main);
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-/* BADGES STYLING */
-.badge-present, .badge-active {
-  background: rgba(52, 199, 89, 0.15);
-  color: #248a3d;
-  font-weight: 600;
-  font-size: 12px;
-  padding: 4px 10px;
-  border-radius: 8px;
-}
-
-.badge-late, .badge-inactive {
-  background: rgba(255, 59, 48, 0.15);
-  color: #c92a20;
-  font-weight: 600;
-  font-size: 12px;
-  padding: 4px 10px;
-  border-radius: 8px;
-}
-
-/* BADGE ADMIN KUNING SUPERIOR */
-.role-badge {
-  font-size: 11px;
-  font-weight: 800;
-  padding: 4px 10px;
-  border-radius: 8px;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
-}
-
-.role-admin { 
-  background: #fff8d6; 
-  color: #b8860b; 
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
-}
-.role-user { 
-  background: #e5f0ff; 
-  color: var(--ios-blue); 
-}
-
-/* TABS & MODAL */
-.admin-tabs {
-  display: flex;
-  background: rgba(118, 118, 128, 0.12);
-  padding: 4px;
-  border-radius: 12px;
-  margin-bottom: 20px;
-}
-
-.tab-btn {
-  flex: 1;
-  padding: 10px;
-  border: none;
-  border-radius: 10px;
-  background: transparent;
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--text-sub);
-  cursor: pointer;
-}
-
-.tab-btn.active {
-  background: #ffffff;
-  color: var(--text-main);
-  box-shadow: 0 3px 8px rgba(0,0,0,0.08);
-}
-
-.modal {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(10px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  z-index: 100;
-}
-
-.modal-content {
-  background: #ffffff;
-  border-radius: var(--radius-xl);
-  padding: 24px;
-  width: 100%;
-  max-width: 400px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-}
-
-/* RESPONSIVE MOBILE FIX */
-@media (max-width: 600px) {
-  body {
-    padding: 16px 12px;
-  }
-  .panel {
-    padding: 28px 20px;
-  }
-  .today-grid {
-    grid-template-columns: 1fr;
-  }
-  .history-item, .emp-card-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  .history-item > div:last-child, 
-  .emp-card-item > button {
-    align-self: flex-end;
-  }
-}
-
-
 /* ==========================================================
-   THEME UPGRADE: MODERN BUDDHIST GLASSMORPHISM & GOLD ACCENTS
+   NEW UI UPGRADE: VIBRANT BLUE GRADIENT & CLEAN CARD DESIGN
+   (Terinspirasi dari referensi UI modern yang clean & bold)
    ========================================================== */
 
 :root {
-  --buddhist-gold: #d4af37;
-  --buddhist-gold-glow: rgba(212, 175, 55, 0.25);
-  --buddhist-maroon: #800020;
-  --ios-glass-bg: rgba(255, 255, 255, 0.75);
-  --ios-glass-border: rgba(212, 175, 55, 0.3);
+  --primary-blue-start: #2e3192;
+  --primary-blue-mid: #005cbf;
+  --primary-blue-end: #00d2ff;
+  --card-bg-clean: #ffffff;
+  --accent-gold: #f5af19;
 }
 
-/* Background Utama dengan nuansa lembut/subtle pattern teratai */
+/* 1. BACKGROUND GRADIENT BIRU MUDA YANG SANGAT KELIHATAN & KONTRAS */
 body {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-  position: relative;
-  overflow-x: hidden;
+  background: linear-gradient(135deg, #005cbf 0%, #00d2ff 50%, #4facfe 100%) !important;
+  min-height: 100vh;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #333333;
 }
 
-/* Efek Cahaya / Ornamen Mandala Abstrak di Background */
+/* Ornamen Lingkaran Halus di Background supaya tidak terlalu sepi */
 body::before {
   content: "";
   position: fixed;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(212, 175, 55, 0.05) 0%, transparent 60%);
+  top: -100px;
+  right: -100px;
+  width: 400px;
+  height: 400px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
   z-index: -1;
   pointer-events: none;
 }
 
-/* Mempercantik Card dengan Border Emas & Efek Glassmorphism */
-.login-card, .user-card, .admin-card, .history-item {
-  background: rgba(255, 255, 255, 0.85) !important;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--ios-glass-border) !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15), 0 0 15px var(--buddhist-gold-glow) !important;
-  border-radius: 20px !important;
-  transition: all 0.3s ease;
+body::after {
+  content: "";
+  position: fixed;
+  bottom: -150px;
+  left: -150px;
+  width: 500px;
+  height: 500px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  z-index: -1;
+  pointer-events: none;
 }
 
-/* Efek Hover Cantik pada Item Riwayat & Kartu */
+/* 2. KARTU UTAMA (LOGIN, USER, ADMIN) ALA CARD REFERENSI */
+.login-card, .user-card, .admin-card {
+  background: var(--card-bg-clean) !important;
+  border-radius: 28px !important;
+  padding: 30px 24px !important;
+  box-shadow: 0 20px 40px rgba(0, 40, 100, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: none;
+}
+
+/* 3. ITEM RIWAYAT & DAFTAR KARYAWAN */
+.history-item, .emp-card-item {
+  background: #f8fbff !important;
+  border: 1px solid #e1ecfd !important;
+  border-radius: 16px !important;
+  padding: 14px 18px !important;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 12px rgba(0, 92, 191, 0.05) !important;
+  transition: all 0.25s ease;
+}
+
 .history-item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 25px rgba(212, 175, 55, 0.2) !important;
-  border-color: var(--buddhist-gold) !important;
+  background: #ffffff !important;
+  box-shadow: 0 8px 20px rgba(0, 92, 191, 0.12) !important;
+  border-color: #005cbf !important;
 }
 
-/* Tombol Utama dengan Gradasi Emas / Marun yang Elegan */
+/* 4. TOMBOL UTAMA DENGAN GRADASI YANG BOLD & ELEGAN */
 .auth-button, #auth-main-button {
-  background: linear-gradient(135deg, #d4af37 0%, #aa771c 100%) !important;
-  color: #fff !important;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+  background: linear-gradient(135deg, #005cbf 0%, #00d2ff 100%) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  border-radius: 14px !important;
+  padding: 14px !important;
+  box-shadow: 0 8px 20px rgba(0, 92, 191, 0.3) !important;
   border: none !important;
-  transition: all 0.2s ease;
+  letter-spacing: 0.5px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.auth-button:hover, #auth-main-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px rgba(0, 92, 191, 0.4) !important;
 }
 
 .auth-button:active, #auth-main-button:active {
   transform: scale(0.98);
 }
 
-/* Badge Status dengan Nuansa Saffron/Gold */
+/* 5. INPUT FORM LEBIH BERSIH & MODERN */
+input[type="email"], input[type="password"], input[type="text"], select {
+  background: #f4f8fc !important;
+  border: 1.5px solid #d0e1fd !important;
+  border-radius: 14px !important;
+  padding: 12px 16px !important;
+  font-size: 15px !important;
+  color: #1a1a1a !important;
+  transition: all 0.2s ease;
+}
+
+input:focus, select:focus {
+  background: #ffffff !important;
+  border-color: #005cbf !important;
+  box-shadow: 0 0 0 4px rgba(0, 92, 191, 0.15) !important;
+  outline: none;
+}
+
+/* 6. BADGE STATUS YANG LEBIH HIDUP */
 .badge-present {
-  background: rgba(40, 167, 69, 0.15);
-  color: #28a745;
-  border: 1px solid rgba(40, 167, 69, 0.3);
-  padding: 4px 10px;
+  background: #e1fdf4;
+  color: #00a86b;
+  border: 1px solid #b2f5d9;
+  padding: 6px 14px;
   border-radius: 20px;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 12px;
 }
 
 .badge-late {
-  background: rgba(212, 175, 55, 0.15);
-  color: #b8860b;
-  border: 1px solid rgba(212, 175, 55, 0.4);
-  padding: 4px 10px;
+  background: #fff8e1;
+  color: #f59e0b;
+  border: 1px solid #fde68a;
+  padding: 6px 14px;
   border-radius: 20px;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 12px;
 }
 
-/* Judul & Header dengan Aksen Tipografi Lembut */
-h1, h2, h3, .user-name-title {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  letter-spacing: -0.3px;
-}
-
-/* Hiasan Simbol / Lotus Kecil di Judul (Opsional via CSS content) */
-.login-card h2::before {
+/* 7. ORNAMEN / IKONIK KECIL UNTUK NUANSA BUDDHIS YANG RAPI */
+.user-card h2::before, .login-card h2::before {
   content: "🪷 ";
 }
