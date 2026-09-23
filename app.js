@@ -90,6 +90,12 @@ async function checkUrlAutoAttendance() {
       
       if (!error && data && data.success) {
         alert("Absensi Berhasil via Scan Kamera!");
+        
+        // --- TAMBAHKAN DUA BARIS INI SUPAYA AUTO RELOAD ---
+        await loadTodayStatus();
+        await loadAttendanceHistory();
+        // -------------------------------------------------
+
       } else if (data && data.message) {
         alert(data.message);
       }
