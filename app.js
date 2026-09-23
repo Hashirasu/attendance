@@ -68,24 +68,41 @@ async function checkUrlAutoAttendance() {
   const secret = urlParams.get("secret");
   const block = urlParams.get("block");
 
+  // Jika ada parameter QR di URL, simpan sementara ke sessionStorage browser
   if (secret && block) {
+    sessionStorage.setItem("pending_secret", secret);
+    sessionStorage.setItem("pending_block", block);
+    // Bersihkan URL supaya bersih dari parameter
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
+  // Ambil data yang tersimpan (baik dari scan baru maupun sisa sebelum login)
+  const savedSecret = sessionStorage.getItem("pending_secret");
+  const savedBlock = sessionStorage.getItem("pending_block");
+
+  if (savedSecret && savedBlock) {
     const currentUnix = Math.floor(Date.now() / 1000);
     const currentBlock = Math.floor(currentUnix / 15);
 
-    if (secret === KIOSK_SECRET && Math.abs(currentBlock - parseInt(block)) <= 1) {
+    // Berikan toleransi waktu yang lebih longgar jika proses login agak lama (misal selisih hingga 4 blok / 60 detik)
+    if (savedSecret === KIOSK_SECRET && Math.abs(currentBlock - parseInt(savedBlock)) <= 4) {
       const { data, error } = await supabase.rpc("check_in");
+      
       if (!error && data && data.success) {
         alert("Absensi Berhasil via Scan Kamera!");
       } else if (data && data.message) {
         alert(data.message);
       }
     } else {
-      alert("QR Code sudah kedaluwarsa, silakan scan ulang di layar Kios.");
+      alert("Sesi QR Code sudah kedaluwarsa (terlalu lama sejak scan). Silakan scan ulang di kios.");
     }
 
-    window.history.replaceState({}, document.title, window.location.pathname);
+    // Hapus data session setelah dieksekusi agar tidak ke-trigger terus
+    sessionStorage.removeItem("pending_secret");
+    sessionStorage.removeItem("pending_block");
   }
 }
+
 
 // ==============================
 // 2. AUTHENTICATION & SESSION
