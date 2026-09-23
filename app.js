@@ -68,15 +68,12 @@ async function checkUrlAutoAttendance() {
   const secret = urlParams.get("secret");
   const block = urlParams.get("block");
 
-  // Jika ada parameter QR di URL, simpan sementara ke sessionStorage browser
   if (secret && block) {
     sessionStorage.setItem("pending_secret", secret);
     sessionStorage.setItem("pending_block", block);
-    // Bersihkan URL supaya bersih dari parameter
     window.history.replaceState({}, document.title, window.location.pathname);
   }
 
-  // Ambil data yang tersimpan (baik dari scan baru maupun sisa sebelum login)
   const savedSecret = sessionStorage.getItem("pending_secret");
   const savedBlock = sessionStorage.getItem("pending_block");
 
@@ -84,18 +81,13 @@ async function checkUrlAutoAttendance() {
     const currentUnix = Math.floor(Date.now() / 1000);
     const currentBlock = Math.floor(currentUnix / 15);
 
-    // Berikan toleransi waktu yang lebih longgar jika proses login agak lama (misal selisih hingga 4 blok / 60 detik)
     if (savedSecret === KIOSK_SECRET && Math.abs(currentBlock - parseInt(savedBlock)) <= 4) {
       const { data, error } = await supabase.rpc("check_in");
       
       if (!error && data && data.success) {
         alert("Absensi Berhasil via Scan Kamera!");
-        
-        // --- TAMBAHKAN DUA BARIS INI SUPAYA AUTO RELOAD ---
         await loadTodayStatus();
         await loadAttendanceHistory();
-        // -------------------------------------------------
-
       } else if (data && data.message) {
         alert(data.message);
       }
@@ -103,12 +95,10 @@ async function checkUrlAutoAttendance() {
       alert("Sesi QR Code sudah kedaluwarsa (terlalu lama sejak scan). Silakan scan ulang di kios.");
     }
 
-    // Hapus data session setelah dieksekusi agar tidak ke-trigger terus
     sessionStorage.removeItem("pending_secret");
     sessionStorage.removeItem("pending_block");
   }
 }
-
 
 // ==============================
 // 2. AUTHENTICATION & SESSION
@@ -120,6 +110,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     await checkUrlAutoAttendance();
   } else {
     showLoginSection();
+    await checkUrlAutoAttendance(); // Tangkap token QR meskipun belum login
   }
 });
 
@@ -157,7 +148,6 @@ authMainButton.addEventListener("click", async () => {
       return;
     }
 
-    // 1. Daftarkan akun baru ke Supabase
     const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
@@ -169,12 +159,10 @@ authMainButton.addEventListener("click", async () => {
       return;
     }
 
-    // 2. Cek apakah halaman ini dibuka dari scan QR Kios (ada parameter secret & block di URL)
-    const urlParams = new URLSearchParams(window.location.search);
-    const hasQrParam = urlParams.has("secret") && urlParams.has("block");
+    // Cek apakah halaman dibuka dari scan QR
+    const hasQrParam = sessionStorage.getItem("pending_secret");
 
     if (hasQrParam) {
-      // Jika dari QR, langsung otomatis login-kan user tersebut!
       messageEl.textContent = "Pendaftaran berhasil, masuk otomatis...";
       
       const { error: loginError } = await supabase.auth.signInWithPassword({
@@ -188,19 +176,48 @@ authMainButton.addEventListener("click", async () => {
       }
 
       messageEl.textContent = "";
-      
-      // Muat profil dashboard user
       await loadUserProfile();
-      
-      // Langsung eksekusi absen otomatis karena mereka scan QR
       await checkUrlAutoAttendance();
       
     } else {
-      // Jika mendaftar biasa lewat web (bukan dari scan QR di lokasi), arahkan seperti biasa
       messageEl.textContent = "Pendaftaran berhasil! Silakan login.";
       toggleAuthBtn.click();
     }
+  } else {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) {
+      messageEl.textContent = "Login Gagal: " + error.message;
+      return;
+    }
+
+    const user = data.user;
+    
+    if (user && !user.email_confirmed_at) {
+      await supabase.auth.signOut();
+
+      emailInput.style.display = "none";
+      passwordInput.style.display = "none";
+      authMainButton.style.display = "none";
+      document.querySelector(".auth-toggle-box").style.display = "none";
+      
+      if (unverifiedSection) {
+        unverifiedSection.style.display = "block";
+      }
+      
+      window.pendingVerificationEmail = email;
+      messageEl.textContent = "";
+      return;
+    }
+
+    messageEl.textContent = "";
+    await loadUserProfile();
+    await checkUrlAutoAttendance();
   }
+});
 
 async function handleLogout() {
   await supabase.auth.signOut();
@@ -614,6 +631,16 @@ if (exportCsvBtn) {
 // ==========================================
 // 5. EVENT LISTENER POS SEMENTARA (UNVERIFIED)
 // ==========================================
+document.getElementById('btn-backend-login')?.addEventListener('click', () => {
+  if (unverifiedSection) unverifiedSection.style.display = "none";
+  emailInput.style.display = "block";
+  passwordInput.style.display = "block";
+  authMainButton.style.display = "block";
+  const toggleBox = document.querySelector(".auth-toggle-box");
+  if (toggleBox) toggleBox.style.display = "block";
+  messageEl.textContent = "";
+});
+
 document.getElementById('btn-back-login')?.addEventListener('click', () => {
   if (unverifiedSection) unverifiedSection.style.display = "none";
   emailInput.style.display = "block";
