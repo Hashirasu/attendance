@@ -84,12 +84,15 @@ async function checkUrlAutoAttendance() {
     if (savedSecret === KIOSK_SECRET && Math.abs(currentBlock - parseInt(savedBlock)) <= 4) {
       const { data, error } = await supabase.rpc("check_in");
       
+      console.log("DEBUG CHECK-IN RESULT:", { data, error }); // Catat ke console untuk monitoring
+
       if (!error && data && data.success) {
         alert("Absensi Berhasil via Scan Kamera!");
         await loadTodayStatus();
         await loadAttendanceHistory();
-      } else if (data && data.message) {
-        alert(data.message);
+      } else {
+        const errorMsg = error ? error.message : (data ? data.message : "Terjadi kesalahan sistem.");
+        alert("Gagal Absen: " + errorMsg);
       }
     } else {
       alert("Sesi QR Code sudah kedaluwarsa (terlalu lama sejak scan). Silakan scan ulang di kios.");
@@ -110,7 +113,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     await checkUrlAutoAttendance();
   } else {
     showLoginSection();
-    await checkUrlAutoAttendance(); // Tangkap token QR meskipun belum login
+    await checkUrlAutoAttendance(); 
   }
 });
 
@@ -159,14 +162,11 @@ authMainButton.addEventListener("click", async () => {
       return;
     }
 
-    // Cek apakah halaman ini dibuka dari scan QR Kios
     const hasQrParam = sessionStorage.getItem("pending_secret");
 
     if (hasQrParam) {
-      // Jika dari QR, arahkan user untuk login secara instan karena data QR sudah aman di session
       messageEl.textContent = "Pendaftaran berhasil! Silakan masukkan ulang password untuk absen.";
       
-      // Pindahkan otomatis ke mode login
       isRegisterMode = false;
       nameGroup.style.display = "none";
       authButtonText.textContent = "Masuk";
@@ -175,13 +175,11 @@ authMainButton.addEventListener("click", async () => {
       
       passwordInput.value = "";
       passwordInput.focus();
-
     } else {
       messageEl.textContent = "Pendaftaran berhasil! Silakan login.";
       toggleAuthBtn.click();
     }
   } else {
-    // --- INI BAGIAN LOGIN MANUAL YANG DIBAWAH ---
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
