@@ -689,3 +689,76 @@ document.getElementById('btn-resend')?.addEventListener('click', async () => {
     alert("Email verifikasi baru telah dikirim! Silakan cek inbox/spam kamu.");
   }
 });
+
+
+
+// ==============================
+// 6. BUILT-IN QR CAMERA SCANNER
+// ==============================
+const openScannerBtn = document.getElementById("open-scanner-btn");
+const scannerModal = document.getElementById("scanner-modal");
+const closeScannerBtn = document.getElementById("close-scanner-btn");
+let html5QrCode = null;
+
+if (openScannerBtn) {
+  openScannerBtn.addEventListener("click", async () => {
+    scannerModal.style.display = "flex";
+    
+    // Inisialisasi scanner pada elemen dengan id="reader"
+    html5QrCode = new Html5Qrcode("reader");
+    
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+    
+    try {
+      await html5QrCode.start(
+        { facingMode: "environment" }, // Gunakan kamera belakang HP
+        config,
+        async (decodedText) => {
+          // Berhasil scan! decodedText berisi URL lengkap dari QR Kios
+          console.log("QR Terdeteksi:", decodedText);
+          
+          // Hentikan kamera
+          await html5QrCode.stop();
+          html5QrCode.clear();
+          scannerModal.style.display = "none";
+          
+          // Ambil parameter secret dan block dari URL hasil scan
+          try {
+            const urlObj = new URL(decodedText);
+            const secret = urlObj.searchParams.get("secret");
+            const block = urlObj.searchParams.get("block");
+            
+            if (secret && block) {
+              sessionStorage.setItem("pending_secret", secret);
+              sessionStorage.setItem("pending_block", block);
+              
+              // Jalankan fungsi auto attendance
+              await checkUrlAutoAttendance();
+            } else {
+              alert("QR Code tidak valid untuk presensi Mudiviverse.");
+            }
+          } catch (e) {
+            alert("Format QR Code tidak dikenali.");
+          }
+        },
+        (errorMessage) => {
+          // Error saat proses scanning bingkai (biasanya diabaikan karena berjalan terus mencari QR)
+        }
+      );
+    } catch (err) {
+      alert("Gagal membuka kamera. Pastikan izin akses kamera diaktifkan di browser Anda.");
+      console.error(err);
+      scannerModal.style.display = "none";
+    }
+  });
+}
+
+if (closeScannerBtn) {
+  closeScannerBtn.addEventListener("click", async () => {
+    if (html5QrCode && html5QrCode.isScanning) {
+      await html5QrCode.stop();
+      html5QrCode.clear();
+    }
+    scannerModal.style.display = "none";
+  });
+}
