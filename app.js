@@ -145,14 +145,31 @@ authMainButton.addEventListener("click", async () => {
       toggleAuthBtn.click();
     }
   } else {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    // Di dalam fungsi penanganan login:
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: emailInput,
+      password: passwordInput
+    });
+
     if (error) {
-      messageEl.textContent = "Login gagal: " + error.message;
-    } else {
-      messageEl.textContent = "";
-      await loadUserProfile();
-      await checkUrlAutoAttendance();
+      showError(error.message); // Fungsi error kamu sebelumnya
+      return;
     }
+
+    const user = data.user;
+    if (user && !user.email_confirmed_at) {
+      // 1. Logout paksa dari sesi aktif agar tidak nyangkut
+      await supabase.auth.signOut();
+
+      // 2. Sembunyikan form login biasa, tampilkan pos sementara unverified-section
+      document.getElementById('login-form-container').style.display = 'none';
+      document.getElementById('unverified-section').style.display = 'block';
+  
+      // Simpan email sementara kalau mau dipakai untuk tombol "Kirim Ulang"
+      window.pendingVerificationEmail = emailInput;
+      return;
+    }
+
   }
 });
 
@@ -576,5 +593,97 @@ if (exportCsvBtn) {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Rekap Presensi");
     XLSX.writeFile(workbook, `Rekap_Presensi_Mudiviverse_${new Date().toISOString().split("T")[0]}.xlsx`);
+  });
+}
+
+
+// ==========================================
+// HANDLE POS SEMENTARA (UNVERIFIED EMAIL)
+// ==========================================
+
+// Tombol kembali ke halaman login biasa
+const btnBackLogin = document.getElementById('btn-back-login');
+if (btnBackLogin) {
+  btnBackLogin.addEventListener('click', () => {
+    // Sembunyikan kotak unverified, tampilkan lagi form login
+    const unverifiedSection = document.getElementById('unverified-section');
+    const loginFormContainer = document.getElementById('login-form-container');
+    
+    if (unverifiedSection) unverifiedSection.style.display = 'none';
+    if (loginFormContainer) loginFormContainer.style.display = 'block';
+  });
+}
+
+// ==========================================
+// HANDLE LOGIN & CEK VERIFIKASI EMAIL
+// ==========================================
+const loginForm = document.getElementById('login-form');
+if (loginForm) {
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const emailInput = document.getElementById('login-email').value;
+    const passwordInput = document.getElementById('login-password').value;
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: emailInput,
+      password: passwordInput
+    });
+
+    if (error) {
+      alert("Login Gagal: " + error.message);
+      return;
+    }
+
+    const user = data.user;
+    
+    // CEK APAKAH EMAIL SUDAH DIVERIFIKASI
+    if (user && !user.email_confirmed_at) {
+      // Logout paksa agar sesi tidak nyangkut
+      await supabase.auth.signOut();
+
+      // Sembunyikan form login biasa, tampilkan pos sementara
+      document.getElementById('login-form-container').style.display = 'none';
+      document.getElementById('unverified-section').style.display = 'block';
+      
+      // Simpan email sementara untuk tombol kirim ulang
+      window.pendingVerificationEmail = emailInput;
+      return;
+    }
+
+    // Jika sudah terverifikasi, arahkan ke dashboard (sesuaikan fungsi navigasimu)
+    alert("Login Berhasil!");
+    // location.reload(); atau panggil fungsi load dashboard di sini
+  });
+}
+
+// Tombol Kembali ke Halaman Login dari Pos Sementara
+const btnBackLogin = document.getElementById('btn-back-login');
+if (btnBackLogin) {
+  btnBackLogin.addEventListener('click', () => {
+    document.getElementById('unverified-section').style.display = 'none';
+    document.getElementById('login-form-container').style.display = 'block';
+  });
+}
+
+// Tombol Kirim Ulang Email Verifikasi
+const btnResend = document.getElementById('btn-resend');
+if (btnResend) {
+  btnResend.addEventListener('click', async () => {
+    if (!window.pendingVerificationEmail) {
+      alert("Email tidak ditemukan. Silakan coba login ulang.");
+      return;
+    }
+    
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: window.pendingVerificationEmail,
+    });
+
+    if (error) {
+      alert("Gagal mengirim ulang: " + error.message);
+    } else {
+      alert("Email verifikasi baru telah dikirim! Silakan cek inbox/spam kamu.");
+    }
   });
 }

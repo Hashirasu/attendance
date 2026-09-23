@@ -39,6 +39,23 @@
         <span id="toggle-auth-text">Belum punya akun?</span>
         <button id="toggle-auth-btn" class="link-button">Daftar di sini</button>
       </div>
+    
+      <!-- POS SEMENTARA: BELUM VERIFIKASI (Disembunyikan awalnya) -->
+      <div id="unverified-section" class="glass-card" style="display: none; text-align: center; padding: 25px; margin-top: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.1);">
+        <div style="font-size: 28px; margin-bottom: 10px;">✉️</div>
+        <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">Verifikasi Email Diperlukan</h3>
+        <p style="font-size: 13px; color: var(--text-sub); line-height: 1.5; margin-bottom: 16px;">
+          Akun kamu belum aktif. Periksa kotak masuk atau folder spam di email kamu untuk mengonfirmasi pendaftaran.
+        </p>
+      
+        <button id="btn-resend" class="main-button" style="width: 100%; margin-bottom: 10px; padding: 10px; font-size: 13px;">
+          Kirim Ulang Email Verifikasi
+        </button>
+      
+        <button id="btn-back-login" style="background: none; border: none; color: var(--text-sub); font-size: 13px; cursor: pointer; text-decoration: underline;">
+          Kembali ke Halaman Login
+        </button>
+      </div>
 
       <p id="message" style="margin-top: 14px; font-size: 13px; color: var(--ios-red); text-align: center; font-weight: 600;"></p>
     </section>
@@ -74,14 +91,19 @@
           </div>
         </div>
 
+        <!-- PENGAMAN: TOMBOL ABSEN MANUAL DIKUNCI / DIGANTI INSTRUKSI QR -->
         <div class="card-box" style="display: flex; flex-direction: column; justify-content: space-between;">
           <div>
             <span class="card-badge">Kehadiran</span>
             <h4 style="font-size: 16px; margin-top: 8px; font-weight: 600;">Catat Presensi</h4>
           </div>
-          <button id="check-in-button" class="main-button" style="padding: 12px; font-size: 13px; margin-top: 12px;">
-            Hadir
-          </button>
+          
+          <div style="background: rgba(0, 0, 0, 0.03); padding: 12px; border-radius: 10px; border: 1px dashed rgba(0, 0, 0, 0.15); margin-top: 12px;">
+            <p style="font-size: 12px; color: var(--text-sub); line-height: 1.4; text-align: center; margin: 0;">
+              🔒 <b>Absensi Manual Dikunci</b><br>Silakan Scan QR Code di lokasi.
+            </p>
+          </div>
+          
           <p id="attendance-message" style="font-size: 11px; margin-top: 8px; color: var(--text-sub); text-align: center;"></p>
         </div>
       </div>
