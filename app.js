@@ -157,54 +157,50 @@ authMainButton.addEventListener("click", async () => {
       return;
     }
 
-    const { error } = await supabase.auth.signUp({
+    // 1. Daftarkan akun baru ke Supabase
+    const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { full_name: name } }
     });
 
-    if (error) {
-      messageEl.textContent = "Gagal mendaftar: " + error.message;
+    if (signUpError) {
+      messageEl.textContent = "Gagal mendaftar: " + signUpError.message;
+      return;
+    }
+
+    // 2. Cek apakah halaman ini dibuka dari scan QR Kios (ada parameter secret & block di URL)
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasQrParam = urlParams.has("secret") && urlParams.has("block");
+
+    if (hasQrParam) {
+      // Jika dari QR, langsung otomatis login-kan user tersebut!
+      messageEl.textContent = "Pendaftaran berhasil, masuk otomatis...";
+      
+      const { error: loginError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (loginError) {
+        messageEl.textContent = "Gagal otomatis masuk: " + loginError.message;
+        return;
+      }
+
+      messageEl.textContent = "";
+      
+      // Muat profil dashboard user
+      await loadUserProfile();
+      
+      // Langsung eksekusi absen otomatis karena mereka scan QR
+      await checkUrlAutoAttendance();
+      
     } else {
-      messageEl.textContent = "Pendaftaran berhasil! Silakan periksa email untuk verifikasi.";
+      // Jika mendaftar biasa lewat web (bukan dari scan QR di lokasi), arahkan seperti biasa
+      messageEl.textContent = "Pendaftaran berhasil! Silakan login.";
       toggleAuthBtn.click();
     }
-  } else {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-
-    if (error) {
-      messageEl.textContent = "Login Gagal: " + error.message;
-      return;
-    }
-
-    const user = data.user;
-    
-    // Cek apakah email belum diverifikasi
-    if (user && !user.email_confirmed_at) {
-      await supabase.auth.signOut();
-
-      emailInput.style.display = "none";
-      passwordInput.style.display = "none";
-      authMainButton.style.display = "none";
-      document.querySelector(".auth-toggle-box").style.display = "none";
-      
-      if (unverifiedSection) {
-        unverifiedSection.style.display = "block";
-      }
-      
-      window.pendingVerificationEmail = email;
-      messageEl.textContent = "";
-      return;
-    }
-
-    messageEl.textContent = "";
-    await loadUserProfile();
-    await checkUrlAutoAttendance();
   }
-});
 
 async function handleLogout() {
   await supabase.auth.signOut();
