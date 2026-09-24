@@ -92,22 +92,26 @@
           </div>
         </div>
 
+        <!-- TOMBOL KAMERA SCANNER LANGSUNG DI SINI -->
         <div class="card-box" style="display: flex; flex-direction: column; justify-content: space-between;">
           <div>
             <span class="card-badge">Kehadiran</span>
-            <h4 style="font-size: 16px; margin-top: 8px; font-weight: 600;">Catat Presensi</h4>
+            <h4 style="font-size: 16px; margin-top: 8px; font-weight: 600;">Scan QR Code</h4>
           </div>
           
-          <div style="background: rgba(0, 0, 0, 0.03); padding: 12px; border-radius: 10px; border: 1px dashed rgba(0, 0, 0, 0.15); margin-top: 12px;">
-            <p style="font-size: 12px; color: var(--text-sub); line-height: 1.4; text-align: center; margin: 0;">
-              🔒 <b>Absensi Manual Dikunci</b><br>Silakan Scan QR Code di lokasi.
+          <div style="margin-top: 12px;">
+            <button id="open-scanner-btn-user" class="main-button" style="width: 100%; padding: 10px; font-size: 13px; font-weight: 600; margin: 0;">
+              📷 Buka Kamera Scanner
+            </button>
+            <p style="font-size: 11px; color: var(--text-sub); text-align: center; margin-top: 6px;">
+              Silakan scan kode QR di lokasi.
             </p>
           </div>
         </div>
       </div>
 
       <!-- KOTAK STATISTIK BULANAN USER -->
-      <div class="card-box" style="margin-bottom: 16px;">
+      <div class="card-box" style="margin-bottom: 16px; margin-top: 16px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <h3 style="font-size: 16px; font-weight: 700;">Statistik Bulan Ini</h3>
           <span style="font-size: 12px; color: var(--text-sub);">📊</span>
@@ -140,13 +144,6 @@
         <div id="attendance-history">
           <p>Memuat riwayat...</p>
         </div>
-      </div>
-
-      <!-- Tombol Buka Kamera Scanner di Dashboard User -->
-      <div id="scanner-entry-section-user" style="margin-top: 15px; text-align: center;">
-        <button id="open-scanner-btn-user" class="secondary-button" style="width: 100%; padding: 12px; font-weight: 600;">
-          📷 Buka Kamera Scanner QR
-        </button>
       </div>
 
       <!-- Modal Kamera Scanner -->

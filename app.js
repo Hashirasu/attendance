@@ -535,7 +535,6 @@ async function loadEmployeeManagement() {
 
   adminEmployeeList.innerHTML = "";
   data.forEach(emp => {
-    // Badge styling: adm1n = merah, admin = oren, user = biru
     let roleBadgeBg = "rgba(0, 92, 191, 0.1)";
     let roleBadgeColor = "var(--ios-blue)";
     let roleText = "MEMBER";
