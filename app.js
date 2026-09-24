@@ -159,6 +159,14 @@ authMainButton.addEventListener("click", async () => {
     return;
   }
 
+  // VALIDASI EMAIL: Hanya boleh huruf, angka, karakter '@', dan titik '.' (tanpa simbol aneh seperti _, -, +, dll)
+  // Format standar: bagian lokal hanya huruf/angka, domain hanya huruf/angka/titik
+  const emailRegex = /^[a-zA-Z0-9]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  if (!emailRegex.test(email)) {
+    messageEl.textContent = "Format email tidak valid atau mengandung simbol yang dilarang (hanya boleh huruf dan angka).";
+    return;
+  }
+
   messageEl.textContent = "Memproses...";
 
   if (isRegisterMode) {
@@ -168,14 +176,14 @@ authMainButton.addEventListener("click", async () => {
       return;
     }
 
-    // 1. Validasi karakter: Hanya boleh huruf dan spasi (tanpa angka/simbol)
+    // Validasi nama: Hanya boleh huruf dan spasi (tanpa angka/simbol)
     const nameRegex = /^[A-Za-z\s]+$/;
     if (!nameRegex.test(name)) {
       messageEl.textContent = "Nama lengkap hanya boleh berisi huruf dan spasi (tidak boleh ada angka/simbol).";
       return;
     }
 
-    // 2. Cek apakah nama sudah terdaftar menggunakan fungsi RPC publik
+    // Cek apakah nama sudah terdaftar menggunakan fungsi RPC publik
     const { data: nameExists, error: rpcError } = await supabase.rpc("check_name_exists", {
       p_name: name
     });
@@ -190,7 +198,7 @@ authMainButton.addEventListener("click", async () => {
       return;
     }
 
-    // 3. Jika nama unik dan bersih, lanjutkan proses pendaftaran (Sign Up)
+    // Lanjutkan proses pendaftaran (Sign Up)
     const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
@@ -202,7 +210,6 @@ authMainButton.addEventListener("click", async () => {
       return;
     }
 
-    // Cek apakah halaman ini dibuka dari scan QR Kios
     const hasQrParam = sessionStorage.getItem("pending_secret");
 
     if (hasQrParam) {
@@ -229,7 +236,7 @@ authMainButton.addEventListener("click", async () => {
       toggleAuthBtn.click();
     }
   } else {
-    // --- BAGIAN LOGIN MANUAL ---
+    // --- LOGIN MANUAL ---
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
