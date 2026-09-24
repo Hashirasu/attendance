@@ -227,12 +227,9 @@ authMainButton.addEventListener("click", async () => {
     } else {
       messageEl.textContent = "Pendaftaran berhasil! Silakan login.";
       toggleAuthBtn.click();
-      
-    } else {
-      messageEl.textContent = "Pendaftaran berhasil! Silakan login.";
-      toggleAuthBtn.click();
     }
   } else {
+    // --- BAGIAN LOGIN MANUAL ---
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
@@ -267,6 +264,7 @@ authMainButton.addEventListener("click", async () => {
     await checkUrlAutoAttendance();
   }
 });
+
 
 async function handleLogout() {
   await supabase.auth.signOut();
