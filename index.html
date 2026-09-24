@@ -2,225 +2,242 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mudiviverse - Presensi</title>
-  <!-- SheetJS untuk Ekspor Excel -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <!-- Library html5-qrcode untuk Scanner Kamera Bawaan -->
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Mudiviverse</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
 <body>
 
-  <div class="container">
-    <!-- HEADER BRANDING -->
-    <header class="app-header">
-      <img src="logo.png" alt="Logo Mudiviverse" class="logo">
-      <h1>Mudiviverse</h1>
-      <p class="subtitle">Sistem Presensi Kehadiran</p>
-    </header>
-
-    <!-- ================= SECTION LOGIN / REGISTER ================= -->
-    <section id="login-section" class="card login-card">
-      <h2>Selamat Datang</h2>
-      <p class="card-desc">Silakan masuk atau daftar untuk melanjutkan presensi.</p>
+  <div class="app">
+    <!-- 1. LOGIN / REGISTER PANEL -->
+    <section id="login-section" class="panel">
+      <div class="brand-header">
+        <div class="logo-box">
+            <img src="logo.png" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
+        </div>
+        <span class="brand-title">MUDIVIVERSE</span>
+      </div>
 
       <div class="form-group" id="name-group" style="display: none;">
-        <label for="register-name">Nama Lengkap (Hanya huruf & spasi)</label>
-        <input type="text" id="register-name" placeholder="Contoh: Budi Santoso">
+        <input type="text" id="register-name" placeholder="Nama Lengkap" class="custom-input">
       </div>
 
       <div class="form-group">
-        <label for="email">Email</label>
-        <input type="email" id="email" placeholder="email@domain.com">
+        <input type="email" id="email" placeholder="contoh@email.com" class="custom-input">
       </div>
 
       <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" id="password" placeholder="••••••••">
+        <input type="password" id="password" placeholder="Enter your Password" class="custom-input">
       </div>
 
-      <button id="auth-main-button" class="auth-button" type="button">
+      <button id="auth-main-button" class="main-button">
         <span id="auth-button-text">Masuk</span>
       </button>
 
-      <div class="auth-toggle-box" style="margin-top: 15px; text-align: center;">
-        <span id="toggle-auth-text" style="font-size: 13px; color: var(--text-sub);">Belum punya akun?</span>
-        <button id="toggle-auth-btn" type="button" class="text-btn" style="background: none; border: none; color: var(--ios-blue); font-weight: 600; cursor: pointer; font-size: 13px;">Daftar di sini</button>
+      <div class="auth-toggle-box">
+        <span id="toggle-auth-text">Belum punya akun?</span>
+        <button id="toggle-auth-btn" class="link-button">Daftar di sini</button>
       </div>
-
-      <!-- TOMBOL BUKA KAMERA SCANNER DARI HALAMAN LOGIN -->
-      <div id="scanner-entry-section" style="margin-top: 20px; text-align: center; border-top: 1px solid var(--border-color, #eee); padding-top: 15px;">
-        <button id="open-scanner-btn" class="secondary-button" type="button" style="width: 100%; padding: 12px; font-weight: 600; border-radius: 12px;">
-          📷 Buka Kamera Scanner QR
+    
+      <!-- POS SEMENTARA: BELUM VERIFIKASI (Disembunyikan awalnya) -->
+      <div id="unverified-section" class="glass-card" style="display: none; text-align: center; padding: 25px; margin-top: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.1);">
+        <div style="font-size: 28px; margin-bottom: 10px;">✉️</div>
+        <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">Verifikasi Email Diperlukan</h3>
+        <p style="font-size: 13px; color: var(--text-sub); line-height: 1.5; margin-bottom: 16px;">
+          Akun kamu belum aktif. Periksa kotak masuk atau folder spam di email kamu untuk mengonfirmasi pendaftaran.
+        </p>
+      
+        <button id="btn-resend" class="main-button" style="width: 100%; margin-bottom: 10px; padding: 10px; font-size: 13px;">
+          Kirim Ulang Email Verifikasi
+        </button>
+      
+        <button id="btn-back-login" style="background: none; border: none; color: var(--text-sub); font-size: 13px; cursor: pointer; text-decoration: underline;">
+          Kembali ke Halaman Login
         </button>
       </div>
 
-      <p id="message" class="error-message"></p>
+      <p id="message" style="margin-top: 14px; font-size: 13px; color: var(--ios-red); text-align: center; font-weight: 600;"></p>
     </section>
 
-    <!-- SECTION UNVERIFIED EMAIL -->
-    <section id="unverified-section" class="card" style="display: none; text-align: center;">
-      <h2 style="color: var(--ios-orange, #f59e0b); margin-bottom: 10px;">Verifikasi Email Diperlukan</h2>
-      <p style="font-size: 14px; color: var(--text-sub); line-height: 1.5; margin-bottom: 20px;">
-        Akun Anda telah terdaftar. Silakan cek email masuk atau folder spam Anda untuk melakukan verifikasi, lalu login kembali.
-      </p>
-      <button id="btn-resend" class="auth-button" type="button" style="margin-bottom: 10px;">Kirim Ulang Email Verifikasi</button>
-      <button id="btn-back-login" class="secondary-button" type="button" style="width: 100%;">Kembali ke Login</button>
-    </section>
-
-        <!-- ================= SECTION DASHBOARD USER ================= -->
-    <section id="user-section" class="card user-card" style="display: none;">
-      <div class="user-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-        <div>
-          <h2 id="user-name-display" style="margin: 0; font-size: 18px;">Nama Pengguna</h2>
-          <span id="user-code" style="font-size: 12px; color: var(--text-sub);">Kode: -</span>
+    <!-- 2. USER DASHBOARD -->
+    <section id="user-section" class="panel" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 1px solid rgba(0,0,0,0.05); margin-bottom: 24px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="logo-box" style="width: 38px; height: 38px;">
+            <img src="logo.png" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
+          </div>
+          <div>
+            <h3 style="font-weight: 700; font-size: 16px;">Mudiviverse</h3>
+            <span id="user-code" style="font-size: 11px; color: var(--text-sub); font-weight: 600;">-</span>
+          </div>
         </div>
         <div style="display: flex; gap: 8px;">
-          <button id="switch-to-admin" class="secondary-button" type="button" style="display: none; padding: 6px 12px; font-size: 12px;">Panel Admin</button>
-          <button id="logout-button" class="secondary-button" type="button" style="padding: 6px 12px; font-size: 12px; color: var(--ios-red);">Keluar</button>
+          <button id="switch-to-admin" class="secondary-button" style="display: none;">Admin</button>
+          <button id="logout-button" class="secondary-button" style="color: var(--ios-red);">Logout</button>
         </div>
       </div>
 
-      <!-- Tombol Buka Kamera Scanner di Dashboard -->
-      <div style="margin-bottom: 15px;">
-        <button id="open-scanner-btn-user" class="auth-button" type="button" style="width: 100%; padding: 12px; font-weight: 600; border-radius: 12px;">
-          📷 Scan QR Absensi (Kamera)
+      <div style="margin-bottom: 24px;">
+        <h2 style="font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">Halo, <span id="user-name-display">Member</span></h2>
+        <p style="color: var(--text-sub); font-size: 14px; margin-top: 4px;">Selamat datang kembali di dashboard Anda.</p>
+      </div>
+
+      <div class="today-grid">
+        <div class="card-box">
+          <span class="card-badge">Hari Ini</span>
+          <div id="today-status" style="margin-top: 12px;">
+            <p>Memuat status...</p>
+          </div>
+        </div>
+
+        <!-- PENGAMAN: TOMBOL ABSEN MANUAL DIKUNCI / DIGANTI INSTRUKSI QR -->
+        <div class="card-box" style="display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <span class="card-badge">Kehadiran</span>
+            <h4 style="font-size: 16px; margin-top: 8px; font-weight: 600;">Catat Presensi</h4>
+          </div>
+          
+          <div style="background: rgba(0, 0, 0, 0.03); padding: 12px; border-radius: 10px; border: 1px dashed rgba(0, 0, 0, 0.15); margin-top: 12px;">
+            <p style="font-size: 12px; color: var(--text-sub); line-height: 1.4; text-align: center; margin: 0;">
+              🔒 <b>Absensi Manual Dikunci</b><br>Silakan Scan QR Code di lokasi.
+            </p>
+          </div>
+          
+          <p id="attendance-message" style="font-size: 11px; margin-top: 8px; color: var(--text-sub); text-align: center;"></p>
+        </div>
+      </div>
+
+      <div class="card-box">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h3 style="font-size: 16px; font-weight: 700;">Riwayat Absensi</h3>
+          <svg width="18" height="18" stroke="var(--text-sub)" viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <div id="attendance-history">
+          <p>Memuat riwayat...</p>
+        </div>
+      </div>
+
+      <!-- Tombol Buka Kamera Scanner (Tambahkan di index.html) -->
+      <div id="scanner-entry-section" style="margin-top: 15px; text-align: center;">
+        <button id="open-scanner-btn" class="secondary-button" style="width: 100%; padding: 12px; font-weight: 600;">
+    📷 Buka Kamera Scanner QR
         </button>
       </div>
 
-      <!-- Status Hari Ini -->
-      <div class="status-box" id="today-status" style="margin-bottom: 15px; padding: 15px; background: #f8f9fa; border-radius: 14px; text-align: center;">
-        <p style="color: var(--text-sub); font-size: 13px;">Memuat status...</p>
-      </div>
-
-      <!-- STATISTIK KEHADIRAN BULAN INI -->
-      <div style="margin-bottom: 20px; padding: 15px; background: #fdfdfd; border: 1px solid #eee; border-radius: 16px;">
-        <h3 style="font-size: 15px; margin-bottom: 10px; color: var(--text-main);">📊 Statistik Bulan Ini</h3>
-        <div style="display: flex; justify-content: space-around; text-align: center; margin-bottom: 12px;">
-          <div>
-            <div id="stat-total-hadir" style="font-size: 18px; font-weight: 700; color: var(--ios-blue);">0</div>
-            <div style="font-size: 10px; color: var(--text-sub);">Tepat Waktu</div>
-          </div>
-          <div>
-            <div id="stat-total-terlambat" style="font-size: 18px; font-weight: 700; color: #f59e0b;">0</div>
-            <div style="font-size: 10px; color: var(--text-sub);">Terlambat</div>
-          </div>
-          <div>
-            <div id="stat-attendance-rate" style="font-size: 18px; font-weight: 700; color: #10b981;">0%</div>
-            <div style="font-size: 10px; color: var(--text-sub);">Kehadiran</div>
-          </div>
-        </div>
-        <div style="width: 100%; background: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden; display: flex;">
-          <div id="progress-bar-present" style="width: 0%; background: var(--ios-blue); height: 100%; transition: width 0.5s ease;"></div>
-          <div id="progress-bar-late" style="width: 0%; background: #f59e0b; height: 100%; transition: width 0.5s ease;"></div>
-        </div>
-      </div>
-
-      <!-- Riwayat Presensi -->
-      <div>
-        <h3 style="font-size: 15px; margin-bottom: 10px;">Riwayat Kehadiran</h3>
-        <div id="attendance-history" style="max-height: 220px; overflow-y: auto;">
-          <p style="color: var(--text-sub); font-size: 13px; text-align: center;">Memuat riwayat...</p>
+     <!-- Modal / Kotak Pop-up Kamera Scanner -->
+      <div id="scanner-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center; flex-direction: column;">
+        <div style="background: var(--card-bg, #fff); padding: 20px; border-radius: 16px; width: 90%; max-width: 400px; text-align: center; position: relative;">
+          <h3 style="margin-bottom: 15px; font-size: 18px;">Arahkan Kamera ke QR Kios</h3>
+    
+    <!-- Area Tampilan Kamera -->
+          <div id="reader" style="width: 100%; border-radius: 12px; overflow: hidden;"></div>
+    
+          <button id="close-scanner-btn" class="auth-button" style="margin-top: 15px; background: var(--ios-red, #ff3b30); color: white; padding: 10px; border-radius: 8px; border: none; width: 100%;">
+      Tutup Kamera
+          </button>
         </div>
       </div>
     </section>
 
-    <!-- ================= SECTION PANEL ADMIN ================= -->
-    <section id="admin-section" class="card admin-card" style="display: none;">
-      <div class="user-header">
-        <h2 style="margin: 0; font-size: 18px;">Panel Admin</h2>
+    <!-- 3. ADMIN PANEL -->
+    <section id="admin-section" class="panel" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 1px solid rgba(0,0,0,0.05); margin-bottom: 24px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="logo-box" style="width: 38px; height: 38px;">
+            <img src="logo.png" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
+          </div>
+          <div>
+            <h3 style="font-weight: 700; font-size: 16px;">Admin Panel</h3>
+          </div>
+        </div>
         <div style="display: flex; gap: 8px;">
-          <button id="switch-to-user" class="secondary-button" type="button" style="padding: 6px 12px; font-size: 12px;">Dashboard</button>
-          <button id="admin-logout-button" class="secondary-button" type="button" style="padding: 6px 12px; font-size: 12px; color: var(--ios-red);">Keluar</button>
+          <button id="switch-to-user" class="secondary-button">User</button>
+          <button id="admin-logout-button" class="secondary-button" style="color: var(--ios-red);">Logout</button>
         </div>
       </div>
 
-      <!-- Tab Navigasi Admin -->
-      <div class="admin-tabs" style="display: flex; gap: 10px; margin: 15px 0;">
-        <button id="tab-rekap-btn" class="auth-button active" type="button" style="flex: 1; padding: 8px; font-size: 13px;">Rekap Absen</button>
-        <button id="tab-karyawan-btn" class="secondary-button" type="button" style="flex: 1; padding: 8px; font-size: 13px;">Kelola Anggota</button>
+      <div class="admin-tabs">
+        <button id="tab-rekap-btn" class="tab-btn active" type="button">Data Absensi</button>
+        <button id="tab-karyawan-btn" class="tab-btn" type="button">Anggota</button>
       </div>
 
-      <!-- View Rekap Absen -->
       <div id="admin-view-rekap">
-        <div class="filter-box" style="display: flex; gap: 8px; margin-bottom: 15px;">
-          <input type="date" id="admin-filter-date" style="flex: 1; padding: 8px; font-size: 13px;">
-          <select id="admin-filter-status" style="flex: 1; padding: 8px; font-size: 13px;">
-            <option value="ALL">Semua Status</option>
-            <option value="present">Tepat Waktu</option>
-            <option value="late">Terlambat</option>
-          </select>
-        </div>
+        <div class="card-box">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="font-size: 16px; font-weight: 700;">Rekap Kehadiran</h3>
+            <button id="export-csv-btn" class="secondary-button btn-export" type="button">
+              <span style="display:flex; align-items:center; gap:4px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export
+              </span>
+            </button>
+          </div>
 
-        <button id="export-csv-btn" class="auth-button" type="button" style="width: 100%; margin-bottom: 15px; background: #28a745 !important; padding: 10px; font-size: 13px;">
-          📥 Download Rekap (Excel)
-        </button>
+          <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <input type="date" id="admin-filter-date" class="custom-input" style="padding: 10px; font-size: 13px;">
+            <select id="admin-filter-status" class="custom-select" style="padding: 10px; font-size: 13px;">
+              <option value="ALL">Semua</option>
+              <option value="present">Tepat Waktu</option>
+              <option value="late">Terlambat</option>
+            </select>
+          </div>
 
-        <div id="admin-attendance-list" style="max-height: 300px; overflow-y: auto;">
-          <p style="color: var(--text-sub); text-align: center; font-size: 13px;">Memuat rekap...</p>
+          <div id="admin-attendance-list">
+            <p>Memuat data...</p>
+          </div>
         </div>
       </div>
 
-      <!-- View Kelola Anggota -->
       <div id="admin-view-karyawan" style="display: none;">
-        <div id="admin-employee-list" style="max-height: 350px; overflow-y: auto;">
-          <p style="color: var(--text-sub); text-align: center; font-size: 13px;">Memuat anggota...</p>
+        <div class="card-box">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="font-size: 16px; font-weight: 700;">Kelola Anggota</h3>
+            <svg width="18" height="18" stroke="var(--text-sub)" viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div id="admin-employee-list">
+            <p>Memuat anggota...</p>
+          </div>
         </div>
       </div>
     </section>
-
   </div>
 
-  <!-- ================= MODAL KAMERA SCANNER QR ================= -->
-  <div id="scanner-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; flex-direction: column;">
-    <div style="background: #ffffff; padding: 20px; border-radius: 20px; width: 90%; max-width: 380px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
-      <h3 style="margin-bottom: 15px; font-size: 18px; color: #333;">Arahkan Kamera ke QR</h3>
-      <div id="reader" style="width: 100%; border-radius: 12px; overflow: hidden;"></div>
-      <button id="close-scanner-btn" class="auth-button" type="button" style="margin-top: 15px; background: var(--ios-red, #ff3b30) !important; color: white; padding: 10px; border-radius: 10px; border: none; width: 100%; font-weight: 600;">
-        Tutup Kamera
-      </button>
-    </div>
-  </div>
-
-  <!-- ================= MODAL EDIT ANGGOTA (ADMIN) ================= -->
-  <div id="edit-emp-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; justify-content: center; align-items: center;">
-    <div class="card" style="width: 90%; max-width: 360px; background: #fff;">
-      <h3 style="margin-bottom: 15px;">Edit Data Anggota</h3>
+  <!-- MODAL EDIT MEMBER -->
+  <div id="edit-emp-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <h3 style="font-weight: 700; font-size: 18px; margin-bottom: 18px;">Edit Akun</h3>
       <input type="hidden" id="edit-emp-id">
-      
-      <div class="form-group" style="margin-bottom: 10px;">
-        <label>Nama Lengkap</label>
-        <input type="text" id="edit-emp-name">
-      </div>
-      
-      <div class="form-group" style="margin-bottom: 10px;">
-        <label>Kode Anggota</label>
-        <input type="text" id="edit-emp-code">
-      </div>
 
-      <div class="form-group" style="margin-bottom: 10px;">
+      <div class="form-group">
+        <label>Nama</label>
+        <input type="text" id="edit-emp-name" class="custom-input">
+      </div>
+      <div class="form-group">
+        <label>Kode</label>
+        <input type="text" id="edit-emp-code" class="custom-input">
+      </div>
+      <div class="form-group">
         <label>Role</label>
-        <select id="edit-emp-role" style="width: 100%; padding: 10px; border-radius: 8px;">
+        <select id="edit-emp-role" class="custom-select">
           <option value="user">User</option>
           <option value="admin">Admin</option>
-          <option value="adm1n">Adm1n (Super)</option>
         </select>
       </div>
-
-      <div class="form-group" style="margin-bottom: 15px;">
-        <label>Status Akun</label>
-        <select id="edit-emp-active" style="width: 100%; padding: 10px; border-radius: 8px;">
+      <div class="form-group">
+        <label>Status</label>
+        <select id="edit-emp-active" class="custom-select">
           <option value="true">Aktif</option>
           <option value="false">Nonaktif</option>
         </select>
       </div>
 
-      <p id="edit-modal-msg" style="font-size: 12px; color: var(--ios-red); margin-bottom: 10px;"></p>
+      <p id="edit-modal-msg" style="font-size: 12px; color: var(--ios-red); font-weight: 600; margin-top: 10px;"></p>
 
-      <div style="display: flex; gap: 10px;">
+      <div style="display: flex; gap: 10px; margin-top: 24px;">
         <button id="cancel-edit-emp" class="secondary-button" type="button" style="flex: 1;">Batal</button>
-        <button id="save-edit-emp" class="auth-button" type="button" style="flex: 1;">Simpan</button>
+        <button id="save-edit-emp" class="main-button" type="button" style="flex: 1; margin: 0;">Simpan</button>
       </div>
     </div>
   </div>
