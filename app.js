@@ -163,11 +163,36 @@ authMainButton.addEventListener("click", async () => {
 
   if (isRegisterMode) {
     const name = registerNameInput.value.trim();
+    
     if (!name) {
       messageEl.textContent = "Nama lengkap wajib diisi!";
       return;
     }
 
+    // 1. Validasi: Hanya boleh huruf (alfabet) dan spasi (tanpa angka/simbol aneh)
+    const nameRegex = /^[A-Za-z\s]+$/;
+    if (!nameRegex.test(name)) {
+      messageEl.textContent = "Nama lengkap hanya boleh berisi huruf dan spasi (tidak boleh ada angka/simbol).";
+      return;
+    }
+
+    // 2. Cek apakah nama sudah terdaftar di database sebelumnya
+    const { data: existingEmployees, error: checkError } = await supabase
+      .from("employees")
+      .select("id")
+      .ilike("name", name); // ilike agar case-insensitive (huruf besar/kecil dianggap sama)
+
+    if (checkError) {
+      messageEl.textContent = "Gagal memvalidasi nama: " + checkError.message;
+      return;
+    }
+
+    if (existingEmployees && existingEmployees.length > 0) {
+      messageEl.textContent = "Nama lengkap ini sudah terdaftar. Silakan gunakan nama lain atau login jika sudah punya akun.";
+      return;
+    }
+
+    // Jika lolos validasi, lanjutkan proses Sign Up
     const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
@@ -178,6 +203,8 @@ authMainButton.addEventListener("click", async () => {
       messageEl.textContent = "Gagal mendaftar: " + signUpError.message;
       return;
     }
+
+    
 
     const hasQrParam = sessionStorage.getItem("pending_secret");
 
