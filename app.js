@@ -1,13 +1,11 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-// CONFIG SUPABASE
 const SUPABASE_URL = "https://njdrnrnnlsrxdyugmsww.supabase.co"; 
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qZHJucm5ubHNyeGR5dWdtc3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5MDExNDEsImV4cCI6MjEwNTQ3NzE0MX0.F65pU2A3XjyEaisye2GfzLPF9DCaQF1fklMxgSTRhs8";
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const KIOSK_SECRET = "VIHARA_ZEN_SECRET_2026";
 
-// ELEMEN DOM
 const loginSection = document.getElementById("login-section");
 const userSection = document.getElementById("user-section");
 const adminSection = document.getElementById("admin-section");
@@ -45,6 +43,9 @@ const exportCsvBtn = document.getElementById("export-csv-btn");
 const adminAttendanceList = document.getElementById("admin-attendance-list");
 const adminEmployeeList = document.getElementById("admin-employee-list");
 
+const adminChartFilter = document.getElementById("admin-chart-filter");
+const adminChartContainer = document.getElementById("admin-chart-container");
+
 const editEmpModal = document.getElementById("edit-emp-modal");
 const editEmpId = document.getElementById("edit-emp-id");
 const editEmpName = document.getElementById("edit-emp-name");
@@ -59,7 +60,7 @@ let isRegisterMode = false;
 let currentUserRole = "user";
 
 // ==============================
-// 1. AUTO CHECK-IN DARI URL QR
+// 1. AUTO CHECK-IN & QR SCANNER
 // ==============================
 async function checkUrlAutoAttendance() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -80,14 +81,11 @@ async function checkUrlAutoAttendance() {
     const currentBlock = Math.floor(currentUnix / 15);
 
     if (savedSecret === KIOSK_SECRET && Math.abs(currentBlock - parseInt(savedBlock)) <= 4) {
-      
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        if (!isRegisterMode) {
-          toggleAuthBtn.click();
-        }
-        messageEl.textContent = "Silakan buat akun terlebih dahulu untuk menyelesaikan absensi Anda.";
+        if (!isRegisterMode) toggleAuthBtn.click();
+        messageEl.textContent = "Silakan buat akun untuk menyelesaikan presensi.";
         return; 
       }
 
@@ -99,24 +97,20 @@ async function checkUrlAutoAttendance() {
         await loadAttendanceHistory();
         await loadMonthlyStatistics();
       } else {
-        const errorMsg = error ? error.message : (data ? data.message : "Terjadi kesalahan sistem.");
+        const errorMsg = error ? error.message : (data ? data.message : "Terjadi kesalahan.");
         alert("Gagal Absen: " + errorMsg);
       }
       
       sessionStorage.removeItem("pending_secret");
       sessionStorage.removeItem("pending_block");
-
     } else {
-      alert("Sesi QR Code sudah kedaluwarsa. Silakan scan ulang di kios.");
+      alert("QR Code kedaluwarsa. Silakan scan ulang.");
       sessionStorage.removeItem("pending_secret");
       sessionStorage.removeItem("pending_block");
     }
   }
 }
 
-// ==============================
-// 2. AUTHENTICATION & SESSION
-// ==============================
 window.addEventListener("DOMContentLoaded", async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (session) {
@@ -153,10 +147,9 @@ authMainButton.addEventListener("click", async () => {
     return;
   }
 
-  // Validasi Email: Hanya huruf, angka, '@', dan '.'
   const emailRegex = /^[a-zA-Z0-9]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   if (!emailRegex.test(email)) {
-    messageEl.textContent = "Format email tidak valid atau mengandung simbol yang dilarang (hanya huruf dan angka).";
+    messageEl.textContent = "Format email tidak valid atau mengandung simbol terlarang.";
     return;
   }
 
@@ -169,32 +162,25 @@ authMainButton.addEventListener("click", async () => {
       return;
     }
 
-    // Validasi Nama: Hanya huruf dan spasi
     const nameRegex = /^[A-Za-z\s]+$/;
     if (!nameRegex.test(name)) {
-      messageEl.textContent = "Nama lengkap hanya boleh berisi huruf dan spasi (tidak boleh ada angka/simbol).";
+      messageEl.textContent = "Nama hanya boleh berisi huruf dan spasi.";
       return;
     }
 
-    // Cek Nama Kembar via RPC Publik
-    const { data: nameExists, error: rpcError } = await supabase.rpc("check_name_exists", {
-      p_name: name
-    });
-
+    const { data: nameExists, error: rpcError } = await supabase.rpc("check_name_exists", { p_name: name });
     if (rpcError) {
       messageEl.textContent = "Gagal memvalidasi nama: " + rpcError.message;
       return;
     }
 
     if (nameExists) {
-      messageEl.textContent = "Nama lengkap ini sudah terdaftar! Silakan gunakan nama lain.";
+      messageEl.textContent = "Nama lengkap ini sudah terdaftar!";
       return;
     }
 
     const { error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { full_name: name } }
+      email, password, options: { data: { full_name: name } }
     });
 
     if (signUpError) {
@@ -202,56 +188,31 @@ authMainButton.addEventListener("click", async () => {
       return;
     }
 
-    const hasQrParam = sessionStorage.getItem("pending_secret");
-
-    if (hasQrParam) {
-      messageEl.textContent = "Pendaftaran berhasil, masuk otomatis...";
-      
-      const { error: loginError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-
-      if (loginError) {
-        messageEl.textContent = "Gagal otomatis masuk: " + loginError.message;
-        return;
+    if (sessionStorage.getItem("pending_secret")) {
+      const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+      if (!loginError) {
+        messageEl.textContent = "";
+        await loadUserProfile();
+        await checkUrlAutoAttendance();
       }
-
-      messageEl.textContent = "";
-      await loadUserProfile();
-      
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      await checkUrlAutoAttendance();
-      
     } else {
       messageEl.textContent = "Pendaftaran berhasil! Silakan login.";
       toggleAuthBtn.click();
     }
   } else {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       messageEl.textContent = "Login Gagal: " + error.message;
       return;
     }
 
-    const user = data.user;
-    
-    if (user && !user.email_confirmed_at) {
+    if (data.user && !data.user.email_confirmed_at) {
       await supabase.auth.signOut();
-
       emailInput.style.display = "none";
       passwordInput.style.display = "none";
       authMainButton.style.display = "none";
       document.querySelector(".auth-toggle-box").style.display = "none";
-      
-      if (unverifiedSection) {
-        unverifiedSection.style.display = "block";
-      }
-      
+      if (unverifiedSection) unverifiedSection.style.display = "block";
       window.pendingVerificationEmail = email;
       messageEl.textContent = "";
       return;
@@ -275,18 +236,16 @@ function showLoginSection() {
   loginSection.style.display = "block";
   userSection.style.display = "none";
   adminSection.style.display = "none";
-  
   if (unverifiedSection) unverifiedSection.style.display = "none";
   emailInput.style.display = "block";
   passwordInput.style.display = "block";
   authMainButton.style.display = "block";
-  const toggleBox = document.querySelector(".auth-toggle-box");
-  if (toggleBox) toggleBox.style.display = "block";
+  document.querySelector(".auth-toggle-box").style.display = "block";
   messageEl.textContent = "";
 }
 
 // ==============================
-// 3. PROFILE & DASHBOARD USER
+// 2. USER DASHBOARD & STATS
 // ==============================
 async function loadUserProfile() {
   const { data: { user } } = await supabase.auth.getUser();
@@ -321,104 +280,58 @@ async function loadUserProfile() {
 
 async function loadTodayStatus() {
   if (!todayStatusEl) return;
-  todayStatusEl.innerHTML = "<p style='color: var(--text-sub);'>Memuat status...</p>";
+  todayStatusEl.innerHTML = "<p>Memuat status...</p>";
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
   
   const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
 
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("attendance")
     .select("check_in, status")
     .eq("employee_id", user.id)
     .eq("attendance_date", todayStr)
     .maybeSingle();
 
-  if (error) {
-    todayStatusEl.innerHTML = "<p style='color: var(--ios-red);'>Gagal memuat status.</p>";
-    return;
-  }
-
   if (data) {
-    const time = new Date(data.check_in).toLocaleTimeString("id-ID", {
-      hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta"
-    });
-    const badge = data.status === "late" 
-      ? `<span class="badge-late">Terlambat</span>` 
-      : `<span class="badge-present">Tepat Waktu</span>`;
-
-    todayStatusEl.innerHTML = `
-      <div style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">Sudah Absen</div>
-      <div style="font-size: 12px; color: var(--text-sub); margin-bottom: 8px;">Pukul ${time} WIB</div>
-      <div>${badge}</div>
-    `;
+    const time = new Date(data.check_in).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" });
+    const badge = data.status === "late" ? `<span class="badge-late">Terlambat</span>` : `<span class="badge-present">Tepat Waktu</span>`;
+    todayStatusEl.innerHTML = `<div style="font-size: 14px; font-weight: 700;">Sudah Absen (${time})</div><div style="margin-top:6px;">${badge}</div>`;
   } else {
-    todayStatusEl.innerHTML = `
-      <div style="font-size: 15px; font-weight: 700; color: var(--ios-red); margin-bottom: 4px;">Belum Absen</div>
-      <div style="font-size: 12px; color: var(--text-sub);">Silakan scan QR di lokasi.</div>
-    `;
+    todayStatusEl.innerHTML = `<div style="font-size: 14px; font-weight: 700; color: var(--ios-red);">Belum Absen</div>`;
   }
 }
 
 async function loadAttendanceHistory() {
   if (!attendanceHistory) return;
-  attendanceHistory.innerHTML = "<p style='color: var(--text-sub);'>Memuat riwayat...</p>";
-
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("attendance")
     .select("attendance_date, check_in, status")
     .eq("employee_id", user.id)
     .order("attendance_date", { ascending: false });
 
-  if (error || !data || data.length === 0) {
-    attendanceHistory.innerHTML = `
-      <div style="text-align: center; padding: 16px 10px;">
-        <p style="font-size: 13px; color: var(--text-sub); margin: 0; font-weight: 500;">Belum ada riwayat.</p>
-      </div>
-    `;
+  if (!data || data.length === 0) {
+    attendanceHistory.innerHTML = "<p style='font-size: 13px; color: var(--text-sub);'>Belum ada riwayat.</p>";
     return;
   }
 
   attendanceHistory.innerHTML = "";
-
   data.forEach((row) => {
-    const date = new Date(row.attendance_date + "T00:00:00").toLocaleDateString("id-ID", {
-      day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Jakarta"
-    });
-
-    const time = new Date(row.check_in).toLocaleTimeString("id-ID", {
-      hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta"
-    });
-
-    const isLate = row.status === "late";
-    const statusBadge = isLate 
-      ? `<span class="badge-late">Terlambat</span>` 
-      : `<span class="badge-present">Hadir</span>`;
+    const date = new Date(row.attendance_date + "T00:00:00").toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Jakarta" });
+    const time = new Date(row.check_in).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" });
+    const badge = row.status === "late" ? `<span class="badge-late">Terlambat</span>` : `<span class="badge-present">Hadir</span>`;
 
     const item = document.createElement("div");
     item.className = "history-item";
-    item.innerHTML = `
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <svg width="18" height="18" stroke="var(--ios-blue)" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-        <div>
-          <strong style="font-size: 14px; color: var(--text-main);">${date}</strong>
-          <div style="font-size: 11px; color: var(--text-sub); margin-top: 2px;">Pukul ${time} WIB</div>
-        </div>
-      </div>
-      <div>${statusBadge}</div>
-    `;
-
+    item.innerHTML = `<div><strong>${date}</strong><div style="font-size: 11px; color: var(--text-sub);">${time} WIB</div></div><div>${badge}</div>`;
     attendanceHistory.appendChild(item);
   });
 }
 
-// ==============================
-// 4. STATISTIK KEHADIRAN BULANAN
-// ==============================
 async function loadMonthlyStatistics() {
   const statHadirEl = document.getElementById("stat-total-hadir");
   const statTerlambatEl = document.getElementById("stat-total-terlambat");
@@ -427,52 +340,37 @@ async function loadMonthlyStatistics() {
   const barLate = document.getElementById("progress-bar-late");
 
   if (!statHadirEl) return;
-
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
   const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const startOfMonth = `${year}-${month}-01`;
+  const startOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
 
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("attendance")
-    .select("status, attendance_date")
+    .select("status")
     .eq("employee_id", user.id)
     .gte("attendance_date", startOfMonth);
 
-  if (error || !data) return;
+  if (!data) return;
 
-  let totalHadir = 0;
-  let totalTerlambat = 0;
+  let hadir = 0, terlambat = 0;
+  data.forEach(r => r.status === "late" ? terlambat++ : hadir++);
+  const total = hadir + terlambat;
+  const percent = total > 0 ? Math.round((hadir / total) * 100) : 0;
 
-  data.forEach(row => {
-    if (row.status === "late") {
-      totalTerlambat++;
-    } else {
-      totalHadir++;
-    }
-  });
-
-  let totalAbsen = totalHadir + totalTerlambat;
-  let presentPercent = totalAbsen > 0 ? (totalHadir / totalAbsen) * 100 : 0;
-  let latePercent = totalAbsen > 0 ? (totalTerlambat / totalAbsen) * 100 : 0;
-
-  statHadirEl.textContent = totalHadir;
-  statTerlambatEl.textContent = totalTerlambat;
-  statRateEl.textContent = Math.round(presentPercent) + "%";
-
+  statHadirEl.textContent = hadir;
+  statTerlambatEl.textContent = terlambat;
+  statRateEl.textContent = percent + "%";
   if (barPresent && barLate) {
-    barPresent.style.width = presentPercent + "%";
-    barLate.style.width = latePercent + "%";
+    barPresent.style.width = percent + "%";
+    barLate.style.width = (total > 0 ? (terlambat / total) * 100 : 0) + "%";
   }
 }
 
 // ==============================
-// 5. BUILT-IN QR CAMERA SCANNER
+// 3. QR SCANNER KAMERA
 // ==============================
-const openScannerBtn = document.getElementById("open-scanner-btn");
 const openScannerBtnUser = document.getElementById("open-scanner-btn-user");
 const scannerModal = document.getElementById("scanner-modal");
 const closeScannerBtn = document.getElementById("close-scanner-btn");
@@ -481,47 +379,35 @@ let html5QrCode = null;
 async function startQrScanner() {
   if (!scannerModal) return;
   scannerModal.style.display = "flex";
-  
   html5QrCode = new Html5Qrcode("reader");
-  const config = { fps: 10, qrbox: { width: 250, height: 250 } };
   
   try {
-    await html5QrCode.start(
-      { facingMode: "environment" },
-      config,
-      async (decodedText) => {
-        await html5QrCode.stop();
-        html5QrCode.clear();
-        scannerModal.style.display = "none";
-        
-        try {
-          const urlObj = new URL(decodedText);
-          const secret = urlObj.searchParams.get("secret");
-          const block = urlObj.searchParams.get("block");
-          
-          if (secret && block) {
-            sessionStorage.setItem("pending_secret", secret);
-            sessionStorage.setItem("pending_block", block);
-            await checkUrlAutoAttendance();
-          } else {
-            alert("QR Code tidak valid untuk presensi Mudiviverse.");
-          }
-        } catch (e) {
-          alert("Format QR Code tidak dikenali.");
+    await html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, async (text) => {
+      await html5QrCode.stop();
+      html5QrCode.clear();
+      scannerModal.style.display = "none";
+      try {
+        const url = new URL(text);
+        const secret = url.searchParams.get("secret");
+        const block = url.searchParams.get("block");
+        if (secret && block) {
+          sessionStorage.setItem("pending_secret", secret);
+          sessionStorage.setItem("pending_block", block);
+          await checkUrlAutoAttendance();
+        } else {
+          alert("QR Code tidak valid.");
         }
-      },
-      () => {}
-    );
-  } catch (err) {
-    alert("Gagal membuka kamera. Pastikan izin akses kamera diaktifkan.");
-    console.error(err);
+      } catch {
+        alert("Format QR tidak dikenali.");
+      }
+    }, () => {});
+  } catch {
+    alert("Gagal membuka kamera.");
     scannerModal.style.display = "none";
   }
 }
 
-if (openScannerBtn) openScannerBtn.addEventListener("click", startQrScanner);
 if (openScannerBtnUser) openScannerBtnUser.addEventListener("click", startQrScanner);
-
 if (closeScannerBtn) {
   closeScannerBtn.addEventListener("click", async () => {
     if (html5QrCode && html5QrCode.isScanning) {
@@ -533,19 +419,15 @@ if (closeScannerBtn) {
 }
 
 // ==============================
-// 6. ADMIN PANEL & MANAGEMENT
+// 4. ADMIN PANEL & GRAFIK X-Y
 // ==============================
 if (switchToAdminBtn) {
   switchToAdminBtn.addEventListener("click", async () => {
     userSection.style.display = "none";
     adminSection.style.display = "block";
-
-    const todayWIB = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
-    if (adminFilterDate) {
-      adminFilterDate.value = todayWIB;
-    }
-
+    adminFilterDate.value = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
     await loadAdminAttendance();
+    await loadAdminChart();
   });
 }
 
@@ -563,7 +445,6 @@ if (tabRekapBtn && tabKaryawanBtn) {
     tabRekapBtn.classList.add("active");
     tabKaryawanBtn.classList.remove("active");
   });
-
   tabKaryawanBtn.addEventListener("click", async () => {
     adminViewRekap.style.display = "none";
     adminViewKaryawan.style.display = "block";
@@ -575,140 +456,103 @@ if (tabRekapBtn && tabKaryawanBtn) {
 
 if (adminFilterDate) adminFilterDate.addEventListener("change", loadAdminAttendance);
 if (adminFilterStatus) adminFilterStatus.addEventListener("change", loadAdminAttendance);
+if (adminChartFilter) adminChartFilter.addEventListener("change", loadAdminChart);
 
 async function loadAdminAttendance() {
   if (!adminAttendanceList) return;
-  adminAttendanceList.innerHTML = "<p style='color: var(--text-sub);'>Memuat rekap...</p>";
+  adminAttendanceList.innerHTML = "<p>Memuat rekap...</p>";
 
-  const todayWIB = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
+  let query = supabase.from("attendance").select("attendance_date, check_in, status, employees(name, employee_code)").order("check_in", { ascending: false });
+  if (adminFilterDate.value) query = query.eq("attendance_date", adminFilterDate.value);
+  if (adminFilterStatus.value !== "ALL") query = query.eq("status", adminFilterStatus.value);
 
-  if (adminFilterDate && !adminFilterDate.value) {
-    adminFilterDate.value = todayWIB;
-  }
-
-  const selectedDate = adminFilterDate.value;
-  const selectedStatus = adminFilterStatus.value;
-
-  let query = supabase
-    .from("attendance")
-    .select("id, attendance_date, check_in, status, employees(name, employee_code)")
-    .order("check_in", { ascending: false });
-
-  if (selectedDate) {
-    query = query.eq("attendance_date", selectedDate);
-  }
-
-  if (selectedStatus !== "ALL") {
-    query = query.eq("status", selectedStatus);
-  }
-
-  const { data, error } = await query;
-
-  if (error || !data) {
-    adminAttendanceList.innerHTML = "<p style='color: var(--ios-red);'>Gagal memuat rekap.</p>";
-    return;
-  }
-
-  if (data.length === 0) {
-    adminAttendanceList.innerHTML = "<p style='color: var(--text-sub); text-align: center; padding: 15px;'>Tidak ada data.</p>";
+  const { data } = await query;
+  if (!data || data.length === 0) {
+    adminAttendanceList.innerHTML = "<p style='font-size: 13px; color: var(--text-sub);'>Tidak ada data.</p>";
     return;
   }
 
   adminAttendanceList.innerHTML = "";
-
-  data.forEach((row) => {
-    const date = new Date(row.attendance_date + "T00:00:00").toLocaleDateString("id-ID", {
-      day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Jakarta"
-    });
-
-    const time = new Date(row.check_in).toLocaleTimeString("id-ID", {
-      hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta"
-    });
-
-    const empName = row.employees ? row.employees.name : "Member (Dihapus)";
-    const empCode = row.employees ? row.employees.employee_code : "-";
-
-    const isLate = row.status === "late";
-    const statusBadge = isLate 
-      ? `<span class="badge-late">Terlambat</span>` 
-      : `<span class="badge-present">Hadir</span>`;
+  data.forEach(row => {
+    const time = new Date(row.check_in).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" });
+    const name = row.employees ? row.employees.name : "Dihapus";
+    const badge = row.status === "late" ? `<span class="badge-late">Terlambat</span>` : `<span class="badge-present">Hadir</span>`;
 
     const item = document.createElement("div");
     item.className = "history-item";
-    item.innerHTML = `
-      <div>
-        <strong style="font-size: 14px; color: var(--text-main);">${empName}</strong> 
-        <span style="font-size: 11px; color: var(--text-sub);">(${empCode})</span>
-        <div style="font-size: 11px; color: var(--text-sub); margin-top: 2px;">${date} &bull; Pukul ${time} WIB</div>
-      </div>
-      <div>${statusBadge}</div>
-    `;
-
+    item.innerHTML = `<div><strong>${name}</strong><div style="font-size: 11px; color: var(--text-sub);">${row.attendance_date} &bull; ${time} WIB</div></div><div>${badge}</div>`;
     adminAttendanceList.appendChild(item);
+  });
+}
+
+async function loadAdminChart() {
+  if (!adminChartContainer) return;
+  adminChartContainer.innerHTML = "<p style='font-size: 12px; color: var(--text-sub); margin: auto;'>Memuat grafik...</p>";
+
+  const filterType = adminChartFilter ? adminChartFilter.value : "month";
+  const { data } = await supabase.from("attendance").select("attendance_date, status");
+  if (!data) return;
+
+  const grouped = {};
+  data.forEach(row => {
+    let key = row.attendance_date;
+    if (filterType === "month") key = row.attendance_date.substring(0, 7);
+    else if (filterType === "year") key = row.attendance_date.substring(0, 4);
+
+    if (!grouped[key]) grouped[key] = { total: 0 };
+    grouped[key].total++;
+  });
+
+  const keys = Object.keys(grouped).sort().slice(-7);
+  if (keys.length === 0) {
+    adminChartContainer.innerHTML = "<p style='font-size: 12px; color: var(--text-sub); margin: auto;'>Belum ada data.</p>";
+    return;
+  }
+
+  const max = Math.max(...keys.map(k => grouped[k].total), 5);
+  adminChartContainer.innerHTML = "";
+
+  keys.forEach(k => {
+    const total = grouped[k].total;
+    const height = Math.round((total / max) * 100);
+    const wrapper = document.createElement("div");
+    wrapper.style.cssText = "display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end;";
+    wrapper.innerHTML = `
+      <div style="font-size: 10px; color: var(--text-sub); margin-bottom: 4px;">${total}</div>
+      <div style="width: 100%; max-width: 24px; height: ${Math.max(height, 10)}%; background: var(--ios-blue); border-radius: 4px 4px 0 0;"></div>
+      <div style="font-size: 9px; color: var(--text-sub); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; max-width: 45px;">${k}</div>
+    `;
+    adminChartContainer.appendChild(wrapper);
   });
 }
 
 async function loadEmployeeManagement() {
   if (!adminEmployeeList) return;
-  adminEmployeeList.innerHTML = "<p style='color: var(--text-sub);'>Memuat anggota...</p>";
+  adminEmployeeList.innerHTML = "<p>Memuat anggota...</p>";
 
-  const { data, error } = await supabase
-    .from("employees")
-    .select("id, name, employee_code, role, is_active")
-    .order("name", { ascending: true });
-
-  if (error) {
-    adminEmployeeList.innerHTML = "<p style='color: var(--ios-red);'>Gagal memuat anggota.</p>";
-    return;
-  }
+  const { data } = await supabase.from("employees").select("id, name, employee_code, role, is_active").order("name");
+  if (!data) return;
 
   adminEmployeeList.innerHTML = "";
-
-  data.forEach((emp) => {
-    const isActive = emp.is_active !== false;
-    const statusBadge = isActive 
-      ? `<span class="badge-active">Aktif</span>` 
-      : `<span class="badge-inactive">Nonaktif</span>`;
-
-    const roleBadge = (emp.role === "admin" || emp.role === "adm1n")
-      ? `<span class="role-badge role-admin">${emp.role.toUpperCase()}</span>`
-      : `<span class="role-badge role-user">MEMBER</span>`;
-
+  data.forEach(emp => {
     const card = document.createElement("div");
     card.className = "emp-card-item";
+    card.innerHTML = `<div><strong>${emp.name}</strong> <span style="font-size: 11px; color: var(--text-sub);">(${emp.role})</span><div style="font-size: 11px; color: var(--text-sub);">Kode: ${emp.employee_code}</div></div><button class="secondary-button" style="padding: 4px 10px; font-size: 12px;">Edit</button>`;
     
-    card.innerHTML = `
-      <div>
-        <div class="emp-name-title">
-          ${emp.name}
-          ${roleBadge}
-          ${statusBadge}
-        </div>
-        <div class="emp-code-sub">Kode: <strong>${emp.employee_code}</strong></div>
-      </div>
-      <button class="secondary-button edit-btn-style" type="button" style="padding: 6px 14px; font-size: 12px;">Edit</button>
-    `;
-
-    const editBtn = card.querySelector(".edit-btn-style");
-    editBtn.addEventListener("click", () => {
+    card.querySelector("button").addEventListener("click", () => {
       editEmpId.value = emp.id;
       editEmpName.value = emp.name;
       editEmpCode.value = emp.employee_code;
       editEmpRole.value = emp.role;
-      editEmpActive.value = isActive ? "true" : "false";
-      if (editModalMsg) editModalMsg.textContent = "";
+      editEmpActive.value = String(emp.is_active);
+      editModalMsg.textContent = "";
       editEmpModal.style.display = "flex";
     });
-
     adminEmployeeList.appendChild(card);
   });
 }
 
-if (cancelEditEmp) {
-  cancelEditEmp.addEventListener("click", () => {
-    editEmpModal.style.display = "none";
-  });
-}
+if (cancelEditEmp) cancelEditEmp.addEventListener("click", () => editEmpModal.style.display = "none");
 
 if (saveEditEmp) {
   saveEditEmp.addEventListener("click", async () => {
@@ -718,38 +562,21 @@ if (saveEditEmp) {
     const role = editEmpRole.value;
     const isActive = editEmpActive.value === "true";
 
-    if (!name || !code) {
-      editModalMsg.textContent = "Nama dan Kode wajib diisi!";
-      return;
-    }
-
     const { data: { user } } = await supabase.auth.getUser();
-    const { data: currentUserData } = await supabase
-      .from("employees")
-      .select("role")
-      .eq("id", user.id)
-      .single();
+    const { data: me } = await supabase.from("employees").select("role").eq("id", user.id).single();
 
-    if (currentUserData.role !== "adm1n") {
-      const { data: targetUserData } = await supabase
-        .from("employees")
-        .select("role")
-        .eq("id", id)
-        .single();
-
-      if (targetUserData.role !== role) {
-        editModalMsg.textContent = "Hanya Adm1n yang bisa mengubah Role!";
+    // HANYA SUPER ADMIN (adm1n) YANG BOLEH UBAH ROLE
+    if (me.role !== "adm1n") {
+      const { data: target } = await supabase.from("employees").select("role").eq("id", id).single();
+      if (target.role !== role) {
+        editModalMsg.textContent = "Akses ditolak: Hanya Super Admin (adm1n) yang dapat mengubah role!";
         return;
       }
     }
 
     editModalMsg.textContent = "Menyimpan...";
-
-    const { error } = await supabase
-      .from("employees")
-      .update({ name, employee_code: code, role, is_active: isActive })
-      .eq("id", id);
-
+    const { error } = await supabase.from("employees").update({ name, employee_code: code, role, is_active: isActive }).eq("id", id);
+    
     if (error) {
       editModalMsg.textContent = "Gagal: " + error.message;
     } else {
@@ -757,75 +584,26 @@ if (saveEditEmp) {
       setTimeout(() => {
         editEmpModal.style.display = "none";
         loadEmployeeManagement();
-      }, 800);
+      }, 700);
     }
   });
 }
 
 if (exportCsvBtn) {
   exportCsvBtn.addEventListener("click", async () => {
-    const { data, error } = await supabase
-      .from("attendance")
-      .select("attendance_date, check_in, status, employees(name, employee_code)")
-      .order("attendance_date", { ascending: false });
-
-    if (error || !data) {
-      alert("Gagal mengambil data ekspor.");
-      return;
-    }
-
-    const excelData = data.map((row) => ({
-      Tanggal: row.attendance_date,
-      "Nama Anggota": row.employees ? row.employees.name : "N/A",
-      "Kode Anggota": row.employees ? row.employees.employee_code : "N/A",
-      "Jam Absen": new Date(row.check_in).toLocaleTimeString("id-ID", { timeZone: "Asia/Jakarta" }),
-      Status: row.status === "late" ? "Terlambat" : "Tepat Waktu",
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(excelData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Rekap Presensi");
-    XLSX.writeFile(workbook, `Rekap_Presensi_Mudiviverse_${new Date().toISOString().split("T")[0]}.xlsx`);
+    const { data } = await supabase.from("attendance").select("attendance_date, check_in, status, employees(name, employee_code)");
+    if (!data) return;
+    const excel = data.map(r => ({ Tanggal: r.attendance_date, Nama: r.employees?.name, Kode: r.employees?.employee_code, Status: r.status }));
+    const ws = XLSX.utils.json_to_sheet(excel);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Rekap");
+    XLSX.writeFile(wb, "Rekap_Mudiviverse.xlsx");
   });
 }
 
-// ==========================================
-// 7. EVENT LISTENER UNVERIFIED / POS SEMENTARA
-// ==========================================
-document.getElementById('btn-backend-login')?.addEventListener('click', () => {
-  if (unverifiedSection) unverifiedSection.style.display = "none";
-  emailInput.style.display = "block";
-  passwordInput.style.display = "block";
-  authMainButton.style.display = "block";
-  const toggleBox = document.querySelector(".auth-toggle-box");
-  if (toggleBox) toggleBox.style.display = "block";
-  messageEl.textContent = "";
-});
-
-document.getElementById('btn-back-login')?.addEventListener('click', () => {
-  if (unverifiedSection) unverifiedSection.style.display = "none";
-  emailInput.style.display = "block";
-  passwordInput.style.display = "block";
-  authMainButton.style.display = "block";
-  const toggleBox = document.querySelector(".auth-toggle-box");
-  if (toggleBox) toggleBox.style.display = "block";
-  messageEl.textContent = "";
-});
-
 document.getElementById('btn-resend')?.addEventListener('click', async () => {
-  if (!window.pendingVerificationEmail) {
-    alert("Email tidak ditemukan. Silakan coba login ulang.");
-    return;
-  }
-  
-  const { error } = await supabase.auth.resend({
-    type: 'signup',
-    email: window.pendingVerificationEmail,
-  });
-
-  if (error) {
-    alert("Gagal mengirim ulang: " + error.message);
-  } else {
-    alert("Email verifikasi baru telah dikirim! Silakan cek inbox/spam kamu.");
+  if (window.pendingVerificationEmail) {
+    await supabase.auth.resend({ type: 'signup', email: window.pendingVerificationEmail });
+    alert("Email verifikasi dikirim ulang.");
   }
 });
