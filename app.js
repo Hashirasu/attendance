@@ -163,36 +163,34 @@ authMainButton.addEventListener("click", async () => {
 
   if (isRegisterMode) {
     const name = registerNameInput.value.trim();
-    
     if (!name) {
       messageEl.textContent = "Nama lengkap wajib diisi!";
       return;
     }
 
-    // 1. Validasi: Hanya boleh huruf (alfabet) dan spasi (tanpa angka/simbol aneh)
+    // 1. Validasi karakter: Hanya boleh huruf dan spasi (tanpa angka/simbol)
     const nameRegex = /^[A-Za-z\s]+$/;
     if (!nameRegex.test(name)) {
       messageEl.textContent = "Nama lengkap hanya boleh berisi huruf dan spasi (tidak boleh ada angka/simbol).";
       return;
     }
 
-    // 2. Cek apakah nama sudah terdaftar di database sebelumnya
-    const { data: existingEmployees, error: checkError } = await supabase
-      .from("employees")
-      .select("id")
-      .ilike("name", name); // ilike agar case-insensitive (huruf besar/kecil dianggap sama)
+    // 2. Cek apakah nama sudah terdaftar menggunakan fungsi RPC publik
+    const { data: nameExists, error: rpcError } = await supabase.rpc("check_name_exists", {
+      p_name: name
+    });
 
-    if (checkError) {
-      messageEl.textContent = "Gagal memvalidasi nama: " + checkError.message;
+    if (rpcError) {
+      messageEl.textContent = "Gagal memvalidasi nama: " + rpcError.message;
       return;
     }
 
-    if (existingEmployees && existingEmployees.length > 0) {
-      messageEl.textContent = "Nama lengkap ini sudah terdaftar. Silakan gunakan nama lain atau login jika sudah punya akun.";
+    if (nameExists) {
+      messageEl.textContent = "Nama lengkap ini sudah terdaftar! Silakan gunakan nama lain.";
       return;
     }
 
-    // Jika lolos validasi, lanjutkan proses Sign Up
+    // 3. Jika nama unik dan bersih, lanjutkan proses pendaftaran (Sign Up)
     const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
@@ -204,8 +202,7 @@ authMainButton.addEventListener("click", async () => {
       return;
     }
 
-    
-
+    // Cek apakah halaman ini dibuka dari scan QR Kios
     const hasQrParam = sessionStorage.getItem("pending_secret");
 
     if (hasQrParam) {
@@ -226,6 +223,10 @@ authMainButton.addEventListener("click", async () => {
       
       await new Promise(resolve => setTimeout(resolve, 1000));
       await checkUrlAutoAttendance();
+      
+    } else {
+      messageEl.textContent = "Pendaftaran berhasil! Silakan login.";
+      toggleAuthBtn.click();
       
     } else {
       messageEl.textContent = "Pendaftaran berhasil! Silakan login.";
