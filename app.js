@@ -27,8 +27,6 @@ const unverifiedSection = document.getElementById("unverified-section");
 const userNameDisplay = document.getElementById("user-name-display");
 const userCodeEl = document.getElementById("user-code");
 const todayStatusEl = document.getElementById("today-status");
-const checkInButton = document.getElementById("check-in-button");
-const attendanceMessage = document.getElementById("attendance-message");
 const attendanceHistory = document.getElementById("attendance-history");
 
 const switchToAdminBtn = document.getElementById("switch-to-admin");
@@ -83,11 +81,9 @@ async function checkUrlAutoAttendance() {
 
     if (savedSecret === KIOSK_SECRET && Math.abs(currentBlock - parseInt(savedBlock)) <= 4) {
       
-      // Cek apakah user sudah login atau belum
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        // Jika belum login, arahkan otomatis ke mode Register supaya buat akun
         if (!isRegisterMode) {
           toggleAuthBtn.click();
         }
@@ -95,15 +91,13 @@ async function checkUrlAutoAttendance() {
         return; 
       }
 
-      // Jika sudah login, eksekusi absen
       const { data, error } = await supabase.rpc("check_in");
       
-      console.log("DEBUG CHECK-IN RESULT:", { data, error });
-
       if (!error && data && data.success) {
-        alert("Absensi Berhasil via Scan Kamera!");
+        alert("Absensi Berhasil via Scan QR!");
         await loadTodayStatus();
         await loadAttendanceHistory();
+        await loadMonthlyStatistics();
       } else {
         const errorMsg = error ? error.message : (data ? data.message : "Terjadi kesalahan sistem.");
         alert("Gagal Absen: " + errorMsg);
@@ -159,11 +153,10 @@ authMainButton.addEventListener("click", async () => {
     return;
   }
 
-  // VALIDASI EMAIL: Hanya boleh huruf, angka, karakter '@', dan titik '.' (tanpa simbol aneh seperti _, -, +, dll)
-  // Format standar: bagian lokal hanya huruf/angka, domain hanya huruf/angka/titik
+  // Validasi Email: Hanya huruf, angka, '@', dan '.'
   const emailRegex = /^[a-zA-Z0-9]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   if (!emailRegex.test(email)) {
-    messageEl.textContent = "Format email tidak valid atau mengandung simbol yang dilarang (hanya boleh huruf dan angka).";
+    messageEl.textContent = "Format email tidak valid atau mengandung simbol yang dilarang (hanya huruf dan angka).";
     return;
   }
 
@@ -176,14 +169,14 @@ authMainButton.addEventListener("click", async () => {
       return;
     }
 
-    // Validasi nama: Hanya boleh huruf dan spasi (tanpa angka/simbol)
+    // Validasi Nama: Hanya huruf dan spasi
     const nameRegex = /^[A-Za-z\s]+$/;
     if (!nameRegex.test(name)) {
       messageEl.textContent = "Nama lengkap hanya boleh berisi huruf dan spasi (tidak boleh ada angka/simbol).";
       return;
     }
 
-    // Cek apakah nama sudah terdaftar menggunakan fungsi RPC publik
+    // Cek Nama Kembar via RPC Publik
     const { data: nameExists, error: rpcError } = await supabase.rpc("check_name_exists", {
       p_name: name
     });
@@ -198,7 +191,6 @@ authMainButton.addEventListener("click", async () => {
       return;
     }
 
-    // Lanjutkan proses pendaftaran (Sign Up)
     const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
@@ -236,7 +228,6 @@ authMainButton.addEventListener("click", async () => {
       toggleAuthBtn.click();
     }
   } else {
-    // --- LOGIN MANUAL ---
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
@@ -271,7 +262,6 @@ authMainButton.addEventListener("click", async () => {
     await checkUrlAutoAttendance();
   }
 });
-
 
 async function handleLogout() {
   await supabase.auth.signOut();
@@ -326,6 +316,7 @@ async function loadUserProfile() {
 
   await loadTodayStatus();
   await loadAttendanceHistory();
+  await loadMonthlyStatistics();
 }
 
 async function loadTodayStatus() {
@@ -426,7 +417,123 @@ async function loadAttendanceHistory() {
 }
 
 // ==============================
-// 4. ADMIN PANEL & MANAGEMENT
+// 4. STATISTIK KEHADIRAN BULANAN
+// ==============================
+async function loadMonthlyStatistics() {
+  const statHadirEl = document.getElementById("stat-total-hadir");
+  const statTerlambatEl = document.getElementById("stat-total-terlambat");
+  const statRateEl = document.getElementById("stat-attendance-rate");
+  const barPresent = document.getElementById("progress-bar-present");
+  const barLate = document.getElementById("progress-bar-late");
+
+  if (!statHadirEl) return;
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const startOfMonth = `${year}-${month}-01`;
+
+  const { data, error } = await supabase
+    .from("attendance")
+    .select("status, attendance_date")
+    .eq("employee_id", user.id)
+    .gte("attendance_date", startOfMonth);
+
+  if (error || !data) return;
+
+  let totalHadir = 0;
+  let totalTerlambat = 0;
+
+  data.forEach(row => {
+    if (row.status === "late") {
+      totalTerlambat++;
+    } else {
+      totalHadir++;
+    }
+  });
+
+  let totalAbsen = totalHadir + totalTerlambat;
+  let presentPercent = totalAbsen > 0 ? (totalHadir / totalAbsen) * 100 : 0;
+  let latePercent = totalAbsen > 0 ? (totalTerlambat / totalAbsen) * 100 : 0;
+
+  statHadirEl.textContent = totalHadir;
+  statTerlambatEl.textContent = totalTerlambat;
+  statRateEl.textContent = Math.round(presentPercent) + "%";
+
+  if (barPresent && barLate) {
+    barPresent.style.width = presentPercent + "%";
+    barLate.style.width = latePercent + "%";
+  }
+}
+
+// ==============================
+// 5. BUILT-IN QR CAMERA SCANNER
+// ==============================
+const openScannerBtn = document.getElementById("open-scanner-btn");
+const openScannerBtnUser = document.getElementById("open-scanner-btn-user");
+const scannerModal = document.getElementById("scanner-modal");
+const closeScannerBtn = document.getElementById("close-scanner-btn");
+let html5QrCode = null;
+
+async function startQrScanner() {
+  if (!scannerModal) return;
+  scannerModal.style.display = "flex";
+  
+  html5QrCode = new Html5Qrcode("reader");
+  const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+  
+  try {
+    await html5QrCode.start(
+      { facingMode: "environment" },
+      config,
+      async (decodedText) => {
+        await html5QrCode.stop();
+        html5QrCode.clear();
+        scannerModal.style.display = "none";
+        
+        try {
+          const urlObj = new URL(decodedText);
+          const secret = urlObj.searchParams.get("secret");
+          const block = urlObj.searchParams.get("block");
+          
+          if (secret && block) {
+            sessionStorage.setItem("pending_secret", secret);
+            sessionStorage.setItem("pending_block", block);
+            await checkUrlAutoAttendance();
+          } else {
+            alert("QR Code tidak valid untuk presensi Mudiviverse.");
+          }
+        } catch (e) {
+          alert("Format QR Code tidak dikenali.");
+        }
+      },
+      () => {}
+    );
+  } catch (err) {
+    alert("Gagal membuka kamera. Pastikan izin akses kamera diaktifkan.");
+    console.error(err);
+    scannerModal.style.display = "none";
+  }
+}
+
+if (openScannerBtn) openScannerBtn.addEventListener("click", startQrScanner);
+if (openScannerBtnUser) openScannerBtnUser.addEventListener("click", startQrScanner);
+
+if (closeScannerBtn) {
+  closeScannerBtn.addEventListener("click", async () => {
+    if (html5QrCode && html5QrCode.isScanning) {
+      await html5QrCode.stop();
+      html5QrCode.clear();
+    }
+    scannerModal.style.display = "none";
+  });
+}
+
+// ==============================
+// 6. ADMIN PANEL & MANAGEMENT
 // ==============================
 if (switchToAdminBtn) {
   switchToAdminBtn.addEventListener("click", async () => {
@@ -683,7 +790,7 @@ if (exportCsvBtn) {
 }
 
 // ==========================================
-// 5. EVENT LISTENER POS SEMENTARA (UNVERIFIED)
+// 7. EVENT LISTENER UNVERIFIED / POS SEMENTARA
 // ==========================================
 document.getElementById('btn-backend-login')?.addEventListener('click', () => {
   if (unverifiedSection) unverifiedSection.style.display = "none";
@@ -722,76 +829,3 @@ document.getElementById('btn-resend')?.addEventListener('click', async () => {
     alert("Email verifikasi baru telah dikirim! Silakan cek inbox/spam kamu.");
   }
 });
-
-
-
-// ==============================
-// 6. BUILT-IN QR CAMERA SCANNER
-// ==============================
-const openScannerBtn = document.getElementById("open-scanner-btn");
-const scannerModal = document.getElementById("scanner-modal");
-const closeScannerBtn = document.getElementById("close-scanner-btn");
-let html5QrCode = null;
-
-if (openScannerBtn) {
-  openScannerBtn.addEventListener("click", async () => {
-    scannerModal.style.display = "flex";
-    
-    // Inisialisasi scanner pada elemen dengan id="reader"
-    html5QrCode = new Html5Qrcode("reader");
-    
-    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-    
-    try {
-      await html5QrCode.start(
-        { facingMode: "environment" }, // Gunakan kamera belakang HP
-        config,
-        async (decodedText) => {
-          // Berhasil scan! decodedText berisi URL lengkap dari QR Kios
-          console.log("QR Terdeteksi:", decodedText);
-          
-          // Hentikan kamera
-          await html5QrCode.stop();
-          html5QrCode.clear();
-          scannerModal.style.display = "none";
-          
-          // Ambil parameter secret dan block dari URL hasil scan
-          try {
-            const urlObj = new URL(decodedText);
-            const secret = urlObj.searchParams.get("secret");
-            const block = urlObj.searchParams.get("block");
-            
-            if (secret && block) {
-              sessionStorage.setItem("pending_secret", secret);
-              sessionStorage.setItem("pending_block", block);
-              
-              // Jalankan fungsi auto attendance
-              await checkUrlAutoAttendance();
-            } else {
-              alert("QR Code tidak valid untuk presensi Mudiviverse.");
-            }
-          } catch (e) {
-            alert("Format QR Code tidak dikenali.");
-          }
-        },
-        (errorMessage) => {
-          // Error saat proses scanning bingkai (biasanya diabaikan karena berjalan terus mencari QR)
-        }
-      );
-    } catch (err) {
-      alert("Gagal membuka kamera. Pastikan izin akses kamera diaktifkan di browser Anda.");
-      console.error(err);
-      scannerModal.style.display = "none";
-    }
-  });
-}
-
-if (closeScannerBtn) {
-  closeScannerBtn.addEventListener("click", async () => {
-    if (html5QrCode && html5QrCode.isScanning) {
-      await html5QrCode.stop();
-      html5QrCode.clear();
-    }
-    scannerModal.style.display = "none";
-  });
-}
