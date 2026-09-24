@@ -535,9 +535,33 @@ async function loadEmployeeManagement() {
 
   adminEmployeeList.innerHTML = "";
   data.forEach(emp => {
+    // Badge styling: adm1n = merah, admin = oren, user = biru
+    let roleBadgeBg = "rgba(0, 92, 191, 0.1)";
+    let roleBadgeColor = "var(--ios-blue)";
+    let roleText = "MEMBER";
+
+    if (emp.role === "adm1n") {
+      roleBadgeBg = "rgba(255, 59, 48, 0.15)";
+      roleBadgeColor = "var(--ios-red)";
+      roleText = "ADM1N";
+    } else if (emp.role === "admin") {
+      roleBadgeBg = "rgba(245, 158, 11, 0.15)";
+      roleBadgeColor = "#f59e0b";
+      roleText = "ADMIN";
+    }
+
     const card = document.createElement("div");
     card.className = "emp-card-item";
-    card.innerHTML = `<div><strong>${emp.name}</strong> <span style="font-size: 11px; color: var(--text-sub);">(${emp.role})</span><div style="font-size: 11px; color: var(--text-sub);">Kode: ${emp.employee_code}</div></div><button class="secondary-button" style="padding: 4px 10px; font-size: 12px;">Edit</button>`;
+    card.innerHTML = `
+      <div>
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px;">
+          <strong style="font-size: 14px; color: var(--text-main);">${emp.name}</strong>
+          <span style="font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: ${roleBadgeBg}; color: ${roleBadgeColor};">${roleText}</span>
+        </div>
+        <div style="font-size: 11px; color: var(--text-sub);">Kode: ${emp.employee_code}</div>
+      </div>
+      <button class="secondary-button" style="padding: 4px 10px; font-size: 12px;">Edit</button>
+    `;
     
     card.querySelector("button").addEventListener("click", () => {
       editEmpId.value = emp.id;
@@ -565,7 +589,6 @@ if (saveEditEmp) {
     const { data: { user } } = await supabase.auth.getUser();
     const { data: me } = await supabase.from("employees").select("role").eq("id", user.id).single();
 
-    // HANYA SUPER ADMIN (adm1n) YANG BOLEH UBAH ROLE
     if (me.role !== "adm1n") {
       const { data: target } = await supabase.from("employees").select("role").eq("id", id).single();
       if (target.role !== role) {
