@@ -147,9 +147,9 @@ authMainButton.addEventListener("click", async () => {
     return;
   }
 
-  const emailRegex = /^[a-zA-Z0-9]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  const emailRegex = /^[a-zA-Z0-9.]+@gmail\.com$/;
   if (!emailRegex.test(email)) {
-    messageEl.textContent = "Format email tidak valid atau mengandung simbol terlarang.";
+    messageEl.textContent = "Format email harus menggunakan domain @gmail.com dan bagian depan hanya boleh berisi huruf, angka, serta titik (.) tanpa simbol lain.";
     return;
   }
 
