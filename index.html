@@ -203,12 +203,21 @@
         <div class="card-box">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
             <h3 style="font-size: 16px; font-weight: 700;">Rekap Kehadiran</h3>
-            <button id="export-csv-btn" class="secondary-button btn-export" type="button">
-              <span style="display:flex; align-items:center; gap:4px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Export Excel
-              </span>
-            </button>
+            <div style="display: flex; gap: 8px;">
+              <!-- Tombol Sinkronisasi ke Google Sheets -->
+              <button id="sync-sheets-btn" class="secondary-button" type="button" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);">
+                <span style="display:flex; align-items:center; gap:4px;">
+                  🔄 Sinkron Sheets
+                </span>
+              </button>
+              
+              <button id="export-csv-btn" class="secondary-button btn-export" type="button">
+                <span style="display:flex; align-items:center; gap:4px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Export Excel
+                </span>
+              </button>
+            </div>
           </div>
 
           <div style="display: flex; gap: 10px; margin-bottom: 20px;">

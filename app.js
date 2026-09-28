@@ -748,3 +748,107 @@ if (exportCsvBtn) {
     XLSX.writeFile(workbook, `Rekap_Absensi_Mudiviverse_${new Date().toISOString().split("T")[0]}.xlsx`);
   });
 }
+
+
+// ==============================
+// 6. SINKRONISASI KE GOOGLE SHEETS
+// ==============================
+const syncSheetsBtn = document.getElementById("sync-sheets-btn");
+
+if (syncSheetsBtn) {
+  syncSheetsBtn.addEventListener("click", async () => {
+    // ⚠️ MASUKKAN URL WEB APP GOOGLE APPS SCRIPT KAMU DI SINI:
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxssFU-ZNmAL8rJ5iQqLhgxLqi_tCntFvVzJq8StAIKOGlIXJFXsGXFHJHHQU5sUl0rug/exec"; 
+
+    if (WEB_APP_URL === "MASUKKAN_URL_WEB_APP_KAMU_DI_SINI" || !WEB_APP_URL) {
+      alert("URL Web App Google Sheets belum diatur!");
+      return;
+    }
+
+    syncSheetsBtn.textContent = "Menyinkronkan...";
+    syncSheetsBtn.disabled = true;
+
+    try {
+      const { data: attData, error } = await supabase
+        .from("attendance")
+        .select("attendance_date, check_in, status, employee_id, employees(name, employee_code, role, birth_place, birth_date)")
+        .order("attendance_date", { ascending: false });
+
+      if (error || !attData) {
+        throw new Error("Gagal mengambil data dari database.");
+      }
+
+      const pengurusRows = [];
+      const memberRows = [];
+      const summaryMap = {};
+
+      attData.forEach(row => {
+        const emp = row.employees || {};
+        const name = emp.name || "N/A";
+        const code = emp.employee_code || "N/A";
+        const role = emp.role || "user";
+        const birthPlace = emp.birth_place || "-";
+        const birthDate = emp.birth_date ? new Date(emp.birth_date).toLocaleDateString("id-ID") : "-";
+        const date = row.attendance_date;
+        const time = new Date(row.check_in).toLocaleTimeString("id-ID", { timeZone: "Asia/Jakarta" });
+        const statusText = row.status === "late" ? "Terlambat" : "Tepat Waktu";
+
+        if (!summaryMap[emp.employee_id]) {
+          summaryMap[emp.employee_id] = {
+            nama: name,
+            kode: code,
+            role: role === "pengurus" ? "Pengurus" : "Anggota Biasa",
+            tepatWaktu: 0,
+            terlambat: 0,
+            total: 0
+          };
+        }
+
+        if (row.status === "late") {
+          summaryMap[emp.employee_id].terlambat++;
+        } else {
+          summaryMap[emp.employee_id].tepatWaktu++;
+        }
+        summaryMap[emp.employee_id].total++;
+
+        const itemExcel = {
+          "Tanggal": date,
+          "Kode Anggota": code,
+          "Nama Lengkap": name,
+          "Tempat Lahir": birthPlace,
+          "Tanggal Lahir": birthDate,
+          "Jam Absen": time,
+          "Status": statusText
+        };
+
+        if (role === "pengurus") {
+          pengurusRows.push(itemExcel);
+        } else {
+          memberRows.push(itemExcel);
+        }
+      });
+
+      // Payload data yang dikirim ke Google Sheets
+      const payload = {
+        pengurus: pengurusRows,
+        anggota: memberRows
+      };
+
+      const response = await fetch(WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors", // Diperlukan untuk Google Apps Script Web App
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      alert("Berhasil! Data kehadiran telah disinkronkan ke Google Sheets.");
+    } catch (err) {
+      alert("Gagal sinkronisasi: " + err.message);
+    } finally {
+      syncSheetsBtn.textContent = "🔄 Sinkron Sheets";
+      syncSheetsBtn.disabled = false;
+    }
+  });
+}
