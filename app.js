@@ -631,7 +631,7 @@ if (saveEditEmp) {
 }
 
 // ==============================
-// 5. ADVANCED EXCEL EXPORT (Pemisahan Pengurus & Anggota + Rekap Periodik)
+// 5. ADVANCED EXCEL EXPORT (Termasuk Pengurus, Admin, Adm1n & Rekap)
 // ==============================
 if (exportCsvBtn) {
   exportCsvBtn.addEventListener("click", async () => {
@@ -645,12 +645,8 @@ if (exportCsvBtn) {
       return;
     }
 
-    // Pisahkan data pengurus dan anggota biasa
     const pengurusRows = [];
     const memberRows = [];
-
-    // Objek untuk merangkum rekap perorangan di sebelah kanan
-    // Format: { nama, kode, tepatWaktu, terlambat, total }
     const summaryMap = {};
 
     attData.forEach(row => {
@@ -658,16 +654,17 @@ if (exportCsvBtn) {
       const name = emp.name || "N/A";
       const code = emp.employee_code || "N/A";
       const role = emp.role || "user";
+      const birthPlace = emp.birth_place || "-";
+      const birthDate = emp.birth_date ? new Date(emp.birth_date).toLocaleDateString("id-ID") : "-";
       const date = row.attendance_date;
       const time = new Date(row.check_in).toLocaleTimeString("id-ID", { timeZone: "Asia/Jakarta" });
       const statusText = row.status === "late" ? "Terlambat" : "Tepat Waktu";
 
-      // Inisialisasi rekap perorangan
       if (!summaryMap[emp.employee_id]) {
         summaryMap[emp.employee_id] = {
           nama: name,
           kode: code,
-          role: role === "pengurus" ? "Pengurus" : "Anggota Biasa",
+          role: (role === "pengurus" || role === "admin" || role === "adm1n") ? "Pengurus" : "Anggota Biasa",
           tepatWaktu: 0,
           terlambat: 0,
           total: 0
@@ -685,18 +682,20 @@ if (exportCsvBtn) {
         "Tanggal": date,
         "Kode Anggota": code,
         "Nama Lengkap": name,
+        "Tempat Lahir": birthPlace,
+        "Tanggal Lahir": birthDate,
         "Jam Absen": time,
         "Status": statusText
       };
 
-      if (role === "pengurus") {
+      // Pengurus, Admin, dan Adm1n masuk ke data pengurus
+      if (role === "pengurus" || role === "admin" || role === "adm1n") {
         pengurusRows.push(itemExcel);
-      } else if (role === "user" || role === "admin" || role === "adm1n") {
+      } else {
         memberRows.push(itemExcel);
       }
     });
 
-    // Ubah summary map ke array untuk tabel di sebelah kanan
     const summaryArray = Object.values(summaryMap).map(s => ({
       "Nama Lengkap": s.nama,
       "Kode": s.kode,
@@ -708,32 +707,27 @@ if (exportCsvBtn) {
 
     const workbook = XLSX.utils.book_new();
 
-    // Helper untuk merakit Sheet dengan Total di Bawah & Rekap di Sebelah Kanan
     function buildStructuredSheet(rows) {
       if (rows.length === 0) {
         return XLSX.utils.json_to_sheet([{ Info: "Tidak ada data" }]);
       }
 
-      // Hitung total keseluruhan baris
       const totalHadirCount = rows.length;
       const totalTepatWaktu = rows.filter(r => r.Status === "Tepat Waktu").length;
       const totalTerlambat = rows.filter(r => r.Status === "Terlambat").length;
 
-      // Konversi data utama ke worksheet
       const ws = XLSX.utils.json_to_sheet(rows);
 
-      // Tambahkan baris total di bawah tabel utama
       XLSX.utils.sheet_add_json(ws, [
-        { "Tanggal": "TOTAL KESELURUHAN", "Kode Anggota": "", "Nama Lengkap": "", "Jam Absen": "", "Status": `Hadir: ${totalHadirCount} (Tepat: ${totalTepatWaktu}, Telat: ${totalTerlambat})` }
+        { "Tanggal": "TOTAL KESELURUHAN", "Kode Anggota": "", "Nama Lengkap": "", "Tempat Lahir": "", "Tanggal Lahir": "", "Jam Absen": "", "Status": `Hadir: ${totalHadirCount} (Tepat: ${totalTepatWaktu}, Telat: ${totalTerlambat})` }
       ], { skipHeader: true, origin: -1 });
 
-      // Tambahkan tabel rekap perorangan di sebelah kanan (Mulai kolom G / indeks 6)
       if (summaryArray.length > 0) {
         XLSX.utils.sheet_add_json(ws, [{
           "REKAP PERORANGAN": "", " ": "", "  ": "", "   ": "", "    ": "", "     ": ""
-        }], { origin: "G1" });
+        }], { origin: "I1" });
 
-        XLSX.utils.sheet_add_json(ws, summaryArray, { origin: "G2" });
+        XLSX.utils.sheet_add_json(ws, summaryArray, { origin: "I2" });
       }
 
       return ws;
@@ -749,7 +743,6 @@ if (exportCsvBtn) {
   });
 }
 
-
 // ==============================
 // 6. SINKRONISASI KE GOOGLE SHEETS
 // ==============================
@@ -757,10 +750,9 @@ const syncSheetsBtn = document.getElementById("sync-sheets-btn");
 
 if (syncSheetsBtn) {
   syncSheetsBtn.addEventListener("click", async () => {
-    // ⚠️ MASUKKAN URL WEB APP GOOGLE APPS SCRIPT KAMU DI SINI:
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxssFU-ZNmAL8rJ5iQqLhgxLqi_tCntFvVzJq8StAIKOGlIXJFXsGXFHJHHQU5sUl0rug/exec"; 
+    const WEB_APP_URL = "MASUKKAN_URL_WEB_APP_KAMU_DI_SINI"; // Ganti dengan URL Google Apps Script kamu
 
-    if (WEB_APP_URL === "MASUKKAN_URL_WEB_APP_KAMU_DI_SINI" || !WEB_APP_URL) {
+    if (WEB_APP_URL === "https://script.google.com/macros/s/AKfycbxssFU-ZNmAL8rJ5iQqLhgxLqi_tCntFvVzJq8StAIKOGlIXJFXsGXFHJHHQU5sUl0rug/exec" || !WEB_APP_URL) {
       alert("URL Web App Google Sheets belum diatur!");
       return;
     }
@@ -797,7 +789,7 @@ if (syncSheetsBtn) {
           summaryMap[emp.employee_id] = {
             nama: name,
             kode: code,
-            role: role === "pengurus" ? "Pengurus" : "Anggota Biasa",
+            role: (role === "pengurus" || role === "admin" || role === "adm1n") ? "Pengurus" : "Anggota Biasa",
             tepatWaktu: 0,
             terlambat: 0,
             total: 0
@@ -821,22 +813,22 @@ if (syncSheetsBtn) {
           "Status": statusText
         };
 
-        // Logika Pemisahan: Pengurus, Admin, dan Adm1n masuk ke data pengurus
+        // Pengurus, Admin, dan Adm1n masuk ke data pengurus
         if (role === "pengurus" || role === "admin" || role === "adm1n") {
           pengurusRows.push(itemExcel);
         } else {
           memberRows.push(itemExcel);
         }
+      });
 
-      // Payload data yang dikirim ke Google Sheets
       const payload = {
         pengurus: pengurusRows,
         anggota: memberRows
       };
 
-      const response = await fetch(WEB_APP_URL, {
+      await fetch(WEB_APP_URL, {
         method: "POST",
-        mode: "no-cors", // Diperlukan untuk Google Apps Script Web App
+        mode: "no-cors",
         headers: {
           "Content-Type": "application/json"
         },
