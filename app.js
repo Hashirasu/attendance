@@ -763,9 +763,11 @@ const syncSheetsBtn = document.getElementById("sync-sheets-btn");
 
 if (syncSheetsBtn) {
   syncSheetsBtn.addEventListener("click", async () => {
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxssFU-ZNmAL8rJ5iQqLhgxLqi_tCntFvVzJq8StAIKOGlIXJFXsGXFHJHHQU5sUl0rug/exec"; // Jangan lupa ganti dengan URL Web App Google Apps Script kamu
+    // URL Web App Google Apps Script kamu
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxssFU-ZNmAL8rJ5iQqLhgxLqi_tCntFvVzJq8StAIKOGlIXJFXsGXFHJHHQU5sUl0rug/exec";
 
-    if (WEB_APP_URL === "https://script.google.com/macros/s/AKfycbxssFU-ZNmAL8rJ5iQqLhgxLqi_tCntFvVzJq8StAIKOGlIXJFXsGXFHJHHQU5sUl0rug/exec" || !WEB_APP_URL) {
+    // Pengecekan sederhana yang aman dan tidak gampang error
+    if (!WEB_APP_URL || WEB_APP_URL.includes("MASUKKAN_URL")) {
       alert("URL Web App Google Sheets belum diatur!");
       return;
     }
