@@ -14,6 +14,9 @@ const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
 const nameGroup = document.getElementById("name-group");
 const registerNameInput = document.getElementById("register-name");
+const registerBirthPlace = document.getElementById("register-birth-place");
+const registerBirthDate = document.getElementById("register-birth-date");
+
 const authMainButton = document.getElementById("auth-main-button");
 const authButtonText = document.getElementById("auth-button-text");
 const toggleAuthBtn = document.getElementById("toggle-auth-btn");
@@ -147,9 +150,10 @@ authMainButton.addEventListener("click", async () => {
     return;
   }
 
+  // Validasi Email: Wajib berakhiran @gmail.com dan depan hanya huruf, angka, titik (.)
   const emailRegex = /^[a-zA-Z0-9.]+@gmail\.com$/;
   if (!emailRegex.test(email)) {
-    messageEl.textContent = "Format email harus menggunakan domain @gmail.com dan bagian depan hanya boleh berisi huruf, angka, serta titik (.) tanpa simbol lain.";
+    messageEl.textContent = "Format email harus menggunakan @gmail.com dan bagian depan hanya huruf, angka, serta titik (.) saja.";
     return;
   }
 
@@ -157,8 +161,11 @@ authMainButton.addEventListener("click", async () => {
 
   if (isRegisterMode) {
     const name = registerNameInput.value.trim();
-    if (!name) {
-      messageEl.textContent = "Nama lengkap wajib diisi!";
+    const birthPlace = registerBirthPlace.value.trim();
+    const birthDate = registerBirthDate.value;
+
+    if (!name || !birthPlace || !birthDate) {
+      messageEl.textContent = "Nama, tempat, dan tanggal lahir wajib diisi!";
       return;
     }
 
@@ -180,7 +187,15 @@ authMainButton.addEventListener("click", async () => {
     }
 
     const { error: signUpError } = await supabase.auth.signUp({
-      email, password, options: { data: { full_name: name } }
+      email, 
+      password, 
+      options: { 
+        data: { 
+          full_name: name,
+          birth_place: birthPlace,
+          birth_date: birthDate
+        } 
+      }
     });
 
     if (signUpError) {
@@ -547,6 +562,10 @@ async function loadEmployeeManagement() {
       roleBadgeBg = "rgba(245, 158, 11, 0.15)";
       roleBadgeColor = "#f59e0b";
       roleText = "ADMIN";
+    } else if (emp.role === "pengurus") {
+      roleBadgeBg = "rgba(16, 185, 129, 0.15)";
+      roleBadgeColor = "#10b981";
+      roleText = "PENGURUS";
     }
 
     const card = document.createElement("div");
@@ -611,21 +630,121 @@ if (saveEditEmp) {
   });
 }
 
+// ==============================
+// 5. ADVANCED EXCEL EXPORT (Pemisahan Pengurus & Anggota + Rekap Periodik)
+// ==============================
 if (exportCsvBtn) {
   exportCsvBtn.addEventListener("click", async () => {
-    const { data } = await supabase.from("attendance").select("attendance_date, check_in, status, employees(name, employee_code)");
-    if (!data) return;
-    const excel = data.map(r => ({ Tanggal: r.attendance_date, Nama: r.employees?.name, Kode: r.employees?.employee_code, Status: r.status }));
-    const ws = XLSX.utils.json_to_sheet(excel);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Rekap");
-    XLSX.writeFile(wb, "Rekap_Mudiviverse.xlsx");
+    const { data: attData, error } = await supabase
+      .from("attendance")
+      .select("attendance_date, check_in, status, employee_id, employees(name, employee_code, role, birth_place, birth_date)")
+      .order("attendance_date", { ascending: false });
+
+    if (error || !attData) {
+      alert("Gagal mengambil data ekspor.");
+      return;
+    }
+
+    // Pisahkan data pengurus dan anggota biasa
+    const pengurusRows = [];
+    const memberRows = [];
+
+    // Objek untuk merangkum rekap perorangan di sebelah kanan
+    // Format: { nama, kode, tepatWaktu, terlambat, total }
+    const summaryMap = {};
+
+    attData.forEach(row => {
+      const emp = row.employees || {};
+      const name = emp.name || "N/A";
+      const code = emp.employee_code || "N/A";
+      const role = emp.role || "user";
+      const date = row.attendance_date;
+      const time = new Date(row.check_in).toLocaleTimeString("id-ID", { timeZone: "Asia/Jakarta" });
+      const statusText = row.status === "late" ? "Terlambat" : "Tepat Waktu";
+
+      // Inisialisasi rekap perorangan
+      if (!summaryMap[emp.employee_id]) {
+        summaryMap[emp.employee_id] = {
+          nama: name,
+          kode: code,
+          role: role === "pengurus" ? "Pengurus" : "Anggota Biasa",
+          tepatWaktu: 0,
+          terlambat: 0,
+          total: 0
+        };
+      }
+
+      if (row.status === "late") {
+        summaryMap[emp.employee_id].terlambat++;
+      } else {
+        summaryMap[emp.employee_id].tepatWaktu++;
+      }
+      summaryMap[emp.employee_id].total++;
+
+      const itemExcel = {
+        "Tanggal": date,
+        "Kode Anggota": code,
+        "Nama Lengkap": name,
+        "Jam Absen": time,
+        "Status": statusText
+      };
+
+      if (role === "pengurus") {
+        pengurusRows.push(itemExcel);
+      } else if (role === "user" || role === "admin" || role === "adm1n") {
+        memberRows.push(itemExcel);
+      }
+    });
+
+    // Ubah summary map ke array untuk tabel di sebelah kanan
+    const summaryArray = Object.values(summaryMap).map(s => ({
+      "Nama Lengkap": s.nama,
+      "Kode": s.kode,
+      "Kategori": s.role,
+      "Tepat Waktu": s.tepatWaktu,
+      "Terlambat": s.terlambat,
+      "Total Hadir": s.total
+    }));
+
+    const workbook = XLSX.utils.book_new();
+
+    // Helper untuk merakit Sheet dengan Total di Bawah & Rekap di Sebelah Kanan
+    function buildStructuredSheet(rows) {
+      if (rows.length === 0) {
+        return XLSX.utils.json_to_sheet([{ Info: "Tidak ada data" }]);
+      }
+
+      // Hitung total keseluruhan baris
+      const totalHadirCount = rows.length;
+      const totalTepatWaktu = rows.filter(r => r.Status === "Tepat Waktu").length;
+      const totalTerlambat = rows.filter(r => r.Status === "Terlambat").length;
+
+      // Konversi data utama ke worksheet
+      const ws = XLSX.utils.json_to_sheet(rows);
+
+      // Tambahkan baris total di bawah tabel utama
+      XLSX.utils.sheet_add_json(ws, [
+        { "Tanggal": "TOTAL KESELURUHAN", "Kode Anggota": "", "Nama Lengkap": "", "Jam Absen": "", "Status": `Hadir: ${totalHadirCount} (Tepat: ${totalTepatWaktu}, Telat: ${totalTerlambat})` }
+      ], { skipHeader: true, origin: -1 });
+
+      // Tambahkan tabel rekap perorangan di sebelah kanan (Mulai kolom G / indeks 6)
+      if (summaryArray.length > 0) {
+        XLSX.utils.sheet_add_json(ws, [{
+          "REKAP PERORANGAN": "", " ": "", "  ": "", "   ": "", "    ": "", "     ": ""
+        }], { origin: "G1" });
+
+        XLSX.utils.sheet_add_json(ws, summaryArray, { origin: "G2" });
+      }
+
+      return ws;
+    }
+
+    const wsPengurus = buildStructuredSheet(pengurusRows);
+    const wsMember = buildStructuredSheet(memberRows);
+
+    XLSX.utils.book_append_sheet(workbook, wsPengurus, "Data Pengurus");
+    XLSX.utils.book_append_sheet(workbook, wsMember, "Data Anggota");
+
+    XLSX.writeFile(workbook, `Rekap_Absensi_Mudiviverse_${new Date().toISOString().split("T")[0]}.xlsx`);
   });
 }
-
-document.getElementById('btn-resend')?.addEventListener('click', async () => {
-  if (window.pendingVerificationEmail) {
-    await supabase.auth.resend({ type: 'signup', email: window.pendingVerificationEmail });
-    alert("Email verifikasi dikirim ulang.");
-  }
-});

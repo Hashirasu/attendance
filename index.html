@@ -21,7 +21,10 @@
       </div>
 
       <div class="form-group" id="name-group" style="display: none;">
-        <input type="text" id="register-name" placeholder="Nama Lengkap (Huruf & Spasi)" class="custom-input">
+        <input type="text" id="register-name" placeholder="Nama Lengkap (Huruf & Spasi)" class="custom-input" style="margin-bottom: 10px;">
+        <input type="text" id="register-birth-place" placeholder="Tempat Lahir" class="custom-input" style="margin-bottom: 10px;">
+        <div style="font-size: 11px; color: var(--text-sub); margin-bottom: 4px;">Tanggal Lahir:</div>
+        <input type="date" id="register-birth-date" class="custom-input">
       </div>
 
       <div class="form-group">
@@ -92,11 +95,11 @@
           </div>
         </div>
 
-        <!-- TOMBOL KAMERA SCANNER LANGSUNG DI SINI -->
+        <!-- TOMBOL KAMERA SCANNER -->
         <div class="card-box" style="display: flex; flex-direction: column; justify-content: space-between;">
           <div>
             <span class="card-badge">Kehadiran</span>
-            <h4 style="font-size: 16px; margin-top: 8px; font-weight: 600;">Catat Kehadiran</h4>
+            <h4 style="font-size: 16px; margin-top: 8px; font-weight: 600;">Scan QR Code</h4>
           </div>
           
           <div style="margin-top: 12px;">
@@ -149,7 +152,7 @@
       <!-- Modal Kamera Scanner -->
       <div id="scanner-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center; flex-direction: column;">
         <div style="background: var(--card-bg, #fff); padding: 20px; border-radius: 16px; width: 90%; max-width: 400px; text-align: center; position: relative;">
-          <h3 style="margin-bottom: 15px; font-size: 18px;">Arahkan Kamera ke kode QR</h3>
+          <h3 style="margin-bottom: 15px; font-size: 18px;">Arahkan Kamera ke QR Kios</h3>
           <div id="reader" style="width: 100%; border-radius: 12px; overflow: hidden;"></div>
           <button id="close-scanner-btn" class="auth-button" style="margin-top: 15px; background: var(--ios-red, #ff3b30); color: white; padding: 10px; border-radius: 8px; border: none; width: 100%;">
             Tutup Kamera
@@ -181,7 +184,7 @@
       </div>
 
       <div id="admin-view-rekap">
-        <!-- GRAFIK TREN KEHADIRAN (X-Y) -->
+        <!-- GRAFIK TREN KEHADIRAN -->
         <div class="card-box" style="margin-bottom: 16px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
             <h3 style="font-size: 16px; font-weight: 700;">Grafik Tren Kehadiran</h3>
@@ -203,7 +206,7 @@
             <button id="export-csv-btn" class="secondary-button btn-export" type="button">
               <span style="display:flex; align-items:center; gap:4px;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Export
+                Export Excel
               </span>
             </button>
           </div>
@@ -254,7 +257,8 @@
       <div class="form-group">
         <label>Role</label>
         <select id="edit-emp-role" class="custom-select">
-          <option value="user">User</option>
+          <option value="user">User (Anggota)</option>
+          <option value="pengurus">Pengurus</option>
           <option value="admin">Admin</option>
           <option value="adm1n">Adm1n</option>
         </select>
