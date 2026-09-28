@@ -200,34 +200,33 @@
           </div>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
-            <h3 style="font-size: 16px; font-weight: 700;">Rekap Kehadiran</h3>
+        <!-- REKAP KEHADIRAN & TOMBOL AKSI YANG SUDAH DIRAPIKAN RESPONSIFNYA -->
+        <div class="card-box" style="margin-bottom: 16px; width: 100%; box-sizing: border-box;">
+          <div style="margin-bottom: 16px;">
+            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 12px;">Rekap Kehadiran</h3>
             
-            <!-- Container Tombol yang Responsif & Rapi -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; width: 100%;">
-              
-              <!-- Tombol Buka Google Sheets -->
-              <a href="https://docs.google.com/spreadsheets/d/1bIaTuqe0iRxnWdIYf_RUFrjbIEBl-89471Z1GFdAMWA/edit?usp=sharing" target="_blank" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; text-align: center;">
-                📊 Buka Sheets
-              </a>
+            <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+              <!-- Baris Atas: Buka Sheets & Sinkron -->
+              <div style="display: flex; gap: 8px; width: 100%;">
+                <a href="https://docs.google.com/spreadsheets/d/1bIaTuqe0iRxnWdIYf_RUFrjbIEBl-89471Z1GFdAMWA/edit?usp=sharing" target="_blank" style="flex: 1; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 8px 10px; border-radius: 8px; font-size: 12px; font-weight: 500; text-align: center;">
+                  📊 Buka Sheets
+                </a>
+                <button id="sync-sheets-btn" class="secondary-button" type="button" style="flex: 1; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); display: flex; align-items: center; justify-content: center; gap: 4px; padding: 8px 10px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer;">
+                  🔄 Sinkron
+                </button>
+              </div>
 
-              <!-- Tombol Sinkronisasi ke Google Sheets -->
-              <button id="sync-sheets-btn" class="secondary-button" type="button" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; width: 100%;">
-                🔄 Sinkron
-              </button>
-              
-              <!-- Tombol Export Excel -->
-              <button id="export-csv-btn" class="secondary-button btn-export" type="button" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; width: 100%;">
+              <!-- Baris Bawah: Export Excel -->
+              <button id="export-csv-btn" class="secondary-button btn-export" type="button" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Export Excel
+                Export Excel (Cadangan)
               </button>
-
             </div>
           </div>
 
           <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-            <input type="date" id="admin-filter-date" class="custom-input" style="padding: 10px; font-size: 13px;">
-            <select id="admin-filter-status" class="custom-select" style="padding: 10px; font-size: 13px;">
+            <input type="date" id="admin-filter-date" class="custom-input" style="padding: 10px; font-size: 13px; flex: 1;">
+            <select id="admin-filter-status" class="custom-select" style="padding: 10px; font-size: 13px; flex: 1;">
               <option value="ALL">Semua</option>
               <option value="present">Tepat Waktu</option>
               <option value="late">Terlambat</option>
@@ -240,13 +239,14 @@
         </div>
       </div>
 
-      <div id="admin-view-karyawan" style="display: none;">
-        <div class="card-box">
+      <!-- VIEW KELOLA ANGGOTA YANG DIKUNCI LEBARNYA AGAR TIDAK MELUBER -->
+      <div id="admin-view-karyawan" style="display: none; width: 100%; max-width: 100%; box-sizing: border-box;">
+        <div class="card-box" style="width: 100%; max-width: 100%; box-sizing: border-box;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
             <h3 style="font-size: 16px; font-weight: 700;">Kelola Anggota</h3>
             <svg width="18" height="18" stroke="var(--text-sub)" viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           </div>
-          <div id="admin-employee-list">
+          <div id="admin-employee-list" style="width: 100%; box-sizing: border-box;">
             <p>Memuat anggota...</p>
           </div>
         </div>
