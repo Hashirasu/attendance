@@ -24,7 +24,8 @@
         <input type="text" id="register-name" placeholder="Nama Lengkap (Huruf & Spasi)" class="custom-input" style="margin-bottom: 10px;">
         <input type="text" id="register-birth-place" placeholder="Tempat Lahir" class="custom-input" style="margin-bottom: 10px;">
         <div style="font-size: 11px; color: var(--text-sub); margin-bottom: 4px;">Tanggal Lahir:</div>
-        <input type="date" id="register-birth-date" class="custom-input">
+        <input type="date" id="register-birth-date" class="custom-input" style="margin-bottom: 10px;">
+        <input type="tel" id="register-phone" placeholder="Nomor WhatsApp (Contoh: 08123456789)" class="custom-input">
       </div>
 
       <div class="form-group">
@@ -200,13 +201,12 @@
           </div>
         </div>
 
-        <!-- REKAP KEHADIRAN & TOMBOL AKSI YANG SUDAH DIRAPIKAN RESPONSIFNYA -->
+        <!-- REKAP KEHADIRAN & TOMBOL AKSI RESPONSIF -->
         <div class="card-box" style="margin-bottom: 16px; width: 100%; box-sizing: border-box;">
           <div style="margin-bottom: 16px;">
             <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 12px;">Rekap Kehadiran</h3>
             
             <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
-              <!-- Baris Atas: Buka Sheets & Sinkron -->
               <div style="display: flex; gap: 8px; width: 100%;">
                 <a href="https://docs.google.com/spreadsheets/d/1bIaTuqe0iRxnWdIYf_RUFrjbIEBl-89471Z1GFdAMWA/edit?usp=sharing" target="_blank" style="flex: 1; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 8px 10px; border-radius: 8px; font-size: 12px; font-weight: 500; text-align: center;">
                   📊 Buka Sheets
@@ -216,7 +216,6 @@
                 </button>
               </div>
 
-              <!-- Baris Bawah: Export Excel -->
               <button id="export-csv-btn" class="secondary-button btn-export" type="button" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Export Excel (Cadangan)
@@ -239,7 +238,7 @@
         </div>
       </div>
 
-      <!-- VIEW KELOLA ANGGOTA YANG DIKUNCI LEBARNYA AGAR TIDAK MELUBER -->
+      <!-- VIEW KELOLA ANGGOTA -->
       <div id="admin-view-karyawan" style="display: none; width: 100%; max-width: 100%; box-sizing: border-box;">
         <div class="card-box" style="width: 100%; max-width: 100%; box-sizing: border-box;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
@@ -263,6 +262,10 @@
       <div class="form-group">
         <label>Nama</label>
         <input type="text" id="edit-emp-name" class="custom-input">
+      </div>
+      <div class="form-group">
+        <label>No. WhatsApp</label>
+        <input type="tel" id="edit-emp-phone" class="custom-input">
       </div>
       <div class="form-group">
         <label>Kode</label>

@@ -16,6 +16,7 @@ const nameGroup = document.getElementById("name-group");
 const registerNameInput = document.getElementById("register-name");
 const registerBirthPlace = document.getElementById("register-birth-place");
 const registerBirthDate = document.getElementById("register-birth-date");
+const registerPhoneInput = document.getElementById("register-phone");
 
 const authMainButton = document.getElementById("auth-main-button");
 const authButtonText = document.getElementById("auth-button-text");
@@ -52,6 +53,7 @@ const adminChartContainer = document.getElementById("admin-chart-container");
 const editEmpModal = document.getElementById("edit-emp-modal");
 const editEmpId = document.getElementById("edit-emp-id");
 const editEmpName = document.getElementById("edit-emp-name");
+const editEmpPhone = document.getElementById("edit-emp-phone");
 const editEmpCode = document.getElementById("edit-emp-code");
 const editEmpRole = document.getElementById("edit-emp-role");
 const editEmpActive = document.getElementById("edit-emp-active");
@@ -150,7 +152,6 @@ authMainButton.addEventListener("click", async () => {
     return;
   }
 
-  // Validasi Email: Wajib berakhiran @gmail.com dan depan hanya huruf, angka, titik (.)
   const emailRegex = /^[a-zA-Z0-9.]+@gmail\.com$/;
   if (!emailRegex.test(email)) {
     messageEl.textContent = "Format email harus menggunakan @gmail.com dan bagian depan hanya huruf, angka, serta titik (.) saja.";
@@ -163,9 +164,10 @@ authMainButton.addEventListener("click", async () => {
     const name = registerNameInput.value.trim();
     const birthPlace = registerBirthPlace.value.trim();
     const birthDate = registerBirthDate.value;
+    const phone = registerPhoneInput ? registerPhoneInput.value.trim() : "";
 
-    if (!name || !birthPlace || !birthDate) {
-      messageEl.textContent = "Nama, tempat, dan tanggal lahir wajib diisi!";
+    if (!name || !birthPlace || !birthDate || !phone) {
+      messageEl.textContent = "Nama, tempat/tgl lahir, dan No WhatsApp wajib diisi!";
       return;
     }
 
@@ -193,7 +195,8 @@ authMainButton.addEventListener("click", async () => {
         data: { 
           full_name: name,
           birth_place: birthPlace,
-          birth_date: birthDate
+          birth_date: birthDate,
+          phone: phone
         } 
       }
     });
@@ -434,7 +437,7 @@ if (closeScannerBtn) {
 }
 
 // ==============================
-// 4. ADMIN PANEL & GRAFIK X-Y
+// 4. ADMIN PANEL & GRAFIK
 // ==============================
 if (switchToAdminBtn) {
   switchToAdminBtn.addEventListener("click", async () => {
@@ -545,7 +548,7 @@ async function loadEmployeeManagement() {
   if (!adminEmployeeList) return;
   adminEmployeeList.innerHTML = "<p>Memuat anggota...</p>";
 
-  const { data } = await supabase.from("employees").select("id, name, employee_code, role, is_active").order("name");
+  const { data } = await supabase.from("employees").select("id, name, employee_code, role, is_active, phone").order("name");
   if (!data) return;
 
   adminEmployeeList.innerHTML = "";
@@ -576,7 +579,7 @@ async function loadEmployeeManagement() {
           <strong style="font-size: 14px; color: var(--text-main);">${emp.name}</strong>
           <span style="font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: ${roleBadgeBg}; color: ${roleBadgeColor};">${roleText}</span>
         </div>
-        <div style="font-size: 11px; color: var(--text-sub);">Kode: ${emp.employee_code}</div>
+        <div style="font-size: 11px; color: var(--text-sub);">Kode: ${emp.employee_code} | WA: ${emp.phone || '-'}</div>
       </div>
       <button class="secondary-button" style="padding: 4px 10px; font-size: 12px;">Edit</button>
     `;
@@ -584,6 +587,7 @@ async function loadEmployeeManagement() {
     card.querySelector("button").addEventListener("click", () => {
       editEmpId.value = emp.id;
       editEmpName.value = emp.name;
+      editEmpPhone.value = emp.phone || "";
       editEmpCode.value = emp.employee_code;
       editEmpRole.value = emp.role;
       editEmpActive.value = String(emp.is_active);
@@ -600,6 +604,7 @@ if (saveEditEmp) {
   saveEditEmp.addEventListener("click", async () => {
     const id = editEmpId.value;
     const name = editEmpName.value.trim();
+    const phone = editEmpPhone.value.trim();
     const code = editEmpCode.value.trim();
     const role = editEmpRole.value;
     const isActive = editEmpActive.value === "true";
@@ -616,7 +621,7 @@ if (saveEditEmp) {
     }
 
     editModalMsg.textContent = "Menyimpan...";
-    const { error } = await supabase.from("employees").update({ name, employee_code: code, role, is_active: isActive }).eq("id", id);
+    const { error } = await supabase.from("employees").update({ name, phone, employee_code: code, role, is_active: isActive }).eq("id", id);
     
     if (error) {
       editModalMsg.textContent = "Gagal: " + error.message;
@@ -631,7 +636,7 @@ if (saveEditEmp) {
 }
 
 // ==============================
-// 5. ADVANCED EXCEL EXPORT (Termasuk Pengurus, Admin, Adm1n & Rekap)
+// 5. ADVANCED EXCEL EXPORT
 // ==============================
 if (exportCsvBtn) {
   exportCsvBtn.addEventListener("click", async () => {
@@ -644,6 +649,7 @@ if (exportCsvBtn) {
         employee_id, 
         employees (
           name, 
+          phone,
           employee_code, 
           role, 
           birth_place, 
@@ -659,11 +665,11 @@ if (exportCsvBtn) {
 
     const pengurusRows = [];
     const memberRows = [];
-    const summaryMap = {};
 
     attData.forEach(row => {
       const emp = row.employees || {};
       const name = emp.name || "N/A";
+      const phone = emp.phone || "-";
       const code = emp.employee_code || "N/A";
       const role = (emp.role || "user").toLowerCase().trim();
       const birthPlace = emp.birth_place || "-";
@@ -674,28 +680,11 @@ if (exportCsvBtn) {
 
       const isPengurus = (role === "pengurus" || role === "admin" || role === "adm1n");
 
-      if (!summaryMap[emp.employee_id]) {
-        summaryMap[emp.employee_id] = {
-          nama: name,
-          kode: code,
-          role: isPengurus ? "Pengurus" : "Anggota Biasa",
-          tepatWaktu: 0,
-          terlambat: 0,
-          total: 0
-        };
-      }
-
-      if (row.status === "late") {
-        summaryMap[emp.employee_id].terlambat++;
-      } else {
-        summaryMap[emp.employee_id].tepatWaktu++;
-      }
-      summaryMap[emp.employee_id].total++;
-
       const itemExcel = {
         "Tanggal": date,
         "Kode Anggota": code,
         "Nama Lengkap": name,
+        "No WhatsApp": phone,
         "Tempat Lahir": birthPlace,
         "Tanggal Lahir": birthDate,
         "Jam Absen": time,
@@ -709,45 +698,9 @@ if (exportCsvBtn) {
       }
     });
 
-    const summaryArray = Object.values(summaryMap).map(s => ({
-      "Nama Lengkap": s.nama,
-      "Kode": s.kode,
-      "Kategori": s.role,
-      "Tepat Waktu": s.tepatWaktu,
-      "Terlambat": s.terlambat,
-      "Total Hadir": s.total
-    }));
-
     const workbook = XLSX.utils.book_new();
-
-    function buildStructuredSheet(rows) {
-      if (rows.length === 0) {
-        return XLSX.utils.json_to_sheet([{ Info: "Tidak ada data" }]);
-      }
-
-      const totalHadirCount = rows.length;
-      const totalTepatWaktu = rows.filter(r => r.Status === "Tepat Waktu").length;
-      const totalTerlambat = rows.filter(r => r.Status === "Terlambat").length;
-
-      const ws = XLSX.utils.json_to_sheet(rows);
-
-      XLSX.utils.sheet_add_json(ws, [
-        { "Tanggal": "TOTAL KESELURUHAN", "Kode Anggota": "", "Nama Lengkap": "", "Tempat Lahir": "", "Tanggal Lahir": "", "Jam Absen": "", "Status": `Hadir: ${totalHadirCount} (Tepat: ${totalTepatWaktu}, Telat: ${totalTerlambat})` }
-      ], { skipHeader: true, origin: -1 });
-
-      if (summaryArray.length > 0) {
-        XLSX.utils.sheet_add_json(ws, [{
-          "REKAP PERORANGAN": "", " ": "", "  ": "", "   ": "", "    ": "", "     ": ""
-        }], { origin: "I1" });
-
-        XLSX.utils.sheet_add_json(ws, summaryArray, { origin: "I2" });
-      }
-
-      return ws;
-    }
-
-    const wsPengurus = buildStructuredSheet(pengurusRows);
-    const wsMember = buildStructuredSheet(memberRows);
+    const wsPengurus = XLSX.utils.json_to_sheet(pengurusRows);
+    const wsMember = XLSX.utils.json_to_sheet(memberRows);
 
     XLSX.utils.book_append_sheet(workbook, wsPengurus, "Data Pengurus");
     XLSX.utils.book_append_sheet(workbook, wsMember, "Data Anggota");
@@ -757,7 +710,7 @@ if (exportCsvBtn) {
 }
 
 // ==============================
-// 6. SINKRONISASI KE GOOGLE SHEETS (SEMUA ANGGOTA INCLUDED)
+// 6. SINKRONISASI KE GOOGLE SHEETS
 // ==============================
 const syncSheetsBtn = document.getElementById("sync-sheets-btn");
 
@@ -774,17 +727,17 @@ if (syncSheetsBtn) {
     syncSheetsBtn.disabled = true;
 
     try {
-      // 1. Ambil SEMUA anggota terdaftar dari tabel employees
+      // 1. Ambil SEMUA anggota terdaftar
       const { data: empData, error: empError } = await supabase
         .from("employees")
-        .select("id, name, employee_code, role, birth_place, birth_date")
+        .select("id, name, phone, employee_code, role, birth_place, birth_date")
         .order("name");
 
       if (empError || !empData) {
         throw new Error("Gagal mengambil data anggota.");
       }
 
-      // 2. Ambil riwayat absensi dari tabel attendance
+      // 2. Ambil riwayat absensi
       const { data: attData, error: attError } = await supabase
         .from("attendance")
         .select(`
@@ -802,7 +755,6 @@ if (syncSheetsBtn) {
       const pengurusRows = [];
       const memberRows = [];
 
-      // Map absensi berdasarkan employee_id dan tanggal
       const attMap = {};
       attData.forEach(att => {
         if (!attMap[att.employee_id]) {
@@ -811,9 +763,10 @@ if (syncSheetsBtn) {
         attMap[att.employee_id].push(att);
       });
 
-      // 3. Gabungkan master anggota dengan riwayat absensi mereka
+      // 3. Gabungkan master anggota dengan absensinya
       empData.forEach(emp => {
         const name = emp.name || "N/A";
+        const phone = emp.phone || "-";
         const code = emp.employee_code || "N/A";
         const role = (emp.role || "user").toLowerCase().trim();
         const birthPlace = emp.birth_place || "-";
@@ -823,7 +776,6 @@ if (syncSheetsBtn) {
         const userAttList = attMap[emp.id] || [];
 
         if (userAttList.length > 0) {
-          // Jika ada riwayat absensi, kirim tiap tanggal absensinya
           userAttList.forEach(att => {
             const time = new Date(att.check_in).toLocaleTimeString("id-ID", { timeZone: "Asia/Jakarta" });
             const statusText = att.status === "late" ? "Terlambat" : "Tepat Waktu";
@@ -831,6 +783,7 @@ if (syncSheetsBtn) {
             const itemData = {
               "Kode Anggota": code,
               "Nama Lengkap": name,
+              "No WhatsApp": phone,
               "Tempat Lahir": birthPlace,
               "Tanggal Lahir": birthDate,
               "Tanggal": att.attendance_date,
@@ -845,13 +798,14 @@ if (syncSheetsBtn) {
             }
           });
         } else {
-          // Jika BELUM PERNAH absen sama sekali, tetap kirim data dirinya
+          // Jika belum pernah absen
           const itemData = {
             "Kode Anggota": code,
             "Nama Lengkap": name,
+            "No WhatsApp": phone,
             "Tempat Lahir": birthPlace,
             "Tanggal Lahir": birthDate,
-            "Tanggal": "", // Kosong karena belum absen
+            "Tanggal": "",
             "Jam Absen": "",
             "Status": ""
           };
