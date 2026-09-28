@@ -821,12 +821,12 @@ if (syncSheetsBtn) {
           "Status": statusText
         };
 
-        if (role === "pengurus") {
+        // Logika Pemisahan: Pengurus, Admin, dan Adm1n masuk ke data pengurus
+        if (role === "pengurus" || role === "admin" || role === "adm1n") {
           pengurusRows.push(itemExcel);
         } else {
           memberRows.push(itemExcel);
         }
-      });
 
       // Payload data yang dikirim ke Google Sheets
       const payload = {
