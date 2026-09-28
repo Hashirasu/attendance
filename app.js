@@ -766,7 +766,7 @@ if (syncSheetsBtn) {
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxssFU-ZNmAL8rJ5iQqLhgxLqi_tCntFvVzJq8StAIKOGlIXJFXsGXFHJHHQU5sUl0rug/exec"; // Jangan lupa ganti dengan URL Web App Google Apps Script kamu
 
     if (WEB_APP_URL === "https://script.google.com/macros/s/AKfycbxssFU-ZNmAL8rJ5iQqLhgxLqi_tCntFvVzJq8StAIKOGlIXJFXsGXFHJHHQU5sUl0rug/exec" || !WEB_APP_URL) {
-      alert("URL Web App Google Sheets belum diatur di kode app.js!");
+      alert("URL Web App Google Sheets belum diatur!");
       return;
     }
 
