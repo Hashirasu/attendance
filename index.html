@@ -200,17 +200,22 @@
           </div>
         </div>
 
-        <div class="card-box">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
             <h3 style="font-size: 16px; font-weight: 700;">Rekap Kehadiran</h3>
-            <div style="display: flex; gap: 8px;">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <!-- Tombol Buka Google Sheets Langsung -->
+              <a href="https://docs.google.com/spreadsheets/d/1bIaTuqe0iRxnWdIYf_RUFrjbIEBl-89471Z1GFdAMWA/edit?usp=sharing" target="_blank" class="secondary-button" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 8px; font-size: 13px;">
+                📊 Buka Sheets
+              </a>
+
               <!-- Tombol Sinkronisasi ke Google Sheets -->
-              <button id="sync-sheets-btn" class="secondary-button" type="button" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);">
+              <button id="sync-sheets-btn" class="secondary-button" type="button" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3);">
                 <span style="display:flex; align-items:center; gap:4px;">
                   🔄 Sinkron Sheets
                 </span>
               </button>
               
+              <!-- Tombol Export Excel (Cadangan) -->
               <button id="export-csv-btn" class="secondary-button btn-export" type="button">
                 <span style="display:flex; align-items:center; gap:4px;">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
