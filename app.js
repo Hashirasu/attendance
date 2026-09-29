@@ -38,8 +38,11 @@ const adminLogoutBtn = document.getElementById("admin-logout-button");
 
 const tabRekapBtn = document.getElementById("tab-rekap-btn");
 const tabKaryawanBtn = document.getElementById("tab-karyawan-btn");
+const tabKioskBtn = document.getElementById("tab-kiosk-btn");
+
 const adminViewRekap = document.getElementById("admin-view-rekap");
 const adminViewKaryawan = document.getElementById("admin-view-karyawan");
+const adminViewKiosk = document.getElementById("admin-view-kiosk");
 
 const adminFilterDate = document.getElementById("admin-filter-date");
 const adminFilterStatus = document.getElementById("admin-filter-status");
@@ -63,6 +66,8 @@ const saveEditEmp = document.getElementById("save-edit-emp");
 
 let isRegisterMode = false;
 let currentUserRole = "user";
+let kioskTimerInterval = null;
+let kioskQrObject = null;
 
 // ==============================
 // 1. AUTO CHECK-IN & QR SCANNER
@@ -250,6 +255,7 @@ if (authMainButton) {
 }
 
 async function handleLogout() {
+  if (kioskTimerInterval) clearInterval(kioskTimerInterval);
   await supabase.auth.signOut();
   showLoginSection();
 }
@@ -307,9 +313,11 @@ async function loadUserProfile() {
     if (currentUserRole === "admin" || currentUserRole === "adm1n") {
       if (switchToAdminBtn) switchToAdminBtn.style.display = "inline-block";
       if (navAdminBtn) navAdminBtn.style.display = "flex";
+      if (tabKioskBtn) tabKioskBtn.style.display = "inline-block"; // HANYA TAMPIL UNTUK ADMIN / ADM1N
     } else {
       if (switchToAdminBtn) switchToAdminBtn.style.display = "none";
       if (navAdminBtn) navAdminBtn.style.display = "none";
+      if (tabKioskBtn) tabKioskBtn.style.display = "none";
     }
   }
 
@@ -463,7 +471,7 @@ if (closeScannerBtn) {
 }
 
 // ==============================
-// 4. ADMIN PANEL & GRAFIK
+// 4. ADMIN PANEL, GRAFIK & KIOSK GENERATOR
 // ==============================
 if (switchToAdminBtn) {
   switchToAdminBtn.addEventListener("click", async () => {
@@ -479,23 +487,90 @@ if (switchToUserBtn) {
   switchToUserBtn.addEventListener("click", () => {
     if (adminSection) adminSection.style.display = "none";
     if (userSection) userSection.style.display = "block";
+    if (kioskTimerInterval) clearInterval(kioskTimerInterval);
   });
 }
 
-if (tabRekapBtn && tabKaryawanBtn) {
+// NAVIGASI SUB-TAB ADMIN (DATA, ANGGOTA, & QR KIOS)
+if (tabRekapBtn && tabKaryawanBtn && tabKioskBtn) {
   tabRekapBtn.addEventListener("click", () => {
     if (adminViewRekap) adminViewRekap.style.display = "block";
     if (adminViewKaryawan) adminViewKaryawan.style.display = "none";
+    if (adminViewKiosk) adminViewKiosk.style.display = "none";
     tabRekapBtn.classList.add("active");
     tabKaryawanBtn.classList.remove("active");
+    tabKioskBtn.classList.remove("active");
+    if (kioskTimerInterval) clearInterval(kioskTimerInterval);
   });
+
   tabKaryawanBtn.addEventListener("click", async () => {
     if (adminViewRekap) adminViewRekap.style.display = "none";
     if (adminViewKaryawan) adminViewKaryawan.style.display = "block";
+    if (adminViewKiosk) adminViewKiosk.style.display = "none";
     tabKaryawanBtn.classList.add("active");
     tabRekapBtn.classList.remove("active");
+    tabKioskBtn.classList.remove("active");
+    if (kioskTimerInterval) clearInterval(kioskTimerInterval);
     await loadEmployeeManagement();
   });
+
+  tabKioskBtn.addEventListener("click", () => {
+    if (currentUserRole !== "admin" && currentUserRole !== "adm1n") {
+      alert("Akses Ditolak: Hanya Admin yang dapat memunculkan Kios QR.");
+      return;
+    }
+    if (adminViewRekap) adminViewRekap.style.display = "none";
+    if (adminViewKaryawan) adminViewKaryawan.style.display = "none";
+    if (adminViewKiosk) adminViewKiosk.style.display = "block";
+    tabKioskBtn.classList.add("active");
+    tabRekapBtn.classList.remove("active");
+    tabKaryawanBtn.classList.remove("active");
+    
+    startAdminKioskQr();
+  });
+}
+
+// LOGIKA DYNAMIC REAL-TIME QR KIOSK GENERATOR (15 DETIK REFRESH)
+function startAdminKioskQr() {
+  const qrBox = document.getElementById("admin-kiosk-qrcode");
+  const fillBar = document.getElementById("kiosk-progress-fill");
+  const timerText = document.getElementById("kiosk-timer-text");
+
+  if (!qrBox) return;
+  qrBox.innerHTML = "";
+
+  if (kioskTimerInterval) clearInterval(kioskTimerInterval);
+
+  kioskQrObject = new QRCode(qrBox, {
+    text: "INIT",
+    width: 220,
+    height: 220,
+    colorDark: "#000000",
+    colorLight: "#ffffff",
+    correctLevel: QRCode.CorrectLevel.H
+  });
+
+  function updateKioskFrame() {
+    const nowUnix = Math.floor(Date.now() / 1000);
+    const block = Math.floor(nowUnix / 15);
+    const secondsRemaining = 15 - (nowUnix % 15);
+
+    // Bikin Target URL Berbasis Domain Utama
+    const baseUrl = window.location.origin + window.location.pathname;
+    const kioskUrl = `${baseUrl}?secret=${KIOSK_SECRET}&block=${block}`;
+
+    kioskQrObject.clear();
+    kioskQrObject.makeCode(kioskUrl);
+
+    if (timerText) timerText.textContent = `Memperbarui dalam ${secondsRemaining}s`;
+    if (fillBar) {
+      const percentage = (secondsRemaining / 15) * 100;
+      fillBar.style.width = `${percentage}%`;
+    }
+  }
+
+  updateKioskFrame();
+  kioskTimerInterval = setInterval(updateKioskFrame, 1000);
 }
 
 if (adminFilterDate) adminFilterDate.addEventListener("change", loadAdminAttendance);

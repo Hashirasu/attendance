@@ -7,6 +7,8 @@
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <!-- LIBRARY GENERATOR QR CODE UNTUK KIOS ADMIN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
@@ -252,8 +254,10 @@
         <div class="admin-tabs">
           <button id="tab-rekap-btn" class="tab-btn active" type="button">Data Absensi</button>
           <button id="tab-karyawan-btn" class="tab-btn" type="button">Anggota</button>
+          <button id="tab-kiosk-btn" class="tab-btn" type="button">📱 QR Kios</button>
         </div>
 
+        <!-- SUB TAB 1: REKAP ABSENSI -->
         <div id="admin-view-rekap">
           <div class="card-box" style="margin-bottom: 16px;">
             <div class="flex-between-center" style="margin-bottom: 12px;">
@@ -301,11 +305,31 @@
           </div>
         </div>
 
+        <!-- SUB TAB 2: MANAGEMENT ANGGOTA -->
         <div id="admin-view-karyawan" style="display: none;">
           <div class="card-box">
             <h3 class="section-heading" style="margin-bottom: 16px;">Daftar Anggota</h3>
             <div id="admin-employee-list">
               <p style="color: var(--text-sub);">Memuat anggota...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB TAB 3: GENERATOR QR KIOSK DINAMIS (KHUSUS ADMIN/ADM1N) -->
+        <div id="admin-view-kiosk" style="display: none;">
+          <div class="card-box kiosk-card-display">
+            <span class="card-badge">Kios Vihara Resmi</span>
+            <h3 class="card-title" style="font-size: 18px; margin-top: 6px;">QR Code Presensi Real-Time</h3>
+            <p class="card-desc" style="font-size: 12px;">
+              Tampilkan layar ini di tablet/monitor Vihara. QR Code berganti otomatis setiap 15 detik untuk keamanan ekstra.
+            </p>
+
+            <div class="qr-container-wrapper">
+              <div id="admin-kiosk-qrcode" class="qr-code-box"></div>
+              <div class="kiosk-timer-bar">
+                <div id="kiosk-progress-fill" class="kiosk-progress-fill"></div>
+              </div>
+              <span id="kiosk-timer-text" class="kiosk-timer-text">Memperbarui dalam 15s</span>
             </div>
           </div>
         </div>
