@@ -710,7 +710,7 @@ if (exportCsvBtn) {
 }
 
 // ==============================
-// 6. SINKRONISASI KE GOOGLE SHEETS (FIX PENGURUS)
+// 6. SINKRONISASI KE GOOGLE SHEETS
 // ==============================
 const syncSheetsBtn = document.getElementById("sync-sheets-btn");
 
@@ -734,13 +734,18 @@ if (syncSheetsBtn) {
         .order("name");
 
       if (empError || !empData) {
-        throw new Error("Gagal mengambil data anggota: " + (empError ? empError.message : "Data kosong"));
+        throw new Error("Gagal mengambil data anggota.");
       }
 
       // 2. Ambil riwayat absensi
       const { data: attData, error: attError } = await supabase
         .from("attendance")
-        .select("attendance_date, check_in, status, employee_id")
+        .select(`
+          attendance_date, 
+          check_in, 
+          status, 
+          employee_id
+        `)
         .order("attendance_date", { ascending: false });
 
       if (attError || !attData) {
@@ -763,12 +768,10 @@ if (syncSheetsBtn) {
         const name = emp.name || "N/A";
         const phone = emp.phone || "-";
         const code = emp.employee_code || "N/A";
-        const roleStr = String(emp.role || "user").toLowerCase().trim();
+        const role = (emp.role || "user").toLowerCase().trim();
         const birthPlace = emp.birth_place || "-";
         const birthDate = emp.birth_date ? new Date(emp.birth_date).toLocaleDateString("id-ID") : "-";
-
-        // Cek apakah pengurus/admin/adm1n
-        const isPengurus = (roleStr === "pengurus" || roleStr === "admin" || roleStr === "adm1n");
+        const isPengurus = (role === "pengurus" || role === "admin" || role === "adm1n");
 
         const userAttList = attMap[emp.id] || [];
 
@@ -829,7 +832,7 @@ if (syncSheetsBtn) {
         body: JSON.stringify(payload)
       });
 
-      alert("Berhasil! Seluruh data telah disinkronkan ke Google Sheets.");
+      alert("Berhasil! Seluruh data anggota dan kehadiran telah disinkronkan ke Google Sheets.");
     } catch (err) {
       alert("Gagal sinkronisasi: " + err.message);
     } finally {
