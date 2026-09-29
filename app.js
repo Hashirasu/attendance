@@ -710,7 +710,7 @@ if (exportCsvBtn) {
 }
 
 // ==============================
-// 6. SINKRONISASI KE GOOGLE SHEETS
+// 6. SINKRONISASI KE GOOGLE SHEETS (FIXED PENGURUS SAFE DATA)
 // ==============================
 const syncSheetsBtn = document.getElementById("sync-sheets-btn");
 
@@ -727,57 +727,72 @@ if (syncSheetsBtn) {
     syncSheetsBtn.disabled = true;
 
     try {
-      // 1. Ambil SEMUA anggota terdaftar
+      // 1. Ambil seluruh master anggota & pengurus
       const { data: empData, error: empError } = await supabase
         .from("employees")
         .select("id, name, phone, employee_code, role, birth_place, birth_date")
         .order("name");
 
       if (empError || !empData) {
-        throw new Error("Gagal mengambil data anggota.");
+        throw new Error("Gagal mengambil data anggota: " + (empError ? empError.message : "Data kosong"));
       }
 
       // 2. Ambil riwayat absensi
       const { data: attData, error: attError } = await supabase
         .from("attendance")
-        .select(`
-          attendance_date, 
-          check_in, 
-          status, 
-          employee_id
-        `)
+        .select("attendance_date, check_in, status, employee_id")
         .order("attendance_date", { ascending: false });
 
       if (attError || !attData) {
         throw new Error("Gagal mengambil data riwayat absensi.");
       }
 
-      const pengurusRows = [];
-      const memberRows = [];
-
       const attMap = {};
-      attData.forEach(att => {
+      (attData || []).forEach(att => {
         if (!attMap[att.employee_id]) {
           attMap[att.employee_id] = [];
         }
         attMap[att.employee_id].push(att);
       });
 
-      // 3. Gabungkan master anggota dengan absensinya
+      const pengurusRows = [];
+      const memberRows = [];
+
+      // 3. Olah data dengan PENGAMAN NULL
       empData.forEach(emp => {
         const name = emp.name || "N/A";
         const phone = emp.phone || "-";
         const code = emp.employee_code || "N/A";
-        const role = (emp.role || "user").toLowerCase().trim();
+        const roleStr = String(emp.role || "user").toLowerCase().trim();
         const birthPlace = emp.birth_place || "-";
-        const birthDate = emp.birth_date ? new Date(emp.birth_date).toLocaleDateString("id-ID") : "-";
-        const isPengurus = (role === "pengurus" || role === "admin" || role === "adm1n");
+        
+        // Pengaman Tanggal Lahir jika NULL
+        let birthDate = "-";
+        if (emp.birth_date) {
+          try {
+            const bd = new Date(emp.birth_date);
+            if (!isNaN(bd.getTime())) {
+              birthDate = bd.toLocaleDateString("id-ID");
+            }
+          } catch (e) {
+            birthDate = "-";
+          }
+        }
 
+        // Kriteria Pengurus / Admin
+        const isPengurus = (roleStr === "pengurus" || roleStr === "admin" || roleStr === "adm1n");
         const userAttList = attMap[emp.id] || [];
 
         if (userAttList.length > 0) {
           userAttList.forEach(att => {
-            const time = new Date(att.check_in).toLocaleTimeString("id-ID", { timeZone: "Asia/Jakarta" });
+            let time = "-";
+            if (att.check_in) {
+              try {
+                time = new Date(att.check_in).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" });
+              } catch (e) {
+                time = "-";
+              }
+            }
             const statusText = att.status === "late" ? "Terlambat" : "Tepat Waktu";
 
             const itemData = {
@@ -786,7 +801,7 @@ if (syncSheetsBtn) {
               "No WhatsApp": phone,
               "Tempat Lahir": birthPlace,
               "Tanggal Lahir": birthDate,
-              "Tanggal": att.attendance_date,
+              "Tanggal": att.attendance_date || "",
               "Jam Absen": time,
               "Status": statusText
             };
@@ -798,7 +813,7 @@ if (syncSheetsBtn) {
             }
           });
         } else {
-          // Jika belum pernah absen
+          // Jika Pengurus/Anggota belum pernah absen
           const itemData = {
             "Kode Anggota": code,
             "Nama Lengkap": name,
@@ -832,7 +847,7 @@ if (syncSheetsBtn) {
         body: JSON.stringify(payload)
       });
 
-      alert("Berhasil! Seluruh data anggota dan kehadiran telah disinkronkan ke Google Sheets.");
+      alert("Berhasil! Seluruh data Pengurus dan Anggota telah disinkronkan.");
     } catch (err) {
       alert("Gagal sinkronisasi: " + err.message);
     } finally {
