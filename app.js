@@ -718,7 +718,7 @@ if (syncSheetsBtn) {
   syncSheetsBtn.addEventListener("click", async () => {
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxssFU-ZNmAL8rJ5iQqLhgxLqi_tCntFvVzJq8StAIKOGlIXJFXsGXFHJHHQU5sUl0rug/exec";
 
-    if (!WEB_APP_URL || WEB_APP_URL.includes("https://script.google.com/macros/s/AKfycbxssFU-ZNmAL8rJ5iQqLhgxLqi_tCntFvVzJq8StAIKOGlIXJFXsGXFHJHHQU5sUl0rug/exec")) {
+    if (!WEB_APP_URL || WEB_APP_URL.includes("MASUKKAN_URL")) {
       alert("URL Web App Google Sheets belum diatur!");
       return;
     }
