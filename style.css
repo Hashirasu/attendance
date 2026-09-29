@@ -38,6 +38,25 @@ html, body {
   color: var(--text-main);
 }
 
+/* FIX CLICKABLE DATE PICKER LAPTOP */
+input[type="date"] {
+  position: relative;
+  cursor: pointer;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  height: auto;
+  color: transparent;
+  background: transparent;
+  cursor: pointer;
+}
+
 /* 1. MESH BACKGROUND ANIMATION */
 .mesh-bg-container {
   position: fixed;
@@ -97,7 +116,6 @@ html, body {
   margin-bottom: 28px;
 }
 
-/* FIXED LOGO SIZE IN CENTER */
 .logo-box {
   width: 58px;
   height: 58px;
