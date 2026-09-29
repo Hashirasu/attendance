@@ -190,18 +190,24 @@ html, body {
   margin-top: 4px;
 }
 
-/* FORM SPACING FIX */
+/* FORM SPACING & INPUT FIX */
 .form-group-list {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  margin-bottom: 20px;
+}
+
+#name-group {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px; /* Memberi jarak antara No. WhatsApp dengan Email Google */
 }
 
 .input-field-box {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px; /* Jarak antara label dan kotak input */
 }
 
 .input-field-box label {
@@ -235,6 +241,7 @@ html, body {
 .main-button {
   width: 100%;
   padding: 14px;
+  margin-top: 20px;
   border: none;
   border-radius: var(--radius-lg);
   background: var(--main-btn-bg);
@@ -497,7 +504,7 @@ html, body {
 
 .chart-container-box { display: flex; align-items: flex-end; gap: 8px; height: 140px; padding-top: 20px; border-bottom: 2px solid var(--card-border); overflow-x: auto; }
 
-/* KIOSK QR CODE DISPLAY FIX */
+/* KIOSK QR CODE DISPLAY */
 .kiosk-card-display {
   display: flex;
   flex-direction: column;
