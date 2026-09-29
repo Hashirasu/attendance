@@ -1,23 +1,22 @@
 /* =========================================
-   MUDIVIVERSE - WORKSPACE GLASSMOPHILIC UI
-   (Calm Live Video Background + Apple Aesthetic)
+   MUDIVIVERSE - CALM MESH GRADIENT & HIGH CONTRAST
+   (Optimized for Readability & Glassmorphism)
 ========================================= */
 
 :root {
-  --glass-bg: rgba(255, 255, 255, 0.18);
-  --glass-border: rgba(255, 255, 255, 0.25);
-  --glass-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  --glass-bg: rgba(15, 23, 42, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
   
-  --card-bg: rgba(255, 255, 255, 0.15);
-  --card-border: rgba(255, 255, 255, 0.2);
+  --card-bg: rgba(30, 41, 59, 0.65);
+  --card-border: rgba(255, 255, 255, 0.15);
   
   --text-main: #ffffff;
-  --text-sub: rgba(255, 255, 255, 0.7);
-  --input-bg: rgba(255, 255, 255, 0.2);
+  --text-sub: #cbd5e1;
   
   --ios-blue: #3b82f6;
   --ios-green: #10b981;
-  --ios-red: #ff3b30;
+  --ios-red: #ef4444;
   
   --radius-xl: 24px;
   --radius-lg: 14px;
@@ -35,54 +34,90 @@ html, body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background-color: #0f172a;
+  background-color: #0b0f19;
   color: var(--text-main);
 }
 
-/* 1. LIVE BACKGROUND VIDEO & OVERLAY */
-.video-background-container {
+/* 1. ANIMATED LIVE MESH GRADIENT BACKGROUND */
+.mesh-bg-container {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
   z-index: -2;
+  background: #0f172a;
   overflow: hidden;
 }
 
-#bg-video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.video-overlay {
+.mesh-ball {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(15, 23, 42, 0.6); /* Dark calm overlay */
-  backdrop-filter: blur(2px);
-  z-index: -1;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.5;
+  animation: floatBall 20s infinite alternate ease-in-out;
 }
 
-/* 2. DESKTOP WORKSPACE LAYOUT */
+.ball-1 {
+  width: 500px; height: 500px;
+  background: #3b82f6;
+  top: -100px; left: -100px;
+}
+
+.ball-2 {
+  width: 600px; height: 600px;
+  background: #6366f1;
+  bottom: -150px; right: -100px;
+  animation-delay: -5s;
+}
+
+.ball-3 {
+  width: 450px; height: 450px;
+  background: #8b5cf6;
+  top: 40%; left: 30%;
+  animation-delay: -10s;
+}
+
+@keyframes floatBall {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(80px, 60px) scale(1.1); }
+  100% { transform: translate(-50px, 90px) scale(0.9); }
+}
+
+/* 2. LAYOUT AUTH / LOGIN (CENTERED WITHOUT SIDEBAR) */
+.auth-wrapper {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.auth-glass-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--radius-xl);
+  padding: 36px 28px;
+}
+
+/* 3. WORKSPACE DASHBOARD (SIDEBAR + MAIN) */
 .app-workspace {
   display: flex;
-  width: 94vw;
+  width: 95vw;
   height: 90vh;
   margin: 5vh auto;
   gap: 20px;
-  box-sizing: border-box;
 }
 
-/* SIDEBAR KIRI */
 .glass-sidebar {
   width: 250px;
   background: var(--glass-bg);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
   border-radius: var(--radius-xl);
@@ -99,14 +134,13 @@ html, body {
 }
 
 .brand-header-sidebar .logo-box {
-  width: 42px;
-  height: 42px;
+  width: 40px; height: 40px;
+  background: #fff; border-radius: 12px;
+  padding: 4px;
 }
 
 .brand-header-sidebar .brand-title {
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
+  font-size: 16px; font-weight: 800; color: #fff; letter-spacing: 0.5px;
 }
 
 .nav-menu {
@@ -139,22 +173,29 @@ html, body {
   backdrop-filter: blur(10px);
 }
 
-.nav-icon {
-  font-size: 16px;
+.logout-btn {
+  width: 100%;
+  padding: 10px;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  border-radius: var(--radius-lg);
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
 }
 
-.sidebar-footer {
-  font-size: 11px;
-  color: var(--text-sub);
-  text-align: center;
+.logout-btn:hover {
+  background: rgba(239, 68, 68, 0.35);
+  color: #fff;
 }
 
-/* CONTENT CONTAINER UTAMA */
+/* MAIN CONTENT WINDOW */
 .glass-content-window {
   flex: 1;
   background: var(--glass-bg);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
   border-radius: var(--radius-xl);
@@ -162,157 +203,62 @@ html, body {
   overflow-y: auto;
 }
 
-.app {
-  width: 100%;
-  max-width: 650px;
-  margin: 0 auto;
-}
-
-.panel {
-  padding: 0;
-}
-
-/* HEADER LOGO ON LOGIN */
-.brand-header {
+.workspace-topbar {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  margin-bottom: 24px;
 }
 
-.logo-box {
-  width: 58px;
-  height: 58px;
-  background: #ffffff;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--ios-blue);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+.user-greeting h3 {
+  font-size: 22px; font-weight: 800; color: #fff;
 }
 
-.brand-title {
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
+.user-code-badge {
+  font-size: 12px; color: var(--text-sub); font-weight: 600;
 }
 
-/* FORM INPUTS & BUTTONS */
-.form-group {
-  margin-bottom: 16px;
+.live-clock-box {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 8px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 18px; font-weight: 700; color: #60a5fa;
 }
 
-.form-group label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-sub);
-  margin-bottom: 6px;
-  display: block;
-  margin-left: 4px;
+.live-zone {
+  font-size: 11px; color: var(--text-sub); margin-left: 4px;
 }
 
-.custom-input, .custom-select {
-  width: 100%;
-  padding: 14px 16px;
-  background: var(--input-bg);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-lg);
-  font-size: 15px;
-  color: #ffffff;
-  transition: all 0.2s ease;
-  backdrop-filter: blur(8px);
-}
-
-.custom-input::placeholder {
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.custom-input:focus, .custom-select:focus {
-  outline: none;
-  background: rgba(255, 255, 255, 0.3);
-  border-color: var(--ios-blue);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
-}
-
-.custom-select option {
-  background: #1e293b;
-  color: #ffffff;
-}
-
-.main-button {
-  width: 100%;
-  padding: 16px;
-  margin-top: 8px;
-  border: none;
-  border-radius: var(--radius-lg);
-  background: #ffffff;
-  color: #0f172a;
-  font-weight: 700;
-  font-size: 15px;
-  cursor: pointer;
-  transition: transform 0.1s ease, background 0.2s ease;
-}
-
-.main-button:hover {
-  background: rgba(255, 255, 255, 0.9);
-}
-
-.main-button:active {
-  transform: scale(0.98);
-}
-
-.secondary-button {
-  padding: 8px 14px;
-  border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.2);
+/* HERO BUDDHIST QUOTE CARD */
+.hero-buddhist-card {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.2));
   border: 1px solid rgba(255, 255, 255, 0.25);
-  color: #ffffff;
-  font-weight: 600;
-  font-size: 13px;
-  cursor: pointer;
-  backdrop-filter: blur(10px);
+  border-radius: var(--radius-xl);
+  padding: 28px;
+  margin-bottom: 24px;
 }
 
-.secondary-button:hover {
-  background: rgba(255, 255, 255, 0.3);
+.quote-tag {
+  font-size: 12px; font-weight: 800; color: #a5b4fc; margin-bottom: 10px; text-transform: uppercase;
 }
 
-.btn-export {
-  background: var(--ios-blue) !important;
-  color: white !important;
-  border: none !important;
-  font-weight: 600;
+.buddhist-quote {
+  font-size: 18px; font-weight: 600; line-height: 1.5; color: #ffffff; font-style: italic;
 }
 
-.auth-toggle-box {
-  margin-top: 24px;
-  text-align: center;
-  font-size: 14px;
-  color: var(--text-sub);
-}
-
-.link-button {
-  background: none;
-  border: none;
-  color: #60a5fa;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  margin-left: 4px;
-}
-
-.link-button:hover {
-  text-decoration: underline;
+.quote-source {
+  display: block; margin-top: 10px; font-size: 13px; color: #cbd5e1; font-weight: 500;
 }
 
 /* CARDS & GRIDS */
-.today-grid {
+.info-grid, .today-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .card-box {
@@ -320,8 +266,7 @@ html, body {
   border: 1px solid var(--card-border);
   border-radius: var(--radius-xl);
   padding: 20px;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
 }
 
 .card-badge {
@@ -329,136 +274,61 @@ html, body {
   padding: 4px 10px;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.15);
-  color: var(--text-sub);
+  color: #94a3b8;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.5px;
   text-transform: uppercase;
 }
 
-/* LIST ITEMS */
-.history-item, .emp-card-item {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(8px);
-}
-
-.emp-name-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-main);
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-/* BADGES STYLING */
-.badge-present, .badge-active {
-  background: rgba(52, 199, 89, 0.25);
-  color: #34d399;
-  font-weight: 600;
-  font-size: 12px;
-  padding: 4px 10px;
-  border-radius: 8px;
-}
-
-.badge-late, .badge-inactive {
-  background: rgba(255, 59, 48, 0.25);
-  color: #f87171;
-  font-weight: 600;
-  font-size: 12px;
-  padding: 4px 10px;
-  border-radius: 8px;
-}
-
-/* TABS & MODAL */
-.admin-tabs {
-  display: flex;
-  background: rgba(0, 0, 0, 0.25);
-  padding: 4px;
-  border-radius: 12px;
-  margin-bottom: 20px;
-}
-
-.tab-btn {
-  flex: 1;
-  padding: 10px;
-  border: none;
-  border-radius: 10px;
-  background: transparent;
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--text-sub);
-  cursor: pointer;
-}
-
-.tab-btn.active {
-  background: rgba(255, 255, 255, 0.25);
-  color: #ffffff;
-  backdrop-filter: blur(10px);
-}
-
-.modal {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(12px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  z-index: 100;
-}
-
-.modal-content {
-  background: #1e293b;
-  border-radius: var(--radius-xl);
-  padding: 24px;
+/* INPUTS & BUTTONS */
+.custom-input, .custom-select {
   width: 100%;
-  max-width: 400px;
-  border: 1px solid rgba(255,255,255,0.15);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  padding: 12px 16px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-lg);
+  font-size: 14px;
+  color: #ffffff;
 }
 
-/* RESPONSIVE MOBILE ADJUSTMENT */
+.custom-input::placeholder { color: #94a3b8; }
+
+.main-button {
+  width: 100%; padding: 14px; border: none; border-radius: var(--radius-lg);
+  background: #ffffff; color: #0f172a; font-weight: 800; font-size: 15px; cursor: pointer;
+}
+
+.secondary-button {
+  padding: 8px 14px; border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff; font-weight: 600; font-size: 13px; cursor: pointer;
+}
+
+.history-item, .emp-card-item {
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: var(--radius-lg);
+  padding: 14px 18px;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.badge-present { background: rgba(16, 185, 129, 0.25); color: #34d399; font-weight: 700; font-size: 12px; padding: 4px 10px; border-radius: 8px; }
+.badge-late { background: rgba(239, 68, 68, 0.25); color: #f87171; font-weight: 700; font-size: 12px; padding: 4px 10px; border-radius: 8px; }
+
+.admin-tabs { display: flex; background: rgba(0, 0, 0, 0.3); padding: 4px; border-radius: 12px; margin-bottom: 20px; }
+.tab-btn { flex: 1; padding: 10px; border: none; border-radius: 10px; background: transparent; font-weight: 700; font-size: 14px; color: #94a3b8; cursor: pointer; }
+.tab-btn.active { background: rgba(255, 255, 255, 0.2); color: #ffffff; }
+
+.modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 100; }
+.modal-content { background: #1e293b; border-radius: var(--radius-xl); padding: 24px; width: 100%; max-width: 400px; border: 1px solid rgba(255,255,255,0.2); }
+
 @media (max-width: 768px) {
-  body {
-    overflow-y: auto;
-  }
-  .app-workspace {
-    flex-direction: column;
-    width: 100vw;
-    height: auto;
-    min-height: 100vh;
-    margin: 0;
-    padding: 12px;
-    gap: 12px;
-  }
-  .glass-sidebar {
-    width: 100%;
-    padding: 16px;
-  }
-  .nav-menu {
-    flex-direction: row;
-    margin-top: 12px;
-  }
-  .nav-btn {
-    flex: 1;
-    justify-content: center;
-    padding: 8px;
-    font-size: 12px;
-  }
-  .glass-content-window {
-    padding: 16px;
-  }
-  .today-grid {
-    grid-template-columns: 1fr;
-  }
+  body { overflow-y: auto; }
+  .app-workspace { flex-direction: column; width: 100vw; height: auto; margin: 0; padding: 12px; }
+  .glass-sidebar { width: 100%; }
+  .nav-menu { flex-direction: row; margin-top: 12px; }
+  .nav-btn { flex: 1; justify-content: center; padding: 8px; }
+  .info-grid, .today-grid { grid-template-columns: 1fr; }
 }

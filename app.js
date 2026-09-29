@@ -250,7 +250,14 @@ async function handleLogout() {
 if (logoutBtn) logoutBtn.addEventListener("click", handleLogout);
 if (adminLogoutBtn) adminLogoutBtn.addEventListener("click", handleLogout);
 
+// GANTI / SESUAIKAN FUNGSI SHOW LOGIN SECTION DI APP.JS
 function showLoginSection() {
+  const authContainer = document.getElementById("auth-container");
+  const dashboardWorkspace = document.getElementById("dashboard-workspace");
+
+  if (authContainer) authContainer.style.display = "flex";
+  if (dashboardWorkspace) dashboardWorkspace.style.display = "none";
+
   loginSection.style.display = "block";
   userSection.style.display = "none";
   adminSection.style.display = "none";
@@ -262,9 +269,7 @@ function showLoginSection() {
   messageEl.textContent = "";
 }
 
-// ==============================
-// 2. USER DASHBOARD & STATS
-// ==============================
+// GANTI / SESUAIKAN FUNGSI LOAD USER PROFILE DI APP.JS
 async function loadUserProfile() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
@@ -280,12 +285,22 @@ async function loadUserProfile() {
     userCodeEl.textContent = `Kode: ${empData.employee_code}`;
     currentUserRole = empData.role;
 
+    const navAdminBtn = document.getElementById("nav-admin-btn");
     if (currentUserRole === "admin" || currentUserRole === "adm1n") {
-      switchToAdminBtn.style.display = "inline-block";
+      if (switchToAdminBtn) switchToAdminBtn.style.display = "inline-block";
+      if (navAdminBtn) navAdminBtn.style.display = "flex";
     } else {
-      switchToAdminBtn.style.display = "none";
+      if (switchToAdminBtn) switchToAdminBtn.style.display = "none";
+      if (navAdminBtn) navAdminBtn.style.display = "none";
     }
   }
+
+  // SEMBUNYIKAN AUTH WRAPPER & MUNCULKAN DASHBOARD WORKSPACE
+  const authContainer = document.getElementById("auth-container");
+  const dashboardWorkspace = document.getElementById("dashboard-workspace");
+
+  if (authContainer) authContainer.style.display = "none";
+  if (dashboardWorkspace) dashboardWorkspace.style.display = "flex";
 
   loginSection.style.display = "none";
   userSection.style.display = "block";
