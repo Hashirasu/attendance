@@ -90,7 +90,7 @@ async function checkUrlAutoAttendance() {
       
       if (!session) {
         if (!isRegisterMode) toggleAuthBtn.click();
-        if (messageEl) messageEl.textContent = "Silakan buat akun untuk menyelesaikan presensi.";
+        messageEl.textContent = "Silakan buat akun untuk menyelesaikan presensi.";
         return; 
       }
 
@@ -98,11 +98,9 @@ async function checkUrlAutoAttendance() {
       
       if (!error && data && data.success) {
         alert("Absensi Berhasil via Scan QR!");
-        await Promise.all([
-          loadTodayStatus(),
-          loadAttendanceHistory(),
-          loadMonthlyStatistics()
-        ]);
+        await loadTodayStatus();
+        await loadAttendanceHistory();
+        await loadMonthlyStatistics();
       } else {
         const errorMsg = error ? error.message : (data ? data.message : "Terjadi kesalahan.");
         alert("Gagal Absen: " + errorMsg);
@@ -129,136 +127,135 @@ window.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-if (toggleAuthBtn) {
-  toggleAuthBtn.addEventListener("click", () => {
-    isRegisterMode = !isRegisterMode;
-    if (isRegisterMode) {
-      if (nameGroup) nameGroup.style.display = "block";
-      if (authButtonText) authButtonText.textContent = "Daftar";
-      if (toggleAuthText) toggleAuthText.textContent = "Sudah punya akun?";
-      toggleAuthBtn.textContent = "Login di sini";
-    } else {
-      if (nameGroup) nameGroup.style.display = "none";
-      if (authButtonText) authButtonText.textContent = "Masuk";
-      if (toggleAuthText) toggleAuthText.textContent = "Belum punya akun?";
-      toggleAuthBtn.textContent = "Daftar di sini";
-    }
-    if (messageEl) messageEl.textContent = "";
-  });
-}
+toggleAuthBtn.addEventListener("click", () => {
+  isRegisterMode = !isRegisterMode;
+  if (isRegisterMode) {
+    nameGroup.style.display = "block";
+    authButtonText.textContent = "Daftar";
+    toggleAuthText.textContent = "Sudah punya akun?";
+    toggleAuthBtn.textContent = "Login di sini";
+  } else {
+    nameGroup.style.display = "none";
+    authButtonText.textContent = "Masuk";
+    toggleAuthText.textContent = "Belum punya akun?";
+    toggleAuthBtn.textContent = "Daftar di sini";
+  }
+  messageEl.textContent = "";
+});
 
-if (authMainButton) {
-  authMainButton.addEventListener("click", async () => {
-    const email = emailInput.value.trim();
-    const password = passwordInput.value.trim();
+authMainButton.addEventListener("click", async () => {
+  const email = emailInput.value.trim();
+  const password = passwordInput.value.trim();
 
-    if (!email || !password) {
-      if (messageEl) messageEl.textContent = "Email dan password wajib diisi!";
+  if (!email || !password) {
+    messageEl.textContent = "Email dan password wajib diisi!";
+    return;
+  }
+
+  const emailRegex = /^[a-zA-Z0-9.]+@gmail\.com$/;
+  if (!emailRegex.test(email)) {
+    messageEl.textContent = "Format email harus menggunakan @gmail.com dan bagian depan hanya huruf, angka, serta titik (.) saja.";
+    return;
+  }
+
+  messageEl.textContent = "Memproses...";
+
+  if (isRegisterMode) {
+    const name = registerNameInput.value.trim();
+    const birthPlace = registerBirthPlace.value.trim();
+    const birthDate = registerBirthDate.value;
+    const phone = registerPhoneInput ? registerPhoneInput.value.trim() : "";
+
+    if (!name || !birthPlace || !birthDate || !phone) {
+      messageEl.textContent = "Nama, tempat/tgl lahir, dan No WhatsApp wajib diisi!";
       return;
     }
 
-    const emailRegex = /^[a-zA-Z0-9.]+@gmail\.com$/;
-    if (!emailRegex.test(email)) {
-      if (messageEl) messageEl.textContent = "Format email harus menggunakan @gmail.com dan bagian depan hanya huruf, angka, serta titik (.) saja.";
+    const nameRegex = /^[A-Za-z\s]+$/;
+    if (!nameRegex.test(name)) {
+      messageEl.textContent = "Nama hanya boleh berisi huruf dan spasi.";
       return;
     }
 
-    if (messageEl) messageEl.textContent = "Memproses...";
+    const { data: nameExists, error: rpcError } = await supabase.rpc("check_name_exists", { p_name: name });
+    if (rpcError) {
+      messageEl.textContent = "Gagal memvalidasi nama: " + rpcError.message;
+      return;
+    }
 
-    if (isRegisterMode) {
-      const name = registerNameInput.value.trim();
-      const birthPlace = registerBirthPlace.value.trim();
-      const birthDate = registerBirthDate.value;
-      const phone = registerPhoneInput ? registerPhoneInput.value.trim() : "";
+    if (nameExists) {
+      messageEl.textContent = "Nama lengkap ini sudah terdaftar!";
+      return;
+    }
 
-      if (!name || !birthPlace || !birthDate || !phone) {
-        if (messageEl) messageEl.textContent = "Nama, tempat/tgl lahir, dan No WhatsApp wajib diisi!";
-        return;
+    const { error: signUpError } = await supabase.auth.signUp({
+      email, 
+      password, 
+      options: { 
+        data: { 
+          full_name: name,
+          birth_place: birthPlace,
+          birth_date: birthDate,
+          phone: phone
+        } 
       }
+    });
 
-      const nameRegex = /^[A-Za-z\s]+$/;
-      if (!nameRegex.test(name)) {
-        if (messageEl) messageEl.textContent = "Nama hanya boleh berisi huruf dan spasi.";
-        return;
-      }
+    if (signUpError) {
+      messageEl.textContent = "Gagal mendaftar: " + signUpError.message;
+      return;
+    }
 
-      const { data: nameExists, error: rpcError } = await supabase.rpc("check_name_exists", { p_name: name });
-      if (rpcError) {
-        if (messageEl) messageEl.textContent = "Gagal memvalidasi nama: " + rpcError.message;
-        return;
-      }
-
-      if (nameExists) {
-        if (messageEl) messageEl.textContent = "Nama lengkap ini sudah terdaftar!";
-        return;
-      }
-
-      const { error: signUpError } = await supabase.auth.signUp({
-        email, 
-        password, 
-        options: { 
-          data: { 
-            full_name: name,
-            birth_place: birthPlace,
-            birth_date: birthDate,
-            phone: phone
-          } 
-        }
-      });
-
-      if (signUpError) {
-        if (messageEl) messageEl.textContent = "Gagal mendaftar: " + signUpError.message;
-        return;
-      }
-
-      if (sessionStorage.getItem("pending_secret")) {
-        const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
-        if (!loginError) {
-          if (messageEl) messageEl.textContent = "";
-          await loadUserProfile();
-          await checkUrlAutoAttendance();
-        }
-      } else {
-        if (messageEl) messageEl.textContent = "Pendaftaran berhasil! Silakan login.";
-        toggleAuthBtn.click();
+    if (sessionStorage.getItem("pending_secret")) {
+      const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+      if (!loginError) {
+        messageEl.textContent = "";
+        await loadUserProfile();
+        await checkUrlAutoAttendance();
       }
     } else {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        if (messageEl) messageEl.textContent = "Login Gagal: " + error.message;
-        return;
-      }
-
-      if (data.user && !data.user.email_confirmed_at) {
-        await supabase.auth.signOut();
-        if (emailInput) emailInput.style.display = "none";
-        if (passwordInput) passwordInput.style.display = "none";
-        if (authMainButton) authMainButton.style.display = "none";
-        const authToggleBox = document.querySelector(".auth-toggle-box");
-        if (authToggleBox) authToggleBox.style.display = "none";
-        if (unverifiedSection) unverifiedSection.style.display = "block";
-        window.pendingVerificationEmail = email;
-        if (messageEl) messageEl.textContent = "";
-        return;
-      }
-
-      if (messageEl) messageEl.textContent = "";
-      await loadUserProfile();
-      await checkUrlAutoAttendance();
+      messageEl.textContent = "Pendaftaran berhasil! Silakan login.";
+      toggleAuthBtn.click();
     }
-  });
-}
+  } else {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      messageEl.textContent = "Login Gagal: " + error.message;
+      return;
+    }
+
+    if (data.user && !data.user.email_confirmed_at) {
+      await supabase.auth.signOut();
+      emailInput.style.display = "none";
+      passwordInput.style.display = "none";
+      authMainButton.style.display = "none";
+      document.querySelector(".auth-toggle-box").style.display = "none";
+      if (unverifiedSection) unverifiedSection.style.display = "block";
+      window.pendingVerificationEmail = email;
+      messageEl.textContent = "";
+      return;
+    }
+
+    messageEl.textContent = "";
+    await loadUserProfile();
+    await checkUrlAutoAttendance();
+  }
+});
 
 async function handleLogout() {
   await supabase.auth.signOut();
   showLoginSection();
 }
 
+// TAMBAHKAN EVENT LISTENER UNTUK TOMBOL LOGOUT MOBILE
 const mobileLogoutBtn = document.getElementById("mobile-logout-button");
 if (mobileLogoutBtn) mobileLogoutBtn.addEventListener("click", handleLogout);
+
+
 if (logoutBtn) logoutBtn.addEventListener("click", handleLogout);
 if (adminLogoutBtn) adminLogoutBtn.addEventListener("click", handleLogout);
 
+// GANTI / SESUAIKAN FUNGSI SHOW LOGIN SECTION DI APP.JS
 function showLoginSection() {
   const authContainer = document.getElementById("auth-container");
   const dashboardWorkspace = document.getElementById("dashboard-workspace");
@@ -266,32 +263,21 @@ function showLoginSection() {
   if (authContainer) authContainer.style.display = "flex";
   if (dashboardWorkspace) dashboardWorkspace.style.display = "none";
 
-  if (loginSection) loginSection.style.display = "block";
-  if (userSection) userSection.style.display = "none";
-  if (adminSection) adminSection.style.display = "none";
+  loginSection.style.display = "block";
+  userSection.style.display = "none";
+  adminSection.style.display = "none";
   if (unverifiedSection) unverifiedSection.style.display = "none";
-  if (emailInput) emailInput.style.display = "block";
-  if (passwordInput) passwordInput.style.display = "block";
-  if (authMainButton) authMainButton.style.display = "block";
-  const authToggleBox = document.querySelector(".auth-toggle-box");
-  if (authToggleBox) authToggleBox.style.display = "block";
-  if (messageEl) messageEl.textContent = "";
+  emailInput.style.display = "block";
+  passwordInput.style.display = "block";
+  authMainButton.style.display = "block";
+  document.querySelector(".auth-toggle-box").style.display = "block";
+  messageEl.textContent = "";
 }
 
+// GANTI / SESUAIKAN FUNGSI LOAD USER PROFILE DI APP.JS
 async function loadUserProfile() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
-
-  // AKTIFKAN WRAPPER DASHBOARD UTAMA
-  const authContainer = document.getElementById("auth-container");
-  const dashboardWorkspace = document.getElementById("dashboard-workspace");
-
-  if (authContainer) authContainer.style.display = "none";
-  if (dashboardWorkspace) dashboardWorkspace.style.display = "flex";
-
-  if (loginSection) loginSection.style.display = "none";
-  if (userSection) userSection.style.display = "block";
-  if (adminSection) adminSection.style.display = "none";
 
   const { data: empData, error } = await supabase
     .from("employees")
@@ -300,8 +286,8 @@ async function loadUserProfile() {
     .single();
 
   if (!error && empData) {
-    if (userNameDisplay) userNameDisplay.textContent = empData.name;
-    if (userCodeEl) userCodeEl.textContent = `Kode: ${empData.employee_code}`;
+    userNameDisplay.textContent = empData.name;
+    userCodeEl.textContent = `Kode: ${empData.employee_code}`;
     currentUserRole = empData.role;
 
     const navAdminBtn = document.getElementById("nav-admin-btn");
@@ -314,17 +300,25 @@ async function loadUserProfile() {
     }
   }
 
-  // PANGGIL SELURUH RENDER DATA SECARA PARALEL AGAR LANGSUNG TAMPIL INSTAN
-  await Promise.all([
-    loadTodayStatus(),
-    loadAttendanceHistory(),
-    loadMonthlyStatistics()
-  ]);
+  // SEMBUNYIKAN AUTH WRAPPER & MUNCULKAN DASHBOARD WORKSPACE
+  const authContainer = document.getElementById("auth-container");
+  const dashboardWorkspace = document.getElementById("dashboard-workspace");
+
+  if (authContainer) authContainer.style.display = "none";
+  if (dashboardWorkspace) dashboardWorkspace.style.display = "flex";
+
+  loginSection.style.display = "none";
+  userSection.style.display = "block";
+  adminSection.style.display = "none";
+
+  await loadTodayStatus();
+  await loadAttendanceHistory();
+  await loadMonthlyStatistics();
 }
 
 async function loadTodayStatus() {
   if (!todayStatusEl) return;
-  todayStatusEl.innerHTML = "<p style='color: #cbd5e1;'>Memuat status...</p>";
+  todayStatusEl.innerHTML = "<p>Memuat status...</p>";
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
@@ -341,16 +335,14 @@ async function loadTodayStatus() {
   if (data) {
     const time = new Date(data.check_in).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" });
     const badge = data.status === "late" ? `<span class="badge-late">Terlambat</span>` : `<span class="badge-present">Tepat Waktu</span>`;
-    todayStatusEl.innerHTML = `<div style="font-size: 15px; font-weight: 700; color: #fff;">Sudah Absen (${time} WIB)</div><div style="margin-top:8px;">${badge}</div>`;
+    todayStatusEl.innerHTML = `<div style="font-size: 14px; font-weight: 700;">Sudah Absen (${time})</div><div style="margin-top:6px;">${badge}</div>`;
   } else {
-    todayStatusEl.innerHTML = `<div style="font-size: 15px; font-weight: 700; color: var(--ios-red);">Belum Absen</div>`;
+    todayStatusEl.innerHTML = `<div style="font-size: 14px; font-weight: 700; color: var(--ios-red);">Belum Absen</div>`;
   }
 }
 
 async function loadAttendanceHistory() {
   if (!attendanceHistory) return;
-  attendanceHistory.innerHTML = "<p style='color: #cbd5e1;'>Memuat riwayat...</p>";
-
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
@@ -361,7 +353,7 @@ async function loadAttendanceHistory() {
     .order("attendance_date", { ascending: false });
 
   if (!data || data.length === 0) {
-    attendanceHistory.innerHTML = "<p style='font-size: 13px; color: var(--text-sub);'>Belum ada riwayat presensi.</p>";
+    attendanceHistory.innerHTML = "<p style='font-size: 13px; color: var(--text-sub);'>Belum ada riwayat.</p>";
     return;
   }
 
@@ -373,7 +365,7 @@ async function loadAttendanceHistory() {
 
     const item = document.createElement("div");
     item.className = "history-item";
-    item.innerHTML = `<div><strong style="color: #fff;">${date}</strong><div style="font-size: 11px; color: var(--text-sub);">${time} WIB</div></div><div>${badge}</div>`;
+    item.innerHTML = `<div><strong>${date}</strong><div style="font-size: 11px; color: var(--text-sub);">${time} WIB</div></div><div>${badge}</div>`;
     attendanceHistory.appendChild(item);
   });
 }
@@ -406,8 +398,8 @@ async function loadMonthlyStatistics() {
   const percent = total > 0 ? Math.round((hadir / total) * 100) : 0;
 
   statHadirEl.textContent = hadir;
-  if (statTerlambatEl) statTerlambatEl.textContent = terlambat;
-  if (statRateEl) statRateEl.textContent = percent + "%";
+  statTerlambatEl.textContent = terlambat;
+  statRateEl.textContent = percent + "%";
   if (barPresent && barLate) {
     barPresent.style.width = percent + "%";
     barLate.style.width = (total > 0 ? (terlambat / total) * 100 : 0) + "%";
@@ -469,9 +461,9 @@ if (closeScannerBtn) {
 // ==============================
 if (switchToAdminBtn) {
   switchToAdminBtn.addEventListener("click", async () => {
-    if (userSection) userSection.style.display = "none";
-    if (adminSection) adminSection.style.display = "block";
-    if (adminFilterDate) adminFilterDate.value = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
+    userSection.style.display = "none";
+    adminSection.style.display = "block";
+    adminFilterDate.value = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
     await loadAdminAttendance();
     await loadAdminChart();
   });
@@ -479,21 +471,21 @@ if (switchToAdminBtn) {
 
 if (switchToUserBtn) {
   switchToUserBtn.addEventListener("click", () => {
-    if (adminSection) adminSection.style.display = "none";
-    if (userSection) userSection.style.display = "block";
+    adminSection.style.display = "none";
+    userSection.style.display = "block";
   });
 }
 
 if (tabRekapBtn && tabKaryawanBtn) {
   tabRekapBtn.addEventListener("click", () => {
-    if (adminViewRekap) adminViewRekap.style.display = "block";
-    if (adminViewKaryawan) adminViewKaryawan.style.display = "none";
+    adminViewRekap.style.display = "block";
+    adminViewKaryawan.style.display = "none";
     tabRekapBtn.classList.add("active");
     tabKaryawanBtn.classList.remove("active");
   });
   tabKaryawanBtn.addEventListener("click", async () => {
-    if (adminViewRekap) adminViewRekap.style.display = "none";
-    if (adminViewKaryawan) adminViewKaryawan.style.display = "block";
+    adminViewRekap.style.display = "none";
+    adminViewKaryawan.style.display = "block";
     tabKaryawanBtn.classList.add("active");
     tabRekapBtn.classList.remove("active");
     await loadEmployeeManagement();
@@ -506,11 +498,11 @@ if (adminChartFilter) adminChartFilter.addEventListener("change", loadAdminChart
 
 async function loadAdminAttendance() {
   if (!adminAttendanceList) return;
-  adminAttendanceList.innerHTML = "<p style='color: #cbd5e1;'>Memuat rekap...</p>";
+  adminAttendanceList.innerHTML = "<p>Memuat rekap...</p>";
 
   let query = supabase.from("attendance").select("attendance_date, check_in, status, employees(name, employee_code)").order("check_in", { ascending: false });
-  if (adminFilterDate && adminFilterDate.value) query = query.eq("attendance_date", adminFilterDate.value);
-  if (adminFilterStatus && adminFilterStatus.value !== "ALL") query = query.eq("status", adminFilterStatus.value);
+  if (adminFilterDate.value) query = query.eq("attendance_date", adminFilterDate.value);
+  if (adminFilterStatus.value !== "ALL") query = query.eq("status", adminFilterStatus.value);
 
   const { data } = await query;
   if (!data || data.length === 0) {
@@ -526,7 +518,7 @@ async function loadAdminAttendance() {
 
     const item = document.createElement("div");
     item.className = "history-item";
-    item.innerHTML = `<div><strong style="color: #fff;">${name}</strong><div style="font-size: 11px; color: var(--text-sub);">${row.attendance_date} &bull; ${time} WIB</div></div><div>${badge}</div>`;
+    item.innerHTML = `<div><strong>${name}</strong><div style="font-size: 11px; color: var(--text-sub);">${row.attendance_date} &bull; ${time} WIB</div></div><div>${badge}</div>`;
     adminAttendanceList.appendChild(item);
   });
 }
@@ -574,28 +566,28 @@ async function loadAdminChart() {
 
 async function loadEmployeeManagement() {
   if (!adminEmployeeList) return;
-  adminEmployeeList.innerHTML = "<p style='color: #cbd5e1;'>Memuat anggota...</p>";
+  adminEmployeeList.innerHTML = "<p>Memuat anggota...</p>";
 
   const { data } = await supabase.from("employees").select("id, name, employee_code, role, is_active, phone").order("name");
   if (!data) return;
 
   adminEmployeeList.innerHTML = "";
   data.forEach(emp => {
-    let roleBadgeBg = "rgba(0, 92, 191, 0.2)";
-    let roleBadgeColor = "#60a5fa";
+    let roleBadgeBg = "rgba(0, 92, 191, 0.1)";
+    let roleBadgeColor = "var(--ios-blue)";
     let roleText = "MEMBER";
 
     if (emp.role === "adm1n") {
-      roleBadgeBg = "rgba(255, 59, 48, 0.25)";
-      roleBadgeColor = "#f87171";
+      roleBadgeBg = "rgba(255, 59, 48, 0.15)";
+      roleBadgeColor = "var(--ios-red)";
       roleText = "ADM1N";
     } else if (emp.role === "admin") {
-      roleBadgeBg = "rgba(245, 158, 11, 0.25)";
-      roleBadgeColor = "#fbbf24";
+      roleBadgeBg = "rgba(245, 158, 11, 0.15)";
+      roleBadgeColor = "#f59e0b";
       roleText = "ADMIN";
     } else if (emp.role === "pengurus") {
-      roleBadgeBg = "rgba(16, 185, 129, 0.25)";
-      roleBadgeColor = "#34d399";
+      roleBadgeBg = "rgba(16, 185, 129, 0.15)";
+      roleBadgeColor = "#10b981";
       roleText = "PENGURUS";
     }
 
@@ -604,7 +596,7 @@ async function loadEmployeeManagement() {
     card.innerHTML = `
       <div>
         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px;">
-          <strong style="font-size: 14px; color: #fff;">${emp.name}</strong>
+          <strong style="font-size: 14px; color: var(--text-main);">${emp.name}</strong>
           <span style="font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: ${roleBadgeBg}; color: ${roleBadgeColor};">${roleText}</span>
         </div>
         <div style="font-size: 11px; color: var(--text-sub);">Kode: ${emp.employee_code} | WA: ${emp.phone || '-'}</div>
@@ -738,7 +730,7 @@ if (exportCsvBtn) {
 }
 
 // ==============================
-// 6. SINKRONISASI KE GOOGLE SHEETS
+// 6. SINKRONISASI KE GOOGLE SHEETS (FIXED PENGURUS SAFE DATA)
 // ==============================
 const syncSheetsBtn = document.getElementById("sync-sheets-btn");
 
@@ -755,6 +747,7 @@ if (syncSheetsBtn) {
     syncSheetsBtn.disabled = true;
 
     try {
+      // 1. Ambil seluruh master anggota & pengurus
       const { data: empData, error: empError } = await supabase
         .from("employees")
         .select("id, name, phone, employee_code, role, birth_place, birth_date")
@@ -764,6 +757,7 @@ if (syncSheetsBtn) {
         throw new Error("Gagal mengambil data anggota: " + (empError ? empError.message : "Data kosong"));
       }
 
+      // 2. Ambil riwayat absensi
       const { data: attData, error: attError } = await supabase
         .from("attendance")
         .select("attendance_date, check_in, status, employee_id")
@@ -784,6 +778,7 @@ if (syncSheetsBtn) {
       const pengurusRows = [];
       const memberRows = [];
 
+      // 3. Olah data dengan PENGAMAN NULL
       empData.forEach(emp => {
         const name = emp.name || "N/A";
         const phone = emp.phone || "-";
@@ -791,6 +786,7 @@ if (syncSheetsBtn) {
         const roleStr = String(emp.role || "user").toLowerCase().trim();
         const birthPlace = emp.birth_place || "-";
         
+        // Pengaman Tanggal Lahir jika NULL
         let birthDate = "-";
         if (emp.birth_date) {
           try {
@@ -803,6 +799,7 @@ if (syncSheetsBtn) {
           }
         }
 
+        // Kriteria Pengurus / Admin
         const isPengurus = (roleStr === "pengurus" || roleStr === "admin" || roleStr === "adm1n");
         const userAttList = attMap[emp.id] || [];
 
@@ -836,6 +833,7 @@ if (syncSheetsBtn) {
             }
           });
         } else {
+          // Jika Pengurus/Anggota belum pernah absen
           const itemData = {
             "Kode Anggota": code,
             "Nama Lengkap": name,
