@@ -1,4 +1,45 @@
-/* Video Background Fullscreen */
+/* =========================================
+   MUDIVIVERSE - WORKSPACE GLASSMOPHILIC UI
+   (Calm Live Video Background + Apple Aesthetic)
+========================================= */
+
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.18);
+  --glass-border: rgba(255, 255, 255, 0.25);
+  --glass-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  
+  --card-bg: rgba(255, 255, 255, 0.15);
+  --card-border: rgba(255, 255, 255, 0.2);
+  
+  --text-main: #ffffff;
+  --text-sub: rgba(255, 255, 255, 0.7);
+  --input-bg: rgba(255, 255, 255, 0.2);
+  
+  --ios-blue: #3b82f6;
+  --ios-green: #10b981;
+  --ios-red: #ff3b30;
+  
+  --radius-xl: 24px;
+  --radius-lg: 14px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #0f172a;
+  color: var(--text-main);
+}
+
+/* 1. LIVE BACKGROUND VIDEO & OVERLAY */
 .video-background-container {
   position: fixed;
   top: 0;
@@ -21,51 +62,403 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(15, 23, 42, 0.4); /* Dark Overlay untuk menjaga kontras */
+  background: rgba(15, 23, 42, 0.6); /* Dark calm overlay */
+  backdrop-filter: blur(2px);
   z-index: -1;
 }
 
-/* Glassmorphism Workspace UI */
+/* 2. DESKTOP WORKSPACE LAYOUT */
 .app-workspace {
   display: flex;
-  width: 95vw;
+  width: 94vw;
   height: 90vh;
   margin: 5vh auto;
-  gap: 16px;
+  gap: 20px;
   box-sizing: border-box;
 }
 
-/* Glass Sidebar & Content Container */
-.glass-sidebar, .glass-content-window {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 16px;
-  color: #ffffff;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-}
-
+/* SIDEBAR KIRI */
 .glass-sidebar {
-  width: 240px;
-  padding: 20px;
+  width: 250px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--radius-xl);
+  padding: 24px 18px;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
 }
 
+.brand-header-sidebar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-header-sidebar .logo-box {
+  width: 42px;
+  height: 42px;
+}
+
+.brand-header-sidebar .brand-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.nav-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 30px;
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  color: var(--text-sub);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.nav-btn:hover, .nav-btn.active {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  backdrop-filter: blur(10px);
+}
+
+.nav-icon {
+  font-size: 16px;
+}
+
+.sidebar-footer {
+  font-size: 11px;
+  color: var(--text-sub);
+  text-align: center;
+}
+
+/* CONTENT CONTAINER UTAMA */
 .glass-content-window {
   flex: 1;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
+  background: var(--glass-bg);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--radius-xl);
+  padding: 28px;
   overflow-y: auto;
 }
 
-/* Glass Cards Inside Content */
-.glass-card {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+.app {
+  width: 100%;
+  max-width: 650px;
+  margin: 0 auto;
+}
+
+.panel {
+  padding: 0;
+}
+
+/* HEADER LOGO ON LOGIN */
+.brand-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.logo-box {
+  width: 58px;
+  height: 58px;
+  background: #ffffff;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ios-blue);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.brand-title {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+/* FORM INPUTS & BUTTONS */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-sub);
+  margin-bottom: 6px;
+  display: block;
+  margin-left: 4px;
+}
+
+.custom-input, .custom-select {
+  width: 100%;
+  padding: 14px 16px;
+  background: var(--input-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  font-size: 15px;
+  color: #ffffff;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+}
+
+.custom-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.custom-input:focus, .custom-select:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.3);
+  border-color: var(--ios-blue);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+.custom-select option {
+  background: #1e293b;
+  color: #ffffff;
+}
+
+.main-button {
+  width: 100%;
+  padding: 16px;
+  margin-top: 8px;
+  border: none;
+  border-radius: var(--radius-lg);
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.2s ease;
+}
+
+.main-button:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.main-button:active {
+  transform: scale(0.98);
+}
+
+.secondary-button {
+  padding: 8px 14px;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+}
+
+.secondary-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.btn-export {
+  background: var(--ios-blue) !important;
+  color: white !important;
+  border: none !important;
+  font-weight: 600;
+}
+
+.auth-toggle-box {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-sub);
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: #60a5fa;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  margin-left: 4px;
+}
+
+.link-button:hover {
+  text-decoration: underline;
+}
+
+/* CARDS & GRIDS */
+.today-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.card-box {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-xl);
   padding: 20px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+}
+
+.card-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--text-sub);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* LIST ITEMS */
+.history-item, .emp-card-item {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
   border: 1px solid rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(8px);
+}
+
+.emp-name-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* BADGES STYLING */
+.badge-present, .badge-active {
+  background: rgba(52, 199, 89, 0.25);
+  color: #34d399;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+.badge-late, .badge-inactive {
+  background: rgba(255, 59, 48, 0.25);
+  color: #f87171;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+/* TABS & MODAL */
+.admin-tabs {
+  display: flex;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 4px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-sub);
+  cursor: pointer;
+}
+
+.tab-btn.active {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  backdrop-filter: blur(10px);
+}
+
+.modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 100;
+}
+
+.modal-content {
+  background: #1e293b;
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  width: 100%;
+  max-width: 400px;
+  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+}
+
+/* RESPONSIVE MOBILE ADJUSTMENT */
+@media (max-width: 768px) {
+  body {
+    overflow-y: auto;
+  }
+  .app-workspace {
+    flex-direction: column;
+    width: 100vw;
+    height: auto;
+    min-height: 100vh;
+    margin: 0;
+    padding: 12px;
+    gap: 12px;
+  }
+  .glass-sidebar {
+    width: 100%;
+    padding: 16px;
+  }
+  .nav-menu {
+    flex-direction: row;
+    margin-top: 12px;
+  }
+  .nav-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 8px;
+    font-size: 12px;
+  }
+  .glass-content-window {
+    padding: 16px;
+  }
+  .today-grid {
+    grid-template-columns: 1fr;
+  }
 }
