@@ -247,6 +247,11 @@ async function handleLogout() {
   showLoginSection();
 }
 
+// TAMBAHKAN EVENT LISTENER UNTUK TOMBOL LOGOUT MOBILE
+const mobileLogoutBtn = document.getElementById("mobile-logout-button");
+if (mobileLogoutBtn) mobileLogoutBtn.addEventListener("click", handleLogout);
+
+
 if (logoutBtn) logoutBtn.addEventListener("click", handleLogout);
 if (adminLogoutBtn) adminLogoutBtn.addEventListener("click", handleLogout);
 
