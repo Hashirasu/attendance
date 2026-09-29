@@ -282,7 +282,6 @@ async function loadUserProfile() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
-  // AKTIFKAN WRAPPER DASHBOARD UTAMA
   const authContainer = document.getElementById("auth-container");
   const dashboardWorkspace = document.getElementById("dashboard-workspace");
 
@@ -314,7 +313,6 @@ async function loadUserProfile() {
     }
   }
 
-  // PANGGIL SELURUH RENDER DATA SECARA PARALEL AGAR LANGSUNG TAMPIL INSTAN
   await Promise.all([
     loadTodayStatus(),
     loadAttendanceHistory(),
@@ -324,7 +322,7 @@ async function loadUserProfile() {
 
 async function loadTodayStatus() {
   if (!todayStatusEl) return;
-  todayStatusEl.innerHTML = "<p style='color: #cbd5e1;'>Memuat status...</p>";
+  todayStatusEl.innerHTML = "<p style='color: var(--text-sub);'>Memuat status...</p>";
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
@@ -341,7 +339,7 @@ async function loadTodayStatus() {
   if (data) {
     const time = new Date(data.check_in).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" });
     const badge = data.status === "late" ? `<span class="badge-late">Terlambat</span>` : `<span class="badge-present">Tepat Waktu</span>`;
-    todayStatusEl.innerHTML = `<div style="font-size: 15px; font-weight: 700; color: #fff;">Sudah Absen (${time} WIB)</div><div style="margin-top:8px;">${badge}</div>`;
+    todayStatusEl.innerHTML = `<div style="font-size: 15px; font-weight: 700; color: var(--text-main);">Sudah Absen (${time} WIB)</div><div style="margin-top:8px;">${badge}</div>`;
   } else {
     todayStatusEl.innerHTML = `<div style="font-size: 15px; font-weight: 700; color: var(--ios-red);">Belum Absen</div>`;
   }
@@ -349,7 +347,7 @@ async function loadTodayStatus() {
 
 async function loadAttendanceHistory() {
   if (!attendanceHistory) return;
-  attendanceHistory.innerHTML = "<p style='color: #cbd5e1;'>Memuat riwayat...</p>";
+  attendanceHistory.innerHTML = "<p style='color: var(--text-sub);'>Memuat riwayat...</p>";
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
@@ -373,7 +371,7 @@ async function loadAttendanceHistory() {
 
     const item = document.createElement("div");
     item.className = "history-item";
-    item.innerHTML = `<div><strong style="color: #fff;">${date}</strong><div style="font-size: 11px; color: var(--text-sub);">${time} WIB</div></div><div>${badge}</div>`;
+    item.innerHTML = `<div><strong style="color: var(--text-main);">${date}</strong><div style="font-size: 11px; color: var(--text-sub);">${time} WIB</div></div><div>${badge}</div>`;
     attendanceHistory.appendChild(item);
   });
 }
@@ -506,7 +504,7 @@ if (adminChartFilter) adminChartFilter.addEventListener("change", loadAdminChart
 
 async function loadAdminAttendance() {
   if (!adminAttendanceList) return;
-  adminAttendanceList.innerHTML = "<p style='color: #cbd5e1;'>Memuat rekap...</p>";
+  adminAttendanceList.innerHTML = "<p style='color: var(--text-sub);'>Memuat rekap...</p>";
 
   let query = supabase.from("attendance").select("attendance_date, check_in, status, employees(name, employee_code)").order("check_in", { ascending: false });
   if (adminFilterDate && adminFilterDate.value) query = query.eq("attendance_date", adminFilterDate.value);
@@ -526,7 +524,7 @@ async function loadAdminAttendance() {
 
     const item = document.createElement("div");
     item.className = "history-item";
-    item.innerHTML = `<div><strong style="color: #fff;">${name}</strong><div style="font-size: 11px; color: var(--text-sub);">${row.attendance_date} &bull; ${time} WIB</div></div><div>${badge}</div>`;
+    item.innerHTML = `<div><strong style="color: var(--text-main);">${name}</strong><div style="font-size: 11px; color: var(--text-sub);">${row.attendance_date} &bull; ${time} WIB</div></div><div>${badge}</div>`;
     adminAttendanceList.appendChild(item);
   });
 }
@@ -574,7 +572,7 @@ async function loadAdminChart() {
 
 async function loadEmployeeManagement() {
   if (!adminEmployeeList) return;
-  adminEmployeeList.innerHTML = "<p style='color: #cbd5e1;'>Memuat anggota...</p>";
+  adminEmployeeList.innerHTML = "<p style='color: var(--text-sub);'>Memuat anggota...</p>";
 
   const { data } = await supabase.from("employees").select("id, name, employee_code, role, is_active, phone").order("name");
   if (!data) return;
@@ -604,7 +602,7 @@ async function loadEmployeeManagement() {
     card.innerHTML = `
       <div>
         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px;">
-          <strong style="font-size: 14px; color: #fff;">${emp.name}</strong>
+          <strong style="font-size: 14px; color: var(--text-main);">${emp.name}</strong>
           <span style="font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: ${roleBadgeBg}; color: ${roleBadgeColor};">${roleText}</span>
         </div>
         <div style="font-size: 11px; color: var(--text-sub);">Kode: ${emp.employee_code} | WA: ${emp.phone || '-'}</div>
@@ -878,3 +876,39 @@ if (syncSheetsBtn) {
     }
   });
 }
+
+// ==============================
+// 7. LIGHT & DARK MODE TOGGLE LOGIC
+// ==============================
+function initThemeToggle() {
+  const themeToggleBtn = document.getElementById("theme-toggle-btn");
+  const themeIcon = document.getElementById("theme-icon");
+
+  const savedTheme = localStorage.getItem("app_theme") || "dark";
+  
+  if (savedTheme === "light") {
+    document.body.classList.add("light-mode");
+    if (themeIcon) themeIcon.textContent = "☀️";
+  } else {
+    document.body.classList.remove("light-mode");
+    if (themeIcon) themeIcon.textContent = "🌙";
+  }
+
+  if (themeToggleBtn) {
+    themeToggleBtn.addEventListener("click", () => {
+      document.body.classList.toggle("light-mode");
+      const isLight = document.body.classList.contains("light-mode");
+
+      if (isLight) {
+        if (themeIcon) themeIcon.textContent = "☀️";
+        localStorage.setItem("app_theme", "light");
+      } else {
+        if (themeIcon) themeIcon.textContent = "🌙";
+        localStorage.setItem("app_theme", "dark");
+      }
+    });
+  }
+}
+
+// Inisialisasi Fitur Mode Gelap / Terang
+initThemeToggle();
