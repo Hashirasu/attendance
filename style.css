@@ -1,348 +1,71 @@
-/* =========================================
-   MUDIVIVERSE - iOS / APPLE GLASS AESTHETIC
-   (Optimized for Laptop & Mobile)
-========================================= */
-
-:root {
-  --bg-1: #e0eafc;
-  --bg-2: #cfdef3;
-  --bg-3: #eef2f3;
-  
-  --glass-bg: rgba(255, 255, 255, 0.65);
-  --glass-border: rgba(255, 255, 255, 0.8);
-  --glass-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-  
-  --text-main: #1c1c1e;
-  --text-sub: #8e8e93;
-  --ios-blue: #007aff;
-  --ios-green: #34c759;
-  --ios-red: #ff3b30;
-  
-  --radius-xl: 24px;
-  --radius-lg: 14px;
+/* Video Background Fullscreen */
+.video-background-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -2;
+  overflow: hidden;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  -webkit-tap-highlight-color: transparent;
-}
-
-html, body {
+#bg-video {
   width: 100%;
-  min-height: 100vh;
-  overflow-x: hidden;
+  height: 100%;
+  object-fit: cover;
 }
 
-body {
-  background: linear-gradient(135deg, var(--bg-1), var(--bg-2), var(--bg-3));
-  background-size: 200% 200%;
-  animation: skyGradient 12s ease infinite;
-  color: var(--text-main);
+.video-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.4); /* Dark Overlay untuk menjaga kontras */
+  z-index: -1;
+}
+
+/* Glassmorphism Workspace UI */
+.app-workspace {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 30px 16px; /* Padding ditambah untuk laptop */
-  position: relative;
+  width: 95vw;
+  height: 90vh;
+  margin: 5vh auto;
+  gap: 16px;
+  box-sizing: border-box;
 }
 
-@keyframes skyGradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+/* Glass Sidebar & Content Container */
+.glass-sidebar, .glass-content-window {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  color: #ffffff;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
 }
 
-.app {
-  width: 100%;
-  max-width: 540px; /* DIPERLEBAR AGAR LEBIH BAGUS DI LAPTOP */
-  position: relative;
-  z-index: 1;
-}
-
-.panel {
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
-  border-radius: var(--radius-xl);
-  padding: 36px 30px; /* Padding disesuaikan */
-}
-
-/* HEADER LOGO */
-.brand-header {
+.glass-sidebar {
+  width: 240px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 28px;
 }
 
-.logo-box {
-  width: 58px;
-  height: 58px;
-  background: #ffffff;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--ios-blue);
-  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
-}
-
-.brand-title {
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-}
-
-/* FORM INPUTS & BUTTONS */
-.form-group {
-  margin-bottom: 16px;
-}
-
-.form-group label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-sub);
-  margin-bottom: 6px;
-  display: block;
-  margin-left: 4px;
-}
-
-.custom-input, .custom-select {
-  width: 100%;
-  padding: 14px 16px;
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: var(--radius-lg);
-  font-size: 15px;
-  color: var(--text-main);
-  transition: all 0.2s ease;
-}
-
-.custom-input:focus, .custom-select:focus {
-  outline: none;
-  background: #ffffff;
-  border-color: var(--ios-blue);
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
-}
-
-.main-button {
-  width: 100%;
-  padding: 16px;
-  margin-top: 8px;
-  border: none;
-  border-radius: var(--radius-lg);
-  background: var(--text-main);
-  color: #ffffff;
-  font-weight: 600;
-  font-size: 15px;
-  cursor: pointer;
-  transition: transform 0.1s ease;
-}
-
-.main-button:active {
-  transform: scale(0.97);
-}
-
-.secondary-button {
-  padding: 8px 14px;
-  border-radius: var(--radius-lg);
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  color: var(--text-main);
-  font-weight: 600;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.btn-export {
-  background: var(--ios-blue) !important;
-  color: white !important;
-  border: none !important;
-  font-weight: 600;
-}
-
-.auth-toggle-box {
-  margin-top: 24px;
-  text-align: center;
-  font-size: 14px;
-  color: var(--text-sub);
-}
-
-.link-button {
-  background: none;
-  border: none;
-  color: var(--ios-blue);
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  margin-left: 4px;
-}
-
-.link-button:hover {
-  text-decoration: underline;
-}
-
-/* CARDS & GRIDS */
-.today-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.card-box {
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  border-radius: var(--radius-xl);
-  padding: 20px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.04);
-}
-
-.card-badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 8px;
-  background: rgba(0,0,0,0.04);
-  color: var(--text-sub);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-
-/* LIST ITEMS */
-.history-item, .emp-card-item {
-  background: rgba(255, 255, 255, 0.85);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  border: 1px solid rgba(0,0,0,0.04);
-}
-
-.emp-name-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-main);
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-/* BADGES STYLING */
-.badge-present, .badge-active {
-  background: rgba(52, 199, 89, 0.15);
-  color: #248a3d;
-  font-weight: 600;
-  font-size: 12px;
-  padding: 4px 10px;
-  border-radius: 8px;
-}
-
-.badge-late, .badge-inactive {
-  background: rgba(255, 59, 48, 0.15);
-  color: #c92a20;
-  font-weight: 600;
-  font-size: 12px;
-  padding: 4px 10px;
-  border-radius: 8px;
-}
-
-/* BADGE ADMIN KUNING SUPERIOR */
-.role-badge {
-  font-size: 11px;
-  font-weight: 800;
-  padding: 4px 10px;
-  border-radius: 8px;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
-}
-
-.role-admin { 
-  background: #fff8d6; 
-  color: #b8860b; 
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
-}
-.role-user { 
-  background: #e5f0ff; 
-  color: var(--ios-blue); 
-}
-
-/* TABS & MODAL */
-.admin-tabs {
-  display: flex;
-  background: rgba(118, 118, 128, 0.12);
-  padding: 4px;
-  border-radius: 12px;
-  margin-bottom: 20px;
-}
-
-.tab-btn {
+.glass-content-window {
   flex: 1;
-  padding: 10px;
-  border: none;
-  border-radius: 10px;
-  background: transparent;
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--text-sub);
-  cursor: pointer;
-}
-
-.tab-btn.active {
-  background: #ffffff;
-  color: var(--text-main);
-  box-shadow: 0 3px 8px rgba(0,0,0,0.08);
-}
-
-.modal {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(10px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  z-index: 100;
-}
-
-.modal-content {
-  background: #ffffff;
-  border-radius: var(--radius-xl);
   padding: 24px;
-  width: 100%;
-  max-width: 400px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
 }
 
-/* RESPONSIVE MOBILE FIX */
-@media (max-width: 600px) {
-  body {
-    padding: 16px 12px;
-  }
-  .panel {
-    padding: 28px 20px;
-  }
-  .today-grid {
-    grid-template-columns: 1fr;
-  }
-  .history-item, .emp-card-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  .history-item > div:last-child, 
-  .emp-card-item > button {
-    align-self: flex-end;
-  }
+/* Glass Cards Inside Content */
+.glass-card {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
 }
