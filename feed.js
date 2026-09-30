@@ -5,6 +5,27 @@ let currentUserId = null;
 let currentUserName = "Member";
 let currentUserRole = "user";
 let editingPostId = null;
+let isFeedSubscribed = false;
+
+export async function initFeedSystem() {
+  await loadPosts();
+
+  // Hanya subscribe ke realtime SEKALI saja
+  if (!isFeedSubscribed) {
+    supabase
+      .channel("public-posts-channel")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "posts" },
+        () => {
+          loadPosts();
+        }
+      )
+      .subscribe();
+
+    isFeedSubscribed = true;
+  }
+}
 
 // INIT QUILL EDITOR
 function initQuillEditor() {

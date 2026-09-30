@@ -479,14 +479,18 @@ if (uploadAvatarFileInput) {
 
       if (updateErr) throw updateErr;
 
+      // Update tampilan gambar profil di layar secara langsung tanpa reload feed/realtime
+      const profilePageAvatar = document.getElementById("profile-page-avatar");
+      if (profilePageAvatar) profilePageAvatar.src = publicUrl;
+
       alert("✅ Foto profil berhasil diperbarui!");
-      await loadUserProfile();
 
     } catch (err) {
-      alert("Gagal mengunggah foto profil: " + err.message + "\nPastikan bucket 'avatars' di Supabase sudah bertipe PUBLIC.");
+      alert("Gagal mengunggah foto profil: " + err.message);
     }
   });
 }
+
 
 // LOGIKA MODAL EDIT BIO
 const btnOpenEditBioModal = document.getElementById("btn-open-edit-bio-modal");
