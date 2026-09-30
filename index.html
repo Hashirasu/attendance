@@ -162,14 +162,31 @@
         </div>
       </header>
 
-      <!-- TAB 1: HOME (INFORMASI, RECENT POSTS & QUOTES BUDDHIS) -->
+      <!-- TAB 1: HOME (PROFIL, RECENT POSTS & QUOTES) -->
       <section id="tab-home-view" class="tab-content">
         
+        <!-- PROFIL HEADER CARD SAYA -->
+        <div class="profile-card-header">
+          <div class="profile-avatar-wrapper">
+            <img id="user-avatar-display" src="https://api.dicebear.com/7.x/bottts/svg?seed=Mudivi" alt="Avatar" class="profile-avatar-img">
+          </div>
+          <h3 id="user-profile-fullname" style="font-size: 18px; font-weight: 800; color: var(--text-main);">Member</h3>
+          <p id="user-profile-bio" class="profile-bio-text">"Menghormati Guru, Menghargai Dharma, dan Tekun bersadhana."</p>
+
+          <div style="margin-top: 12px; display: flex; justify-content: center; align-items: center; gap: 10px;">
+            <div class="profile-points-badge">
+              🪙 <span id="user-points-display">0</span> Poin Vihara
+            </div>
+            <button id="btn-open-edit-profile" class="secondary-button" style="padding: 6px 12px; font-size: 12px; border-radius: 20px;">
+              ✏️ Edit Profil
+            </button>
+          </div>
+        </div>
+
         <!-- HERO QUOTE BUDDHIST -->
         <div class="hero-buddhist-card">
           <div class="flex-between-center">
             <div class="quote-tag">🪷 Perenungan Hari Ini</div>
-            <!-- KHUSUS ADMIN & ADM1N -->
             <button id="btn-edit-quote-trigger" class="secondary-button" style="display: none; padding: 2px 8px; font-size: 10px;">✏️ Edit</button>
           </div>
           <p id="display-quote-text" class="buddhist-quote">"Pikiran adalah pelopor dari segala kondisi, pikiran adalah pemimpin, pikiran adalah pembentuk."</p>
@@ -192,7 +209,6 @@
 
           <div class="input-field-box" style="margin-bottom: 12px;">
             <label>Isi Pengumuman & Foto</label>
-            <!-- QUILL EDITOR BOX -->
             <div id="quill-editor" style="height: 180px; background: var(--input-bg); color: var(--text-main); border-radius: 0 0 12px 12px;"></div>
           </div>
 
@@ -204,7 +220,7 @@
           </div>
         </div>
 
-        <!-- AREA RECENT POSTS (HOME) -->
+        <!-- AREA RECENT POSTS -->
         <div class="flex-between-center" style="margin-bottom: 14px;">
           <h3 class="section-heading">📰 Postingan Terbaru</h3>
         </div>
@@ -238,7 +254,7 @@
           </div>
         </div>
 
-        <!-- PANDUAN ADINATA & MANTRA (MODULAR) -->
+        <!-- PANDUAN ADINATA & MANTRA -->
         <div class="card-box" style="margin-top: 20px;">
           <div class="flex-between-center" style="margin-bottom: 16px;">
             <h3 class="section-heading">📿 Panduan Adinata & Mantra Zhen Fo Zong</h3>
@@ -255,15 +271,12 @@
           <button id="btn-refresh-feed" class="secondary-button" style="padding: 6px 12px; font-size: 12px;">🔄 Refresh</button>
         </div>
 
-        <!-- SLOT UNTUK MEMINDAHKAN EDITOR JIKA DI HALAMAN POST -->
-        <div id="post-tab-editor-slot"></div>
-
         <div id="full-feed-container">
           <p style="color: var(--text-sub); text-align: center; padding: 20px;">Memuat seluruh postingan...</p>
         </div>
       </section>
 
-      <!-- TAB 2: PRESENSI (ABSENSI UTAMA) -->
+      <!-- TAB 2: PRESENSI -->
       <section id="tab-presensi-view" class="tab-content" style="display: none;">
         <div class="today-grid">
           <div class="card-box">
@@ -300,11 +313,11 @@
           <div class="stats-row">
             <div>
               <div id="stat-total-hadir" class="stat-number stat-blue">0</div>
-              <div class="stat-label">Tepat Waktu</div>
+              <div class="stat-label">Tepat Waktu (+50 Poin)</div>
             </div>
             <div>
               <div id="stat-total-terlambat" class="stat-number stat-yellow">0</div>
-              <div class="stat-label">Terlambat</div>
+              <div class="stat-label">Terlambat (+10 Poin)</div>
             </div>
             <div>
               <div id="stat-attendance-rate" class="stat-number stat-green">0%</div>
@@ -395,7 +408,7 @@
           </div>
         </div>
 
-        <!-- SUB TAB 3: GENERATOR QR KIOSK DINAMIS (KHUSUS ADMIN/ADM1N) -->
+        <!-- SUB TAB 3: GENERATOR QR KIOSK DINAMIS -->
         <div id="admin-view-kiosk" style="display: none;">
           <div class="card-box kiosk-card-display">
             <span class="card-badge">Official QR Code</span>
@@ -416,6 +429,57 @@
       </section>
 
     </main>
+  </div>
+
+  <!-- MODAL EDIT PROFIL SAYA -->
+  <div id="edit-profile-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <h3 style="font-weight: 700; font-size: 18px; margin-bottom: 18px; color: var(--text-main);">Edit Profil Saya</h3>
+
+      <div class="input-field-box">
+        <label>URL Foto Profil / Avatar</label>
+        <input type="text" id="edit-profile-avatar-input" class="custom-input" placeholder="https://api.dicebear.com/7.x/bottts/svg?seed=NAMA">
+      </div>
+
+      <div class="input-field-box">
+        <label>Bio / Perenungan Favorit</label>
+        <textarea id="edit-profile-bio-input" class="custom-input" rows="3" placeholder="Tulis bio singkat kamu..."></textarea>
+      </div>
+
+      <p id="edit-profile-modal-msg" style="font-size: 12px; color: #f87171; font-weight: 600; margin-top: 10px;"></p>
+
+      <div class="flex-gap-10" style="margin-top: 24px;">
+        <button id="cancel-edit-profile" class="secondary-button" type="button" style="flex: 1;">Batal</button>
+        <button id="save-edit-profile" class="main-button" type="button" style="flex: 1; margin: 0; background: #3b82f6; color: white;">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL KELOLA POIN MEMBER (ADMIN) -->
+  <div id="manage-points-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <h3 style="font-weight: 700; font-size: 18px; margin-bottom: 6px; color: var(--text-main);">Kelola Poin Anggota</h3>
+      <p id="target-member-name" style="font-size: 13px; color: var(--ios-blue); font-weight: 700; margin-bottom: 16px;"></p>
+
+      <input type="hidden" id="target-member-id">
+
+      <div class="input-field-box">
+        <label>Jumlah Poin (Gunakan minus '-' untuk memotong)</label>
+        <input type="number" id="input-points-amount" class="custom-input" placeholder="Contoh: 20 atau -10">
+      </div>
+
+      <div class="input-field-box">
+        <label>Alasan / Keterangan</label>
+        <input type="text" id="input-points-reason" class="custom-input" placeholder="Contoh: Aktif bertanya saat kebaktian">
+      </div>
+
+      <p id="manage-points-modal-msg" style="font-size: 12px; color: #f87171; font-weight: 600; margin-top: 10px;"></p>
+
+      <div class="flex-gap-10" style="margin-top: 24px;">
+        <button id="cancel-manage-points" class="secondary-button" type="button" style="flex: 1;">Batal</button>
+        <button id="save-manage-points" class="main-button" type="button" style="flex: 1; margin: 0; background: #f59e0b; color: white;">Proses Poin</button>
+      </div>
+    </div>
   </div>
 
   <!-- MODAL EDIT PERENUNGAN HARI INI -->
@@ -445,7 +509,7 @@
   <!-- MODAL CAMERA SCANNER -->
   <div id="scanner-modal" class="modal-backdrop" style="display: none;">
     <div class="scanner-modal-card">
-      <h3 style="margin-bottom: 15px; font-size: 18px; color: var(--text-main);">Arahkan Kamera ke QR </h3>
+      <h3 style="margin-bottom: 15px; font-size: 18px; color: var(--text-main);">Arahkan Kamera ke QR</h3>
       <div id="reader" style="width: 100%; border-radius: 12px; overflow: hidden;"></div>
       <button id="close-scanner-btn" class="btn-close-scanner">
         Tutup Kamera
@@ -498,7 +562,6 @@
   </div>
 
   <script type="module" src="app.js"></script>
-  <script type="module" src="adinataData.js"></script>
   <script type="module" src="feed.js"></script>
 
   <script>

@@ -864,3 +864,70 @@ html, body {
 .btn-delete-comment:hover {
   text-decoration: underline;
 }
+
+
+/* =========================================
+   PROFIL & MANAJEMEN POIN STYLING
+========================================= */
+.profile-card-header {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.profile-avatar-wrapper {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  margin: 0 auto 14px auto;
+}
+
+.profile-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--ios-blue);
+  background: var(--input-bg);
+}
+
+.profile-points-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-weight: 800;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.profile-bio-text {
+  font-size: 13px;
+  color: var(--text-sub);
+  margin-top: 8px;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.btn-point-action {
+  padding: 4px 10px;
+  font-size: 11px;
+  border-radius: 8px;
+  font-weight: 700;
+  background: #f59e0b;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-point-action:hover {
+  background: #d97706;
+}

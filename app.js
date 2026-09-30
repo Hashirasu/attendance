@@ -66,6 +66,8 @@ const saveEditEmp = document.getElementById("save-edit-emp");
 
 let isRegisterMode = false;
 let currentUserRole = "user";
+let currentUserId = null;
+let currentEmployeeData = null;
 let kioskTimerInterval = null;
 let kioskQrObject = null;
 
@@ -94,7 +96,7 @@ async function checkUrlAutoAttendance() {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        if (!isRegisterMode) toggleAuthBtn.click();
+        if (!isRegisterMode && toggleAuthBtn) toggleAuthBtn.click();
         if (messageEl) messageEl.textContent = "Silakan buat akun untuk menyelesaikan presensi.";
         return; 
       }
@@ -104,6 +106,7 @@ async function checkUrlAutoAttendance() {
       if (!error && data && data.success) {
         alert("Absensi Berhasil via Scan QR!");
         await Promise.all([
+          loadUserProfile(),
           loadTodayStatus(),
           loadAttendanceHistory(),
           loadMonthlyStatistics()
@@ -153,7 +156,7 @@ if (toggleAuthBtn) {
 }
 
 // ==============================
-// 2. AUTHENTICATION (LOG-IN / SIGN-UP AUTO LOGIN)
+// 2. AUTHENTICATION
 // ==============================
 if (authMainButton) {
   authMainButton.addEventListener("click", async () => {
@@ -201,7 +204,6 @@ if (authMainButton) {
         return;
       }
 
-      // 1. DAFTAR AKUN BARU
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email, 
         password, 
@@ -220,7 +222,6 @@ if (authMainButton) {
         return;
       }
 
-      // 2. AUTO LOGIN SETELAH BERHASIL DAFTAR
       if (messageEl) messageEl.textContent = "Pendaftaran berhasil, masuk ke akun...";
 
       const { error: autoLoginError } = await supabase.auth.signInWithPassword({ email, password });
@@ -231,13 +232,11 @@ if (authMainButton) {
         return;
       }
 
-      // BERHASIL AUTO-LOGIN -> LANGSUNG MASUK DAHSBOARD
       if (messageEl) messageEl.textContent = "";
       await loadUserProfile();
       await checkUrlAutoAttendance();
 
     } else {
-      // PROSES LOGIN BIASA
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         if (messageEl) messageEl.textContent = "Login Gagal: " + error.message;
@@ -294,9 +293,14 @@ function showLoginSection() {
   if (messageEl) messageEl.textContent = "";
 }
 
+// ==============================
+// LOAD USER PROFILE & POINTS
+// ==============================
 async function loadUserProfile() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
+
+  currentUserId = user.id;
 
   const authContainer = document.getElementById("auth-container");
   const dashboardWorkspace = document.getElementById("dashboard-workspace");
@@ -310,17 +314,30 @@ async function loadUserProfile() {
 
   const { data: empData, error } = await supabase
     .from("employees")
-    .select("name, employee_code, role")
+    .select("*")
     .eq("id", user.id)
     .single();
 
   if (!error && empData) {
-    if (userNameDisplay) userNameDisplay.textContent = empData.name;
-    if (userCodeEl) userCodeEl.textContent = `Kode: ${empData.employee_code}`;
+    currentEmployeeData = empData;
     currentUserRole = empData.role;
 
+    if (userNameDisplay) userNameDisplay.textContent = empData.name;
+    if (userCodeEl) userCodeEl.textContent = `Kode: ${empData.employee_code}`;
+
+    // POPULASI KARTU PROFIL HOME & POIN
+    const profileFullname = document.getElementById("user-profile-fullname");
+    const profileBio = document.getElementById("user-profile-bio");
+    const profileAvatar = document.getElementById("user-avatar-display");
+    const profilePoints = document.getElementById("user-points-display");
+
+    if (profileFullname) profileFullname.textContent = empData.name;
+    if (profileBio) profileBio.textContent = `"${empData.bio || 'Menghormati Guru, Menghargai Dharma, dan Tekun bersadhana.'}"`;
+    if (profileAvatar) profileAvatar.src = empData.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${empData.name}`;
+    if (profilePoints) profilePoints.textContent = empData.points || 0;
+
     const navAdminBtn = document.getElementById("nav-admin-btn");
-    if (currentUserRole === "admin" || currentUserRole === "adm1n") {
+    if (currentUserRole === "admin" || currentUserRole === "adm1n" || currentUserRole === "pengurus") {
       if (switchToAdminBtn) switchToAdminBtn.style.display = "inline-block";
       if (navAdminBtn) navAdminBtn.style.display = "flex";
       if (tabKioskBtn) tabKioskBtn.style.display = "inline-block";
@@ -336,10 +353,10 @@ async function loadUserProfile() {
     loadAttendanceHistory(),
     loadMonthlyStatistics()
   ]);
-  // Tambahkan di baris paling bawah fungsi loadUserProfile() pada app.js:
+
   if (window.initFeedSystem) {
-       await window.initFeedSystem();
-      }
+    await window.initFeedSystem();
+  }
 }
 
 async function loadTodayStatus() {
@@ -389,7 +406,8 @@ async function loadAttendanceHistory() {
   data.forEach((row) => {
     const date = new Date(row.attendance_date + "T00:00:00").toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Jakarta" });
     const time = new Date(row.check_in).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" });
-    const badge = row.status === "late" ? `<span class="badge-late">Terlambat</span>` : `<span class="badge-present">Hadir</span>`;
+    const isLate = row.status === "late";
+    const badge = isLate ? `<span class="badge-late">Terlambat (+10)</span>` : `<span class="badge-present">Hadir (+50)</span>`;
 
     const item = document.createElement("div");
     item.className = "history-item";
@@ -485,7 +503,130 @@ if (closeScannerBtn) {
 }
 
 // ==============================
-// 4. ADMIN PANEL, GRAFIK & KIOSK GENERATOR
+// LOGIKA MODAL EDIT PROFIL SAYA
+// ==============================
+const btnOpenEditProfile = document.getElementById("btn-open-edit-profile");
+const editProfileModal = document.getElementById("edit-profile-modal");
+const editAvatarInput = document.getElementById("edit-profile-avatar-input");
+const editBioInput = document.getElementById("edit-profile-bio-input");
+const cancelEditProfileBtn = document.getElementById("cancel-edit-profile");
+const saveEditProfileBtn = document.getElementById("save-edit-profile");
+const editProfileMsg = document.getElementById("edit-profile-modal-msg");
+
+if (btnOpenEditProfile) {
+  btnOpenEditProfile.addEventListener("click", () => {
+    if (currentEmployeeData) {
+      editAvatarInput.value = currentEmployeeData.avatar_url || "";
+      editBioInput.value = currentEmployeeData.bio || "";
+    }
+    if (editProfileMsg) editProfileMsg.textContent = "";
+    if (editProfileModal) editProfileModal.style.display = "flex";
+  });
+}
+
+if (cancelEditProfileBtn) {
+  cancelEditProfileBtn.addEventListener("click", () => {
+    if (editProfileModal) editProfileModal.style.display = "none";
+  });
+}
+
+if (saveEditProfileBtn) {
+  saveEditProfileBtn.addEventListener("click", async () => {
+    const avatarUrl = editAvatarInput.value.trim();
+    const bioText = editBioInput.value.trim();
+
+    saveEditProfileBtn.textContent = "Menyimpan...";
+    const { error } = await supabase.from("employees").update({
+      avatar_url: avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${currentEmployeeData.name}`,
+      bio: bioText
+    }).eq("id", currentUserId);
+
+    if (error) {
+      if (editProfileMsg) editProfileMsg.textContent = "Gagal menyimpan: " + error.message;
+    } else {
+      if (editProfileModal) editProfileModal.style.display = "none";
+      await loadUserProfile();
+    }
+    saveEditProfileBtn.textContent = "Simpan";
+  });
+}
+
+// ==============================
+// LOGIKA MODAL KELOLA POIN MEMBER (ADMIN)
+// ==============================
+document.addEventListener("click", (e) => {
+  if (e.target.classList.contains("btn-add-points")) {
+    const empId = e.target.getAttribute("data-id");
+    const empName = e.target.getAttribute("data-name");
+
+    const targetIdEl = document.getElementById("target-member-id");
+    const targetNameEl = document.getElementById("target-member-name");
+    const amountEl = document.getElementById("input-points-amount");
+    const reasonEl = document.getElementById("input-points-reason");
+    const msgEl = document.getElementById("manage-points-modal-msg");
+    const pointsModal = document.getElementById("manage-points-modal");
+
+    if (targetIdEl) targetIdEl.value = empId;
+    if (targetNameEl) targetNameEl.textContent = `Anggota: ${empName}`;
+    if (amountEl) amountEl.value = "";
+    if (reasonEl) reasonEl.value = "";
+    if (msgEl) msgEl.textContent = "";
+
+    if (pointsModal) pointsModal.style.display = "flex";
+  }
+});
+
+const btnCancelPoints = document.getElementById("cancel-manage-points");
+if (btnCancelPoints) {
+  btnCancelPoints.addEventListener("click", () => {
+    const pointsModal = document.getElementById("manage-points-modal");
+    if (pointsModal) pointsModal.style.display = "none";
+  });
+}
+
+const btnSavePoints = document.getElementById("save-manage-points");
+if (btnSavePoints) {
+  btnSavePoints.addEventListener("click", async () => {
+    const empId = document.getElementById("target-member-id").value;
+    const amount = parseInt(document.getElementById("input-points-amount").value);
+    const reason = document.getElementById("input-points-reason").value.trim();
+    const msgEl = document.getElementById("manage-points-modal-msg");
+
+    if (isNaN(amount) || amount === 0 || !reason) {
+      if (msgEl) msgEl.textContent = "Masukkan jumlah poin valid dan alasannya!";
+      return;
+    }
+
+    btnSavePoints.textContent = "Memproses...";
+
+    const { data: emp } = await supabase.from("employees").select("points").eq("id", empId).single();
+    const currentPoints = emp ? (emp.points || 0) : 0;
+    const newTotal = currentPoints + amount;
+
+    const { error: updateErr } = await supabase.from("employees").update({ points: newTotal }).eq("id", empId);
+
+    if (updateErr) {
+      if (msgEl) msgEl.textContent = "Gagal mengupdate poin: " + updateErr.message;
+    } else {
+      await supabase.from("point_logs").insert({
+        employee_id: empId,
+        points_added: amount,
+        reason: reason
+      });
+
+      const pointsModal = document.getElementById("manage-points-modal");
+      if (pointsModal) pointsModal.style.display = "none";
+      alert(`Berhasil memperbarui poin! Total poin baru: ${newTotal}`);
+      await loadEmployeeManagement();
+      if (empId === currentUserId) await loadUserProfile();
+    }
+
+    btnSavePoints.textContent = "Proses Poin";
+  });
+}
+
+// ==============================
+// 4. ADMIN PANEL & KIOSK GENERATOR
 // ==============================
 if (switchToAdminBtn) {
   switchToAdminBtn.addEventListener("click", async () => {
@@ -505,7 +646,6 @@ if (switchToUserBtn) {
   });
 }
 
-// NAVIGASI SUB-TAB ADMIN
 if (tabRekapBtn && tabKaryawanBtn && tabKioskBtn) {
   tabRekapBtn.addEventListener("click", () => {
     if (adminViewRekap) adminViewRekap.style.display = "block";
@@ -544,7 +684,6 @@ if (tabRekapBtn && tabKaryawanBtn && tabKioskBtn) {
   });
 }
 
-// LOGIKA DYNAMIC REAL-TIME QR KIOSK GENERATOR (15 DETIK REFRESH)
 function startAdminKioskQr() {
   const qrBox = document.getElementById("admin-kiosk-qrcode");
   const fillBar = document.getElementById("kiosk-progress-fill");
@@ -662,7 +801,7 @@ async function loadEmployeeManagement() {
   if (!adminEmployeeList) return;
   adminEmployeeList.innerHTML = "<p style='color: var(--text-sub);'>Memuat anggota...</p>";
 
-  const { data } = await supabase.from("employees").select("id, name, employee_code, role, is_active, phone").order("name");
+  const { data } = await supabase.from("employees").select("id, name, employee_code, role, is_active, phone, points").order("name");
   if (!data) return;
 
   adminEmployeeList.innerHTML = "";
@@ -687,18 +826,29 @@ async function loadEmployeeManagement() {
 
     const card = document.createElement("div");
     card.className = "emp-card-item";
+    card.style.marginBottom = "10px";
     card.innerHTML = `
-      <div>
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px;">
-          <strong style="font-size: 14px; color: var(--text-main);">${emp.name}</strong>
-          <span style="font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: ${roleBadgeBg}; color: ${roleBadgeColor};">${roleText}</span>
+      <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px;">
+            <strong style="font-size: 14px; color: var(--text-main);">${emp.name}</strong>
+            <span style="font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: ${roleBadgeBg}; color: ${roleBadgeColor};">${roleText}</span>
+          </div>
+          <div style="font-size: 11px; color: var(--text-sub);">Kode: ${emp.employee_code} | WA: ${emp.phone || '-'}</div>
+          <div style="margin-top: 4px;">
+            <span style="font-size: 11px; font-weight: 800; color: #f59e0b; background: rgba(245, 158, 11, 0.15); padding: 2px 8px; border-radius: 8px;">
+              🪙 ${emp.points || 0} Poin
+            </span>
+          </div>
         </div>
-        <div style="font-size: 11px; color: var(--text-sub);">Kode: ${emp.employee_code} | WA: ${emp.phone || '-'}</div>
+        <div style="display: flex; gap: 6px;">
+          <button class="btn-add-points" data-id="${emp.id}" data-name="${emp.name}" style="padding: 4px 10px; font-size: 11px; border-radius: 8px; font-weight: 700; background: #f59e0b; color: white; border: none; cursor: pointer;">🪙 Poin</button>
+          <button class="btn-edit-member secondary-button" style="padding: 4px 10px; font-size: 11px;">Edit</button>
+        </div>
       </div>
-      <button class="secondary-button" style="padding: 4px 10px; font-size: 12px;">Edit</button>
     `;
     
-    card.querySelector("button").addEventListener("click", () => {
+    card.querySelector(".btn-edit-member").addEventListener("click", () => {
       editEmpId.value = emp.id;
       editEmpName.value = emp.name;
       editEmpPhone.value = emp.phone || "";
@@ -976,7 +1126,7 @@ function initThemeToggle() {
   
   if (savedTheme === "light") {
     document.body.classList.add("light-mode");
-    if (themeIcon) themeIcon.textContent = "☀️️";
+    if (themeIcon) themeIcon.textContent = "☀️";
   } else {
     document.body.classList.remove("light-mode");
     if (themeIcon) themeIcon.textContent = "🌙";
@@ -998,5 +1148,4 @@ function initThemeToggle() {
   }
 }
 
-// Inisialisasi Fitur Mode Gelap / Terang
 initThemeToggle();
