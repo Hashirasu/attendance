@@ -152,6 +152,9 @@ if (toggleAuthBtn) {
   });
 }
 
+// ==============================
+// 2. AUTHENTICATION (LOG-IN / SIGN-UP AUTO LOGIN)
+// ==============================
 if (authMainButton) {
   authMainButton.addEventListener("click", async () => {
     const email = emailInput.value.trim();
@@ -198,7 +201,8 @@ if (authMainButton) {
         return;
       }
 
-      const { error: signUpError } = await supabase.auth.signUp({
+      // 1. DAFTAR AKUN BARU
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email, 
         password, 
         options: { 
@@ -216,18 +220,24 @@ if (authMainButton) {
         return;
       }
 
-      if (sessionStorage.getItem("pending_secret")) {
-        const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
-        if (!loginError) {
-          if (messageEl) messageEl.textContent = "";
-          await loadUserProfile();
-          await checkUrlAutoAttendance();
-        }
-      } else {
-        if (messageEl) messageEl.textContent = "Pendaftaran berhasil! Silakan login.";
+      // 2. AUTO LOGIN SETELAH BERHASIL DAFTAR
+      if (messageEl) messageEl.textContent = "Pendaftaran berhasil, masuk ke akun...";
+
+      const { error: autoLoginError } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (autoLoginError) {
+        if (messageEl) messageEl.textContent = "Pendaftaran berhasil! Silakan masuk manual.";
         toggleAuthBtn.click();
+        return;
       }
+
+      // BERHASIL AUTO-LOGIN -> LANGSUNG MASUK DAHSBOARD
+      if (messageEl) messageEl.textContent = "";
+      await loadUserProfile();
+      await checkUrlAutoAttendance();
+
     } else {
+      // PROSES LOGIN BIASA
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         if (messageEl) messageEl.textContent = "Login Gagal: " + error.message;
@@ -313,7 +323,7 @@ async function loadUserProfile() {
     if (currentUserRole === "admin" || currentUserRole === "adm1n") {
       if (switchToAdminBtn) switchToAdminBtn.style.display = "inline-block";
       if (navAdminBtn) navAdminBtn.style.display = "flex";
-      if (tabKioskBtn) tabKioskBtn.style.display = "inline-block"; // HANYA TAMPIL UNTUK ADMIN / ADM1N
+      if (tabKioskBtn) tabKioskBtn.style.display = "inline-block";
     } else {
       if (switchToAdminBtn) switchToAdminBtn.style.display = "none";
       if (navAdminBtn) navAdminBtn.style.display = "none";
@@ -491,7 +501,7 @@ if (switchToUserBtn) {
   });
 }
 
-// NAVIGASI SUB-TAB ADMIN (DATA, ANGGOTA, & QR KIOS)
+// NAVIGASI SUB-TAB ADMIN
 if (tabRekapBtn && tabKaryawanBtn && tabKioskBtn) {
   tabRekapBtn.addEventListener("click", () => {
     if (adminViewRekap) adminViewRekap.style.display = "block";
@@ -555,7 +565,6 @@ function startAdminKioskQr() {
     const block = Math.floor(nowUnix / 15);
     const secondsRemaining = 15 - (nowUnix % 15);
 
-    // Bikin Target URL Berbasis Domain Utama
     const baseUrl = window.location.origin + window.location.pathname;
     const kioskUrl = `${baseUrl}?secret=${KIOSK_SECRET}&block=${block}`;
 
@@ -963,7 +972,7 @@ function initThemeToggle() {
   
   if (savedTheme === "light") {
     document.body.classList.add("light-mode");
-    if (themeIcon) themeIcon.textContent = "☀️";
+    if (themeIcon) themeIcon.textContent = "☀️️";
   } else {
     document.body.classList.remove("light-mode");
     if (themeIcon) themeIcon.textContent = "🌙";
