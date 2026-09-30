@@ -118,6 +118,10 @@
           <span class="nav-icon">🏠</span>
           <span>Home</span>
         </button>
+        <button type="button" id="nav-posts-btn" class="nav-btn">
+          <span class="nav-icon">📰</span>
+          <span>Post</span>
+        </button>
         <button type="button" id="nav-presensi-btn" class="nav-btn">
           <span class="nav-icon">📋</span>
           <span>Presensi</span>
@@ -158,20 +162,27 @@
         </div>
       </header>
 
-      <!-- TAB 1: HOME (INFORMASI & QUOTES BUDDHIS) -->
+      <!-- TAB 1: HOME (INFORMASI, RECENT POSTS & QUOTES BUDDHIS) -->
       <section id="tab-home-view" class="tab-content">
+        
+        <!-- HERO QUOTE BUDDHIST -->
         <div class="hero-buddhist-card">
-          <div class="quote-tag">🪷 Perenungan Hari Ini</div>
-          <p class="buddhist-quote">"Pikiran adalah pelopor dari segala kondisi, pikiran adalah pemimpin, pikiran adalah pembentuk."</p>
-          <span class="quote-source">— Dhammapada, Yamakavagga</span>
+          <div class="flex-between-center">
+            <div class="quote-tag">🪷 Perenungan Hari Ini</div>
+            <button id="btn-edit-quote-trigger" class="secondary-button" style="display: none; padding: 2px 8px; font-size: 10px;">✏️ Edit</button>
+          </div>
+          <p id="display-quote-text" class="buddhist-quote">"Pikiran adalah pelopor dari segala kondisi, pikiran adalah pemimpin, pikiran adalah pembentuk."</p>
+          <span id="display-quote-source" class="quote-source">— Dhammapada, Yamakavagga</span>
         </div>
 
-        <!-- FORM UPLOAD PENGUMUMAN (KHUSUS ADMIN/ADM1N) -->
-        <div id="admin-post-box" class="card-box" style="display: none; margin-bottom: 20px;">
+        <!-- FORM UPLOAD PENGUMUMAN (KHUSUS ADMIN / PENGURUS) -->
+        <div id="admin-post-box" class="card-box admin-post-card-box" style="display: none; margin-bottom: 20px;">
           <div class="flex-between-center" style="margin-bottom: 12px;">
-            <h3 class="section-heading">📢 Buat Pengumuman / Postingan Baru</h3>
-            <span class="card-badge">Khusus Admin</span>
+            <h3 id="form-post-heading" class="section-heading">📢 Buat Pengumuman / Postingan Baru</h3>
+            <span class="card-badge">Pengurus & Admin</span>
           </div>
+
+          <input type="hidden" id="edit-post-id-val">
 
           <div class="input-field-box" style="margin-bottom: 12px;">
             <label for="post-title-input">Judul Pengumuman</label>
@@ -184,35 +195,44 @@
             <div id="quill-editor" style="height: 180px; background: var(--input-bg); color: var(--text-main); border-radius: 0 0 12px 12px;"></div>
           </div>
 
-          <button id="btn-submit-post" class="main-button" style="margin-top: 10px; background: var(--ios-blue); color: white;">
-            🚀 Unggah Postingan
-          </button>
+          <div class="flex-gap-10">
+            <button id="btn-cancel-edit-post" class="secondary-button" style="display: none; flex: 1;">Batal Edit</button>
+            <button id="btn-submit-post" class="main-button" style="margin-top: 10px; flex: 2; background: var(--ios-blue); color: white;">
+              🚀 Unggah Postingan
+            </button>
+          </div>
         </div>
 
-        <!-- AREA FEED FORUM UTAMA -->
+        <!-- AREA RECENT POSTS (HOME) -->
         <div class="flex-between-center" style="margin-bottom: 14px;">
-          <h3 class="section-heading">📰 Beranda Komunitas Mudiviverse</h3>
-          <button id="btn-refresh-feed" class="secondary-button" style="padding: 4px 10px; font-size: 12px;">🔄 Refresh</button>
+          <h3 class="section-heading">📰 Postingan Terbaru</h3>
         </div>
 
-        <div id="forum-feed-container">
+        <div id="recent-feed-container">
           <p style="color: var(--text-sub); text-align: center; padding: 20px;">Memuat postingan...</p>
         </div>
 
+        <div style="text-align: center; margin: 16px 0 24px 0;">
+          <button id="btn-see-more-posts" class="secondary-button" style="padding: 10px 20px; font-weight: 700; color: #60a5fa;">
+            See more posts ➔
+          </button>
+        </div>
+
+        <!-- INFO GRID VISHARA -->
         <div class="info-grid" style="margin-top: 20px;">
           <div class="card-box">
             <span class="card-badge">📢 Pengumuman Vihara</span>
-            <h4 class="card-title">Pudja Bhakti Mingguan</h4>
+            <h4 class="card-title">Puja Bhakti Mingguan</h4>
             <p class="card-desc">
-              Mari bergabung dalam Kebaktian Minggu jam 09.00 WIB. Pastikan melakukan presensi mandiri via QR Code di lokasi.
+              Mari bergabung dalam Kebaktian Minggu jam 10.00 WIB. Pastikan melakukan presensi mandiri via QR Code di lokasi.
             </p>
           </div>
 
           <div class="card-box">
-            <span class="card-badge">💡 Mudita Spirit</span>
+            <span class="card-badge">💡 Zhen Fo Zong Spirit</span>
             <h4 class="card-title">Harmoni & Kebersamaan</h4>
             <p class="card-desc">
-              "Mudita" adalah kebahagiaan simpatik atas keberhasilan sesama. Mari kembangkan cinta kasih dalam setiap langkah.
+              "Menghormati Guru, Menghargai Dharma, dan Tekun bersadhana"
             </p>
           </div>
         </div>
@@ -224,6 +244,21 @@
             <span class="card-badge">真佛宗</span>
           </div>
           <div id="adinata-container" class="adinata-list-container"></div>
+        </div>
+      </section>
+
+      <!-- TAB POSTS (SEMUA POSTINGAN FORUM) -->
+      <section id="tab-posts-view" class="tab-content" style="display: none;">
+        <div class="flex-between-center" style="margin-bottom: 16px;">
+          <h3 class="section-heading">📰 Forum & Komunitas Mudiviverse</h3>
+          <button id="btn-refresh-feed" class="secondary-button" style="padding: 6px 12px; font-size: 12px;">🔄 Refresh</button>
+        </div>
+
+        <!-- WADAH DUPLIKASI EDITOR DI HALAMAN POST JIKA ADMIN/PENGURUS -->
+        <div id="full-post-editor-slot"></div>
+
+        <div id="full-feed-container">
+          <p style="color: var(--text-sub); text-align: center; padding: 20px;">Memuat seluruh postingan...</p>
         </div>
       </section>
 
@@ -382,6 +417,30 @@
     </main>
   </div>
 
+  <!-- MODAL EDIT PERENUNGAN HARI INI -->
+  <div id="edit-quote-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <h3 style="font-weight: 700; font-size: 18px; margin-bottom: 18px; color: var(--text-main);">Edit Perenungan Hari Ini</h3>
+      
+      <div class="input-field-box" style="margin-bottom: 12px;">
+        <label>Isi Kutipan / Perenungan</label>
+        <textarea id="edit-quote-text-input" class="custom-input" rows="4" style="resize: vertical;"></textarea>
+      </div>
+
+      <div class="input-field-box">
+        <label>Sumber Kutipan</label>
+        <input type="text" id="edit-quote-source-input" class="custom-input" placeholder="Contoh: Dhammapada, Yamakavagga">
+      </div>
+
+      <p id="edit-quote-modal-msg" style="font-size: 12px; color: #f87171; font-weight: 600; margin-top: 10px;"></p>
+
+      <div class="flex-gap-10" style="margin-top: 24px;">
+        <button id="cancel-edit-quote" class="secondary-button" type="button" style="flex: 1;">Batal</button>
+        <button id="save-edit-quote" class="main-button" type="button" style="flex: 1; margin: 0; background: #3b82f6; color: white;">Simpan</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL CAMERA SCANNER -->
   <div id="scanner-modal" class="modal-backdrop" style="display: none;">
     <div class="scanner-modal-card">
@@ -456,16 +515,18 @@
 
       // Tab Switchers
       const btnHome = document.getElementById("nav-home-btn");
+      const btnPosts = document.getElementById("nav-posts-btn");
       const btnPresensi = document.getElementById("nav-presensi-btn");
       const btnAdmin = document.getElementById("nav-admin-btn");
 
       const viewHome = document.getElementById("tab-home-view");
+      const viewPosts = document.getElementById("tab-posts-view");
       const viewPresensi = document.getElementById("tab-presensi-view");
       const viewAdmin = document.getElementById("tab-admin-view");
 
       function resetTabs() {
-        [btnHome, btnPresensi, btnAdmin].forEach(b => b && b.classList.remove("active"));
-        [viewHome, viewPresensi, viewAdmin].forEach(v => v && (v.style.display = "none"));
+        [btnHome, btnPosts, btnPresensi, btnAdmin].forEach(b => b && b.classList.remove("active"));
+        [viewHome, viewPosts, viewPresensi, viewAdmin].forEach(v => v && (v.style.display = "none"));
       }
 
       if (btnHome) {
@@ -473,6 +534,21 @@
           resetTabs();
           btnHome.classList.add("active");
           viewHome.style.display = "block";
+        });
+      }
+
+      if (btnPosts) {
+        btnPosts.addEventListener("click", () => {
+          resetTabs();
+          btnPosts.classList.add("active");
+          viewPosts.style.display = "block";
+        });
+      }
+
+      const btnSeeMore = document.getElementById("btn-see-more-posts");
+      if (btnSeeMore) {
+        btnSeeMore.addEventListener("click", () => {
+          if (btnPosts) btnPosts.click();
         });
       }
 

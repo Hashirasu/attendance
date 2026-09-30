@@ -4,15 +4,16 @@ let quill = null;
 let currentUserId = null;
 let currentUserName = "Member";
 let currentUserRole = "user";
+let editingPostId = null;
 
-// INISIALISASI QUILL RICH TEXT EDITOR
+// INIT QUILL EDITOR
 function initQuillEditor() {
   const editorEl = document.getElementById("quill-editor");
   if (!editorEl) return;
 
   quill = new Quill('#quill-editor', {
     theme: 'snow',
-    placeholder: 'Tulis isi pengumuman... Kamu bisa memasukkan gambar via ikon gambar di toolbar.',
+    placeholder: 'Tulis isi pengumuman... Kamu bisa memasukkan foto via ikon gambar di toolbar.',
     modules: {
       toolbar: [
         [{ 'header': [1, 2, false] }],
@@ -26,7 +27,7 @@ function initQuillEditor() {
   });
 }
 
-// LOAD DATA USER & FEED Halaman Home
+// INSIALISASI SISTEM FORUM FEED & REALTIME SUBSCRIPTION
 async function initFeedSystem() {
   initQuillEditor();
 
@@ -35,7 +36,6 @@ async function initFeedSystem() {
 
   currentUserId = session.user.id;
 
-  // Cek Role User
   const { data: empData } = await supabase
     .from("employees")
     .select("name, role")
@@ -46,22 +46,72 @@ async function initFeedSystem() {
     currentUserName = empData.name;
     currentUserRole = empData.role;
 
-    // Tampilkan Form Post HANYA jika Admin / Adm1n
+    // Pengurus, Admin, dan Adm1n BISA UPLOAD & EDIT POST
+    const isAuthorized = (currentUserRole === "pengurus" || currentUserRole === "admin" || currentUserRole === "adm1n");
     const adminPostBox = document.getElementById("admin-post-box");
-    if (adminPostBox && (currentUserRole === "admin" || currentUserRole === "adm1n")) {
+    const editQuoteBtn = document.getElementById("btn-edit-quote-trigger");
+
+    if (adminPostBox && isAuthorized) {
       adminPostBox.style.display = "block";
+    }
+
+    if (editQuoteBtn && isAuthorized) {
+      editQuoteBtn.style.display = "inline-block";
     }
   }
 
+  await loadDailyQuote();
   await loadFeedPosts();
+
+  // REALTIME SUBSCRIPTIONS
+  supabase
+    .channel('public:posts')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, () => {
+      loadFeedPosts();
+    })
+    .subscribe();
+
+  supabase
+    .channel('public:comments')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, (payload) => {
+      if (payload.new && payload.new.post_id) {
+        loadCommentsForPost(payload.new.post_id);
+      } else {
+        loadFeedPosts();
+      }
+    })
+    .subscribe();
+
+  supabase
+    .channel('public:daily_quotes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'daily_quotes' }, () => {
+      loadDailyQuote();
+    })
+    .subscribe();
 }
 
-// FUNGSI MEMUAT DAFTAR POSTINGAN FORUM
-async function loadFeedPosts() {
-  const container = document.getElementById("forum-feed-container");
-  if (!container) return;
+// MEMUAT & SINKRONISASI PERENUNGAN HARI INI
+async function loadDailyQuote() {
+  const quoteTextEl = document.getElementById("display-quote-text");
+  const quoteSourceEl = document.getElementById("display-quote-source");
+  if (!quoteTextEl || !quoteSourceEl) return;
 
-  container.innerHTML = "<p style='color: var(--text-sub); text-align: center; padding: 15px;'>Memuat postingan...</p>";
+  const { data } = await supabase
+    .from("daily_quotes")
+    .select("quote_text, quote_source")
+    .eq("id", 1)
+    .maybeSingle();
+
+  if (data) {
+    quoteTextEl.textContent = `"${data.quote_text}"`;
+    quoteSourceEl.textContent = `— ${data.quote_source}`;
+  }
+}
+
+// FUNGSI RENDER POSTINGAN UNTUK HOME (RECENT) & FULL POSTS TAB
+async function loadFeedPosts() {
+  const recentContainer = document.getElementById("recent-feed-container");
+  const fullContainer = document.getElementById("full-feed-container");
 
   const { data: posts, error } = await supabase
     .from("posts")
@@ -69,92 +119,128 @@ async function loadFeedPosts() {
     .order("created_at", { ascending: false });
 
   if (error || !posts || posts.length === 0) {
-    container.innerHTML = "<p style='color: var(--text-sub); text-align: center; padding: 20px; background: var(--card-bg); border-radius: 16px;'>Belum ada pengumuman / postingan.</p>";
+    const emptyHtml = "<p style='color: var(--text-sub); text-align: center; padding: 20px; background: var(--card-bg); border-radius: 16px;'>Belum ada postingan.</p>";
+    if (recentContainer) recentContainer.innerHTML = emptyHtml;
+    if (fullContainer) fullContainer.innerHTML = emptyHtml;
     return;
   }
 
-  container.innerHTML = "";
-
-  for (const post of posts) {
-    const postCard = document.createElement("div");
-    postCard.className = "post-card";
-
-    const dateFormatted = new Date(post.created_at).toLocaleDateString("id-ID", {
-      day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
+  if (recentContainer) {
+    recentContainer.innerHTML = "";
+    const recentPosts = posts.slice(0, 3); // Hanya 3 postingan terbaru untuk Home
+    recentPosts.forEach(post => {
+      recentContainer.appendChild(createPostCardElement(post));
     });
+  }
 
-    const isAuthorOrAdmin = (currentUserId === post.author_id || currentUserRole === "admin" || currentUserRole === "adm1n");
-
-    postCard.innerHTML = `
-      <div class="post-header">
-        <div class="post-author-box">
-          <div class="post-avatar">${post.author_name.charAt(0).toUpperCase()}</div>
-          <div>
-            <div class="post-author-name">${post.author_name}</div>
-            <div class="post-date">${dateFormatted} WIB</div>
-          </div>
-        </div>
-        ${isAuthorOrAdmin ? `<button class="btn-delete-post secondary-button" style="padding: 2px 8px; font-size: 11px; color: #f87171;" data-id="${post.id}">Hapus</button>` : ''}
-      </div>
-
-      <div class="post-title">${post.title}</div>
-      <div class="post-body-content">${post.content}</div>
-
-      <!-- SECTION KOMENTAR -->
-      <div class="comments-wrapper">
-        <div id="comments-list-${post.id}" class="comments-list">
-          <p style="font-size: 11px; color: var(--text-sub);">Memuat komentar...</p>
-        </div>
-
-        <div class="comment-input-box">
-          <input type="text" id="comment-input-${post.id}" class="comment-input" placeholder="Tulis komentar...">
-          <button class="btn-send-comment" data-postid="${post.id}">Kirim</button>
-        </div>
-      </div>
-    `;
-
-    container.appendChild(postCard);
-
-    // Event Hapus Post
-    const deleteBtn = postCard.querySelector(".btn-delete-post");
-    if (deleteBtn) {
-      deleteBtn.addEventListener("click", async () => {
-        if (confirm("Yakin ingin menghapus postingan ini?")) {
-          await supabase.from("posts").delete().eq("id", post.id);
-          await loadFeedPosts();
-        }
-      });
-    }
-
-    // Event Kirim Komentar
-    const sendCommentBtn = postCard.querySelector(`.btn-send-comment`);
-    if (sendCommentBtn) {
-      sendCommentBtn.addEventListener("click", async () => {
-        const input = document.getElementById(`comment-input-${post.id}`);
-        const commentText = input.value.trim();
-        if (!commentText) return;
-
-        await supabase.from("comments").insert({
-          post_id: post.id,
-          user_id: currentUserId,
-          user_name: currentUserName,
-          comment_text: commentText
-        });
-
-        input.value = "";
-        await loadCommentsForPost(post.id);
-      });
-    }
-
-    // Load Komentar Post Ini
-    loadCommentsForPost(post.id);
+  if (fullContainer) {
+    fullContainer.innerHTML = "";
+    posts.forEach(post => {
+      fullContainer.appendChild(createPostCardElement(post));
+    });
   }
 }
 
-// MEMUAT KOMENTAR PER POSTINGAN
+// MEMBUAT ELEMEN KARTU POSTINGAN
+function createPostCardElement(post) {
+  const postCard = document.createElement("div");
+  postCard.className = "post-card";
+
+  const dateFormatted = new Date(post.created_at).toLocaleDateString("id-ID", {
+    day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
+  });
+
+  const isAuthorOrAdmin = (currentUserId === post.author_id || currentUserRole === "pengurus" || currentUserRole === "admin" || currentUserRole === "adm1n");
+
+  postCard.innerHTML = `
+    <div class="post-header">
+      <div class="post-author-box">
+        <div class="post-avatar">${post.author_name.charAt(0).toUpperCase()}</div>
+        <div>
+          <div class="post-author-name">${post.author_name}</div>
+          <div class="post-date">${dateFormatted} WIB</div>
+        </div>
+      </div>
+      ${isAuthorOrAdmin ? `
+        <div class="flex-gap-8">
+          <button class="btn-edit-post secondary-button" style="padding: 2px 8px; font-size: 11px; color: #60a5fa;" data-id="${post.id}">Edit</button>
+          <button class="btn-delete-post secondary-button" style="padding: 2px 8px; font-size: 11px; color: #f87171;" data-id="${post.id}">Hapus</button>
+        </div>
+      ` : ''}
+    </div>
+
+    <div class="post-title">${post.title}</div>
+    <div class="post-body-content">${post.content}</div>
+
+    <!-- SECTION KOMENTAR -->
+    <div class="comments-wrapper">
+      <div id="comments-list-${post.id}" class="comments-list">
+        <p style="font-size: 11px; color: var(--text-sub);">Memuat komentar...</p>
+      </div>
+
+      <div class="comment-input-box">
+        <input type="text" id="comment-input-${post.id}" class="comment-input" placeholder="Tulis komentar...">
+        <button class="btn-send-comment" data-postid="${post.id}">Kirim</button>
+      </div>
+    </div>
+  `;
+
+  // EVENT EDIT POST
+  const editBtn = postCard.querySelector(".btn-edit-post");
+  if (editBtn) {
+    editBtn.addEventListener("click", () => {
+      editingPostId = post.id;
+      document.getElementById("edit-post-id-val").value = post.id;
+      document.getElementById("post-title-input").value = post.title;
+      quill.root.innerHTML = post.content;
+
+      document.getElementById("form-post-heading").textContent = "✏️ Edit Postingan Pengumuman";
+      document.getElementById("btn-submit-post").textContent = "💾 Simpan Perubahan";
+      document.getElementById("btn-cancel-edit-post").style.display = "inline-block";
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+
+  // EVENT HAPUS POST
+  const deleteBtn = postCard.querySelector(".btn-delete-post");
+  if (deleteBtn) {
+    deleteBtn.addEventListener("click", async () => {
+      if (confirm("Yakin ingin menghapus postingan ini?")) {
+        await supabase.from("posts").delete().eq("id", post.id);
+        await loadFeedPosts();
+      }
+    });
+  }
+
+  // EVENT KIRIM KOMENTAR
+  const sendCommentBtn = postCard.querySelector(`.btn-send-comment`);
+  if (sendCommentBtn) {
+    sendCommentBtn.addEventListener("click", async () => {
+      const input = postCard.querySelector(`#comment-input-${post.id}`);
+      const commentText = input.value.trim();
+      if (!commentText) return;
+
+      await supabase.from("comments").insert({
+        post_id: post.id,
+        user_id: currentUserId,
+        user_name: currentUserName,
+        comment_text: commentText
+      });
+
+      input.value = "";
+      await loadCommentsForPost(post.id);
+    });
+  }
+
+  loadCommentsForPost(post.id);
+  return postCard;
+}
+
+// MEMUAT KOMENTAR PER POST
 async function loadCommentsForPost(postId) {
-  const commentListEl = document.getElementById(`comments-list-${postId}`);
-  if (!commentListEl) return;
+  const commentListEls = document.querySelectorAll(`#comments-list-${postId}`);
+  if (!commentListEls || commentListEls.length === 0) return;
 
   const { data: comments } = await supabase
     .from("comments")
@@ -162,25 +248,29 @@ async function loadCommentsForPost(postId) {
     .eq("post_id", postId)
     .order("created_at", { ascending: true });
 
-  if (!comments || comments.length === 0) {
-    commentListEl.innerHTML = "<p style='font-size: 11px; color: var(--text-sub); margin-bottom: 8px;'>Belum ada komentar.</p>";
-    return;
-  }
+  commentListEls.forEach(commentListEl => {
+    if (!comments || comments.length === 0) {
+      commentListEl.innerHTML = "<p style='font-size: 11px; color: var(--text-sub); margin-bottom: 8px;'>Belum ada komentar.</p>";
+      return;
+    }
 
-  commentListEl.innerHTML = "";
-  comments.forEach(c => {
-    const cItem = document.createElement("div");
-    cItem.className = "comment-item";
-    cItem.innerHTML = `
-      <div class="comment-author">${c.user_name}</div>
-      <div class="comment-text">${c.comment_text}</div>
-    `;
-    commentListEl.appendChild(cItem);
+    commentListEl.innerHTML = "";
+    comments.forEach(c => {
+      const cItem = document.createElement("div");
+      cItem.className = "comment-item";
+      cItem.innerHTML = `
+        <div class="comment-author">${c.user_name}</div>
+        <div class="comment-text">${c.comment_text}</div>
+      `;
+      commentListEl.appendChild(cItem);
+    });
   });
 }
 
-// EVENT UNGGAH POSTINGAN BARU (KHUSUS ADMIN)
+// EVENT UNGGAH / EDIT POSTINGAN
 const btnSubmitPost = document.getElementById("btn-submit-post");
+const btnCancelEditPost = document.getElementById("btn-cancel-edit-post");
+
 if (btnSubmitPost) {
   btnSubmitPost.addEventListener("click", async () => {
     const titleInput = document.getElementById("post-title-input");
@@ -195,24 +285,43 @@ if (btnSubmitPost) {
     btnSubmitPost.textContent = "Mengunggah...";
     btnSubmitPost.disabled = true;
 
-    const { error } = await supabase.from("posts").insert({
-      author_id: currentUserId,
-      author_name: currentUserName,
-      title: title,
-      content: htmlContent
-    });
+    if (editingPostId) {
+      const { error } = await supabase.from("posts").update({
+        title: title,
+        content: htmlContent
+      }).eq("id", editingPostId);
 
-    if (error) {
-      alert("Gagal mengunggah: " + error.message);
+      if (error) alert("Gagal update: " + error.message);
+      else resetPostForm();
     } else {
-      titleInput.value = "";
-      quill.setContents([]);
-      await loadFeedPosts();
+      const { error } = await supabase.from("posts").insert({
+        author_id: currentUserId,
+        author_name: currentUserName,
+        title: title,
+        content: htmlContent
+      });
+
+      if (error) alert("Gagal mengunggah: " + error.message);
+      else resetPostForm();
     }
 
-    btnSubmitPost.textContent = "🚀 Unggah Postingan";
     btnSubmitPost.disabled = false;
+    await loadFeedPosts();
   });
+}
+
+function resetPostForm() {
+  editingPostId = null;
+  document.getElementById("edit-post-id-val").value = "";
+  document.getElementById("post-title-input").value = "";
+  quill.setContents([]);
+  document.getElementById("form-post-heading").textContent = "📢 Buat Pengumuman / Postingan Baru";
+  document.getElementById("btn-submit-post").textContent = "🚀 Unggah Postingan";
+  if (btnCancelEditPost) btnCancelEditPost.style.display = "none";
+}
+
+if (btnCancelEditPost) {
+  btnCancelEditPost.addEventListener("click", resetPostForm);
 }
 
 const btnRefreshFeed = document.getElementById("btn-refresh-feed");
@@ -220,5 +329,58 @@ if (btnRefreshFeed) {
   btnRefreshFeed.addEventListener("click", loadFeedPosts);
 }
 
-// Jalankan Inisialisasi Feed saat DOM Siap
+// LOGIKA MODAL EDIT PERENUNGAN HARI INI
+const btnEditQuoteTrigger = document.getElementById("btn-edit-quote-trigger");
+const editQuoteModal = document.getElementById("edit-quote-modal");
+const editQuoteTextInput = document.getElementById("edit-quote-text-input");
+const editQuoteSourceInput = document.getElementById("edit-quote-source-input");
+const cancelEditQuote = document.getElementById("cancel-edit-quote");
+const saveEditQuote = document.getElementById("save-edit-quote");
+const editQuoteModalMsg = document.getElementById("edit-quote-modal-msg");
+
+if (btnEditQuoteTrigger) {
+  btnEditQuoteTrigger.addEventListener("click", async () => {
+    const { data } = await supabase.from("daily_quotes").select("*").eq("id", 1).maybeSingle();
+    if (data) {
+      editQuoteTextInput.value = data.quote_text;
+      editQuoteSourceInput.value = data.quote_source;
+    }
+    editQuoteModalMsg.textContent = "";
+    editQuoteModal.style.display = "flex";
+  });
+}
+
+if (cancelEditQuote) {
+  cancelEditQuote.addEventListener("click", () => editQuoteModal.style.display = "none");
+}
+
+if (saveEditQuote) {
+  saveEditQuote.addEventListener("click", async () => {
+    const text = editQuoteTextInput.value.trim();
+    const source = editQuoteSourceInput.value.trim();
+
+    if (!text || !source) {
+      editQuoteModalMsg.textContent = "Kutipan dan sumber tidak boleh kosong!";
+      return;
+    }
+
+    saveEditQuote.textContent = "Menyimpan...";
+    const { error } = await supabase.from("daily_quotes").upsert({
+      id: 1,
+      quote_text: text,
+      quote_source: source,
+      updated_at: new Date().toISOString()
+    });
+
+    if (error) {
+      editQuoteModalMsg.textContent = "Gagal menyimpan: " + error.message;
+    } else {
+      editQuoteModal.style.display = "none";
+      await loadDailyQuote();
+    }
+    saveEditQuote.textContent = "Simpan";
+  });
+}
+
+// JALANKAN SAAT DOM SIAP
 window.addEventListener("DOMContentLoaded", initFeedSystem);

@@ -760,3 +760,52 @@ html, body {
   font-weight: 700;
   cursor: pointer;
 }
+
+
+
+/* =========================================
+   PERBAIKAN GAMBAR, TEXT WRAPPING & FEED UI
+========================================= */
+.post-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-bottom: 10px;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.post-body-content {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-main);
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap; /* Mencegah teks rata tengah nembus box */
+}
+
+.post-body-content p {
+  margin-bottom: 8px;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* GAMBAR UTUH TANPA TERPOTONG */
+.post-body-content img, .ql-editor img {
+  max-width: 100% !important;
+  height: auto !important;
+  object-fit: contain !important; /* Mencegah gambar terpotong */
+  border-radius: 12px;
+  margin: 10px 0;
+  display: block;
+}
+
+.comment-text {
+  color: var(--text-main);
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.admin-post-card-box {
+  border: 1px solid rgba(59, 130, 246, 0.4);
+}
