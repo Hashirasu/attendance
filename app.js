@@ -339,7 +339,7 @@ async function loadUserProfile() {
     if (profilePageName) profilePageName.textContent = empData.name;
     if (profilePageCode) profilePageCode.textContent = `Kode Anggota: ${empData.employee_code}`;
     if (profilePagePoints) profilePagePoints.textContent = empData.points || 0;
-    if (profilePageBio) profilePageBio.textContent = `"${empData.bio || 'Menghormati Guru, Menghargai Dharma, dan Tekun bersadhana.'}"`;
+    if (profilePageBio) profilePageBio.textContent = `"${empData.bio || 'Halo, salam kenal ya!'}"`;
 
     const navAdminBtn = document.getElementById("nav-admin-btn");
     if (currentUserRole === "admin" || currentUserRole === "adm1n" || currentUserRole === "pengurus") {
