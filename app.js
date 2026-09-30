@@ -109,7 +109,8 @@ async function checkUrlAutoAttendance() {
           loadUserProfile(),
           loadTodayStatus(),
           loadAttendanceHistory(),
-          loadMonthlyStatistics()
+          loadMonthlyStatistics(),
+          loadUserAchievements()
         ]);
       } else {
         const errorMsg = error ? error.message : (data ? data.message : "Terjadi kesalahan.");
@@ -294,7 +295,7 @@ function showLoginSection() {
 }
 
 // ==============================
-// LOAD USER PROFILE & DEDICATED TAB PROFILES
+// 3. LOAD USER PROFILE, ACHIEVEMENTS & DEDICATED PROFILE
 // ==============================
 async function loadUserProfile() {
   const { data: { user } } = await supabase.auth.getUser();
@@ -325,7 +326,7 @@ async function loadUserProfile() {
     if (userNameDisplay) userNameDisplay.textContent = empData.name;
     if (userCodeEl) userCodeEl.textContent = `Kode: ${empData.employee_code}`;
 
-    // POPULASI DEDICATED TAB PROFILE (GAMBAR 2)
+    // POPULASI DEDICATED TAB PROFILE
     const profilePageAvatar = document.getElementById("profile-page-avatar");
     const profilePageName = document.getElementById("profile-page-name");
     const profilePageCode = document.getElementById("profile-page-code");
@@ -355,7 +356,8 @@ async function loadUserProfile() {
   await Promise.all([
     loadTodayStatus(),
     loadAttendanceHistory(),
-    loadMonthlyStatistics()
+    loadMonthlyStatistics(),
+    loadUserAchievements()
   ]);
 
   if (window.initFeedSystem) {
@@ -363,9 +365,79 @@ async function loadUserProfile() {
   }
 }
 
-// ==============================
+// LOGIKA KALKULASI ACHIEVEMENT BADGES SYSTEM
+async function loadUserAchievements() {
+  if (!currentUserId) return;
+
+  const { count, error } = await supabase
+    .from("attendance")
+    .select("id", { count: "exact", head: true })
+    .eq("employee_id", currentUserId);
+
+  const totalAbsen = count || 0;
+  let unlockedCount = 0;
+
+  // BADGE 1: 10 KALI ABSEN (Keep it up!)
+  const item10 = document.getElementById("badge-item-10");
+  const bar10 = document.getElementById("badge-bar-10");
+  const status10 = document.getElementById("badge-status-10");
+  if (item10 && bar10 && status10) {
+    const pct10 = Math.min(100, Math.round((totalAbsen / 10) * 100));
+    bar10.style.width = `${pct10}%`;
+    if (totalAbsen >= 10) {
+      item10.classList.remove("locked");
+      item10.classList.add("unlocked");
+      status10.textContent = "✅ Terbuka (10 / 10 Absen)";
+      status10.style.color = "#10b981";
+      unlockedCount++;
+    } else {
+      status10.textContent = `${totalAbsen} / 10 Absen`;
+    }
+  }
+
+  // BADGE 2: 30 KALI ABSEN (Well done!)
+  const item30 = document.getElementById("badge-item-30");
+  const bar30 = document.getElementById("badge-bar-30");
+  const status30 = document.getElementById("badge-status-30");
+  if (item30 && bar30 && status30) {
+    const pct30 = Math.min(100, Math.round((totalAbsen / 30) * 100));
+    bar30.style.width = `${pct30}%`;
+    if (totalAbsen >= 30) {
+      item30.classList.remove("locked");
+      item30.classList.add("unlocked");
+      status30.textContent = "✅ Terbuka (30 / 30 Absen)";
+      status30.style.color = "#10b981";
+      unlockedCount++;
+    } else {
+      status30.textContent = `${totalAbsen} / 30 Absen`;
+    }
+  }
+
+  // BADGE 3: 90 KALI ABSEN (Loyal Member)
+  const item90 = document.getElementById("badge-item-90");
+  const bar90 = document.getElementById("badge-bar-90");
+  const status90 = document.getElementById("badge-status-90");
+  if (item90 && bar90 && status90) {
+    const pct90 = Math.min(100, Math.round((totalAbsen / 90) * 100));
+    bar90.style.width = `${pct90}%`;
+    if (totalAbsen >= 90) {
+      item90.classList.remove("locked");
+      item90.classList.add("unlocked");
+      status90.textContent = "✅ Terbuka (90 / 90 Absen)";
+      status90.style.color = "#10b981";
+      unlockedCount++;
+    } else {
+      status90.textContent = `${totalAbsen} / 90 Absen`;
+    }
+  }
+
+  const badgeCountText = document.getElementById("badge-count-text");
+  if (badgeCountText) {
+    badgeCountText.textContent = `${unlockedCount} / 3 Unlocked`;
+  }
+}
+
 // LOGIKA UPLOAD FOTO PROFIL DARI GALERI KE SUPABASE STORAGE
-// ==============================
 const uploadAvatarFileInput = document.getElementById("upload-avatar-file");
 
 if (uploadAvatarFileInput) {
@@ -378,7 +450,7 @@ if (uploadAvatarFileInput) {
       return;
     }
 
-    if (file.size > 3 * 1024 * 1024) { // Limit 3MB
+    if (file.size > 3 * 1024 * 1024) { 
       alert("Ukuran file gambar maksimal 3MB!");
       return;
     }
@@ -387,19 +459,19 @@ if (uploadAvatarFileInput) {
     const filePath = `${currentUserId}/avatar_${Date.now()}.${fileExt}`;
 
     try {
-      // 1. UPLOAD FILE KE BUCKET STORAGE 'avatars'
+      // 1. Upload File Gambar ke Bucket 'avatars'
       const { error: uploadErr } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, { upsert: true });
 
       if (uploadErr) throw uploadErr;
 
-      // 2. DAPATKAN PUBLIC URL GAMBAR
+      // 2. Ambil Public URL Gambar
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
 
-      // 3. UPDATE URL FOTO PROFIL DI TABEL EMPLOYEES
+      // 3. Update Kolom avatar_url di Tabel employees
       const { error: updateErr } = await supabase
         .from('employees')
         .update({ avatar_url: publicUrl })
@@ -411,7 +483,7 @@ if (uploadAvatarFileInput) {
       await loadUserProfile();
 
     } catch (err) {
-      alert("Gagal mengunggah foto profil: " + err.message);
+      alert("Gagal mengunggah foto profil: " + err.message + "\nPastikan bucket 'avatars' di Supabase sudah bertipe PUBLIC.");
     }
   });
 }
@@ -553,7 +625,7 @@ async function loadMonthlyStatistics() {
 }
 
 // ==============================
-// 3. QR SCANNER KAMERA
+// 4. QR SCANNER KAMERA
 // ==============================
 const openScannerBtnUser = document.getElementById("open-scanner-btn-user");
 const scannerModal = document.getElementById("scanner-modal");
@@ -603,7 +675,7 @@ if (closeScannerBtn) {
 }
 
 // ==============================
-// LOGIKA MODAL KELOLA POIN MEMBER (ADMIN)
+// 5. MANAJEMEN POIN MEMBER (ADMIN)
 // ==============================
 document.addEventListener("click", (e) => {
   if (e.target.classList.contains("btn-add-points")) {
@@ -677,7 +749,7 @@ if (btnSavePoints) {
 }
 
 // ==============================
-// 4. ADMIN PANEL & KIOSK GENERATOR
+// 6. ADMIN PANEL & KIOSK GENERATOR
 // ==============================
 if (switchToAdminBtn) {
   switchToAdminBtn.addEventListener("click", async () => {
@@ -951,7 +1023,7 @@ if (saveEditEmp) {
 }
 
 // ==============================
-// 5. ADVANCED EXCEL EXPORT
+// 7. ADVANCED EXCEL EXPORT
 // ==============================
 if (exportCsvBtn) {
   exportCsvBtn.addEventListener("click", async () => {
@@ -1025,7 +1097,7 @@ if (exportCsvBtn) {
 }
 
 // ==============================
-// 6. SINKRONISASI KE GOOGLE SHEETS
+// 8. SINKRONISASI KE GOOGLE SHEETS
 // ==============================
 const syncSheetsBtn = document.getElementById("sync-sheets-btn");
 
@@ -1167,7 +1239,7 @@ if (syncSheetsBtn) {
 }
 
 // ==============================
-// 7. LIGHT & DARK MODE TOGGLE LOGIC
+// 9. LIGHT & DARK MODE TOGGLE LOGIC
 // ==============================
 function initThemeToggle() {
   const themeToggleBtn = document.getElementById("theme-toggle-btn");

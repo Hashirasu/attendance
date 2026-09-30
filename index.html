@@ -312,7 +312,7 @@
         </div>
       </section>
 
-      <!-- TAB 4: HALAMAN DEDICATED PROFILES (SESUAI GAMBAR 2 & 3) -->
+      <!-- TAB 4: HALAMAN DEDICATED PROFILE -->
       <section id="tab-profile-view" class="tab-content" style="display: none;">
         <div class="profile-page-header">
           <div class="profile-main-display">
@@ -341,11 +341,10 @@
             </p>
           </div>
 
-          <!-- WADAH KHUSUS SIMULASI AVATAR LUCU (PREPARATION UNTUK CLASSDOJO/ROBLOX STYLE) -->
+          <!-- WADAH AVATAR LUCU (PREPARATION UNTUK CLASSDOJO STYLE) -->
           <div class="avatar-character-box">
             <div class="avatar-stage">
               <div class="avatar-shadow"></div>
-              <!-- DUMMY PET/AVATAR CHARA (GAMBAR 3) -->
               <img id="avatar-chara-img" src="https://api.dicebear.com/7.x/bottts/svg?seed=AvatarChara" class="chara-sprite" alt="Avatar Character">
             </div>
             <button id="btn-custom-avatar" class="secondary-button-sm" style="margin-top: 10px; opacity: 0.7;" disabled>
@@ -354,13 +353,74 @@
           </div>
         </div>
 
-        <!-- POSTINGAN SAYA SENSASI INSTAGRAM FEED -->
-        <div class="card-box" style="margin-top: 20px;">
-          <h3 class="section-heading" style="margin-bottom: 14px;">📸 Postingan & Aktivitas Saya</h3>
-          <div id="my-personal-feed-container">
-            <p style="color: var(--text-sub); text-align: center; padding: 20px;">Memuat postingan kamu...</p>
+        <!-- SECTION ACHIEVEMENT BADGES & FRIENDS LIST -->
+        <div class="profile-grid-two">
+          
+          <!-- CARD 1: ACHIEVEMENT BADGES -->
+          <div class="card-box">
+            <div class="flex-between-center" style="margin-bottom: 14px;">
+              <h3 class="section-heading">🏆 Pencapaian & Badge</h3>
+              <span id="badge-count-text" class="card-badge" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">0 / 3 Unlocked</span>
+            </div>
+
+            <div class="achievement-list">
+              <!-- BADGE 1: 10 KALI ABSEN -->
+              <div id="badge-item-10" class="badge-card locked">
+                <div class="badge-icon">🌱</div>
+                <div class="badge-info">
+                  <h4>Keep it up!</h4>
+                  <p>Hadir dan melakukan presensi sebanyak 10 kali.</p>
+                  <div class="badge-progress-track">
+                    <div id="badge-bar-10" class="badge-progress-fill" style="width: 0%;"></div>
+                  </div>
+                  <span id="badge-status-10" class="badge-status-text">0 / 10 Absen</span>
+                </div>
+              </div>
+
+              <!-- BADGE 2: 30 KALI ABSEN -->
+              <div id="badge-item-30" class="badge-card locked">
+                <div class="badge-icon">⭐</div>
+                <div class="badge-info">
+                  <h4>Well Done!</h4>
+                  <p>Hadir dan melakukan presensi sebanyak 30 kali.</p>
+                  <div class="badge-progress-track">
+                    <div id="badge-bar-30" class="badge-progress-fill" style="width: 0%;"></div>
+                  </div>
+                  <span id="badge-status-30" class="badge-status-text">0 / 30 Absen</span>
+                </div>
+              </div>
+
+              <!-- BADGE 3: 90 KALI ABSEN -->
+              <div id="badge-item-90" class="badge-card locked">
+                <div class="badge-icon">👑</div>
+                <div class="badge-info">
+                  <h4>Loyal Member</h4>
+                  <p>Hadir dan melakukan presensi sebanyak 90 kali.</p>
+                  <div class="badge-progress-track">
+                    <div id="badge-bar-90" class="badge-progress-fill" style="width: 0%;"></div>
+                  </div>
+                  <span id="badge-status-90" class="badge-status-text">0 / 90 Absen</span>
+                </div>
+              </div>
+            </div>
           </div>
+
+          <!-- CARD 2: LIST TEMAN (SOON) -->
+          <div class="card-box">
+            <div class="flex-between-center" style="margin-bottom: 14px;">
+              <h3 class="section-heading">👥 Daftar Teman</h3>
+              <span class="card-badge">Fitur Komunitas</span>
+            </div>
+
+            <div class="friends-placeholder-box">
+              <div class="friends-empty-icon">🤝</div>
+              <h4>Fitur Pertemanan Segera Hadir!</h4>
+              <p>Nanti kamu bisa mencari teman sesama anggota Vihara, melihat profil/avatar mereka, dan berkirim pesan secara langsung.</p>
+            </div>
+          </div>
+
         </div>
+      </section>
       </section>
 
       <!-- TAB 5: ADMIN PANEL -->
