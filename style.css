@@ -618,3 +618,145 @@ html, body {
     grid-template-columns: 1fr;
   }
 }
+
+
+
+/* =========================================
+   COMMUNITY FEED & FORUM STYLING
+========================================= */
+.ql-toolbar.ql-snow {
+  background: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+  border-radius: 12px 12px 0 0 !important;
+}
+
+.ql-container.ql-snow {
+  border-color: var(--card-border) !important;
+  border-radius: 0 0 12px 12px !important;
+  color: var(--text-main) !important;
+}
+
+.ql-editor img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  margin: 10px 0;
+}
+
+.post-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-xl);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.post-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.post-author-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.post-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--ios-blue);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.post-author-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.post-date {
+  font-size: 11px;
+  color: var(--text-sub);
+}
+
+.post-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-bottom: 10px;
+}
+
+.post-body-content {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-main);
+}
+
+.post-body-content img {
+  width: 100%;
+  max-height: 400px;
+  object-fit: cover;
+  border-radius: 14px;
+  margin: 12px 0;
+}
+
+/* SECTION KOMENTAR */
+.comments-wrapper {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--card-border);
+}
+
+.comment-item {
+  background: var(--input-bg);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.comment-author {
+  font-weight: 700;
+  color: #60a5fa;
+  margin-bottom: 2px;
+}
+
+.comment-text {
+  color: var(--text-main);
+}
+
+.comment-input-box {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.comment-input {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 12px;
+  border-radius: 10px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--text-main);
+}
+
+.btn-send-comment {
+  padding: 8px 14px;
+  background: var(--ios-blue);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
