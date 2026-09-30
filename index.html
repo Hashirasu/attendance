@@ -169,14 +169,15 @@
         <div class="hero-buddhist-card">
           <div class="flex-between-center">
             <div class="quote-tag">🪷 Perenungan Hari Ini</div>
+            <!-- KHUSUS ADMIN & ADM1N -->
             <button id="btn-edit-quote-trigger" class="secondary-button" style="display: none; padding: 2px 8px; font-size: 10px;">✏️ Edit</button>
           </div>
           <p id="display-quote-text" class="buddhist-quote">"Pikiran adalah pelopor dari segala kondisi, pikiran adalah pemimpin, pikiran adalah pembentuk."</p>
           <span id="display-quote-source" class="quote-source">— Dhammapada, Yamakavagga</span>
         </div>
 
-        <!-- FORM UPLOAD PENGUMUMAN (KHUSUS ADMIN / PENGURUS) -->
-        <div id="admin-post-box" class="card-box admin-post-card-box" style="display: none; margin-bottom: 20px;">
+        <!-- WADAH FORM UPLOAD POSTINGAN (PENGURUS, ADMIN & ADM1N) -->
+        <div id="post-editor-container" class="card-box admin-post-card-box" style="display: none; margin-bottom: 20px;">
           <div class="flex-between-center" style="margin-bottom: 12px;">
             <h3 id="form-post-heading" class="section-heading">📢 Buat Pengumuman / Postingan Baru</h3>
             <span class="card-badge">Pengurus & Admin</span>
@@ -218,7 +219,7 @@
           </button>
         </div>
 
-        <!-- INFO GRID VISHARA -->
+        <!-- INFO GRID VIHARA -->
         <div class="info-grid" style="margin-top: 20px;">
           <div class="card-box">
             <span class="card-badge">📢 Pengumuman Vihara</span>
@@ -230,7 +231,7 @@
 
           <div class="card-box">
             <span class="card-badge">💡 Zhen Fo Zong Spirit</span>
-            <h4 class="card-title">Harmoni & Kebersamaan</h4>
+            <h4 class="card-title">尊師 ~ 重法 ~ 實修</h4>
             <p class="card-desc">
               "Menghormati Guru, Menghargai Dharma, dan Tekun bersadhana"
             </p>
@@ -254,8 +255,8 @@
           <button id="btn-refresh-feed" class="secondary-button" style="padding: 6px 12px; font-size: 12px;">🔄 Refresh</button>
         </div>
 
-        <!-- WADAH DUPLIKASI EDITOR DI HALAMAN POST JIKA ADMIN/PENGURUS -->
-        <div id="full-post-editor-slot"></div>
+        <!-- SLOT UNTUK MEMINDAHKAN EDITOR JIKA DI HALAMAN POST -->
+        <div id="post-tab-editor-slot"></div>
 
         <div id="full-feed-container">
           <p style="color: var(--text-sub); text-align: center; padding: 20px;">Memuat seluruh postingan...</p>

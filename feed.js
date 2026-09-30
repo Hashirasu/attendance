@@ -46,16 +46,19 @@ async function initFeedSystem() {
     currentUserName = empData.name;
     currentUserRole = empData.role;
 
-    // Pengurus, Admin, dan Adm1n BISA UPLOAD & EDIT POST
-    const isAuthorized = (currentUserRole === "pengurus" || currentUserRole === "admin" || currentUserRole === "adm1n");
-    const adminPostBox = document.getElementById("admin-post-box");
-    const editQuoteBtn = document.getElementById("btn-edit-quote-trigger");
+    // 1. UPLOAD POSTINGAN: BISA UNTUK Pengurus, Admin, DAN Adm1n
+    const canUploadPost = (currentUserRole === "pengurus" || currentUserRole === "admin" || currentUserRole === "adm1n");
+    const postEditorContainer = document.getElementById("post-editor-container");
 
-    if (adminPostBox && isAuthorized) {
-      adminPostBox.style.display = "block";
+    if (postEditorContainer && canUploadPost) {
+      postEditorContainer.style.display = "block";
     }
 
-    if (editQuoteBtn && isAuthorized) {
+    // 2. EDIT PERENUNGAN HARI INI: HANYA UNTUK Admin DAN Adm1n (PENGURUS TIDAK BISA)
+    const canEditQuote = (currentUserRole === "admin" || currentUserRole === "adm1n");
+    const editQuoteBtn = document.getElementById("btn-edit-quote-trigger");
+
+    if (editQuoteBtn && canEditQuote) {
       editQuoteBtn.style.display = "inline-block";
     }
   }
