@@ -11,6 +11,9 @@ function initQuillEditor() {
   const editorEl = document.getElementById("quill-editor");
   if (!editorEl) return;
 
+  // Mencegah re-inisialisasi ganda jika editor sudah ada
+  if (document.querySelector('.ql-toolbar')) return;
+
   quill = new Quill('#quill-editor', {
     theme: 'snow',
     placeholder: 'Tulis isi pengumuman... Kamu bisa memasukkan foto via ikon gambar di toolbar.',
@@ -28,7 +31,7 @@ function initQuillEditor() {
 }
 
 // INSIALISASI SISTEM FORUM FEED & REALTIME SUBSCRIPTION
-async function initFeedSystem() {
+export async function initFeedSystem() {
   initQuillEditor();
 
   const { data: { session } } = await supabase.auth.getSession();
@@ -36,33 +39,35 @@ async function initFeedSystem() {
 
   currentUserId = session.user.id;
 
-  const { data: empData } = await supabase
+  // 1. DAHULUKAN MEMBACA EMPLOYEE & ROLE DENGAN AWAIT HINGGA SELESAI
+  const { data: empData, error } = await supabase
     .from("employees")
     .select("name, role")
     .eq("id", currentUserId)
     .single();
 
-  if (empData) {
+  if (!error && empData) {
     currentUserName = empData.name;
     currentUserRole = empData.role;
 
-    // UPLOAD POSTINGAN: BISA UNTUK Pengurus, Admin, DAN Adm1n
+    // KONTROL VISIBILITAS FORM UPLOAD (Pengurus, Admin, Adm1n)
     const canUploadPost = (currentUserRole === "pengurus" || currentUserRole === "admin" || currentUserRole === "adm1n");
     const postEditorContainer = document.getElementById("post-editor-container");
 
-    if (postEditorContainer && canUploadPost) {
-      postEditorContainer.style.display = "block";
+    if (postEditorContainer) {
+      postEditorContainer.style.display = canUploadPost ? "block" : "none";
     }
 
-    // EDIT PERENUNGAN HARI INI: HANYA UNTUK Admin DAN Adm1n
+    // KONTROL EDIT PERENUNGAN HARI INI (Khusus Admin & Adm1n)
     const canEditQuote = (currentUserRole === "admin" || currentUserRole === "adm1n");
     const editQuoteBtn = document.getElementById("btn-edit-quote-trigger");
 
-    if (editQuoteBtn && canEditQuote) {
-      editQuoteBtn.style.display = "inline-block";
+    if (editQuoteBtn) {
+      editQuoteBtn.style.display = canEditQuote ? "inline-block" : "none";
     }
   }
 
+  // 2. SETELAH ROLE PASTI TERDAPATKAN, BARU MUAT DAILY QUOTE & FEED POSTS
   await loadDailyQuote();
   await loadFeedPosts();
 
@@ -92,6 +97,9 @@ async function initFeedSystem() {
     })
     .subscribe();
 }
+
+// DAFTARKAN FUNGSI AGAR BISA DIPANGGIL SECARA GLOBAL SETELAH AUTO-LOGIN
+window.initFeedSystem = initFeedSystem;
 
 // MEMUAT & SINKRONISASI PERENUNGAN HARI INI
 async function loadDailyQuote() {
@@ -203,7 +211,7 @@ function createPostCardElement(post) {
       document.getElementById("post-title-input").value = post.title;
       quill.root.innerHTML = post.content;
 
-      document.getElementById("form-post-heading").textContent = "✏ Edit Postingan Pengumuman";
+      document.getElementById("form-post-heading").textContent = "✏️ Edit Postingan Pengumuman";
       document.getElementById("btn-submit-post").textContent = "💾 Simpan Perubahan";
       document.getElementById("btn-cancel-edit-post").style.display = "inline-block";
 
@@ -265,8 +273,6 @@ async function loadCommentsForPost(postId, postAuthorId = null) {
 
     commentListEl.innerHTML = "";
     comments.forEach(c => {
-      // HAK HAPUS KOMENTAR:
-      // Penulis Komentar BISA Hapus, Pembuat Post BISA Hapus, Pengurus/Admin BISA Hapus
       const canDeleteComment = (
         currentUserId === c.user_id || 
         currentUserId === postAuthorId || 
@@ -347,7 +353,7 @@ function resetPostForm() {
   editingPostId = null;
   document.getElementById("edit-post-id-val").value = "";
   document.getElementById("post-title-input").value = "";
-  quill.setContents([]);
+  if (quill) quill.setContents([]);
   document.getElementById("form-post-heading").textContent = "📢 Buat Pengumuman / Postingan Baru";
   document.getElementById("btn-submit-post").textContent = "🚀 Unggah Postingan";
   if (btnCancelEditPost) btnCancelEditPost.style.display = "none";

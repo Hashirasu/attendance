@@ -336,6 +336,10 @@ async function loadUserProfile() {
     loadAttendanceHistory(),
     loadMonthlyStatistics()
   ]);
+  // Tambahkan di baris paling bawah fungsi loadUserProfile() pada app.js:
+  if (window.initFeedSystem) {
+       await window.initFeedSystem();
+      }
 }
 
 async function loadTodayStatus() {
