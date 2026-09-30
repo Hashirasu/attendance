@@ -153,14 +153,21 @@ function createPostCardElement(post) {
     day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
   });
 
-  const isAuthorOrAdmin = (currentUserId === post.author_id || currentUserRole === "pengurus" || currentUserRole === "admin" || currentUserRole === "adm1n");
+  const isManagement = (currentUserRole === "pengurus" || currentUserRole === "admin" || currentUserRole === "adm1n");
+  const isAuthorOrAdmin = (currentUserId === post.author_id || isManagement);
+
+  // KONTROL IDENTITAS PENULIS:
+  // Pengurus/Admin/Adm1n dapat melihat nama asli.
+  // Anggota biasa hanya melihat "Humas Mudiviva".
+  const displayAuthorName = isManagement ? post.author_name : "Humas Mudiviva";
+  const avatarLetter = displayAuthorName.charAt(0).toUpperCase();
 
   postCard.innerHTML = `
     <div class="post-header">
       <div class="post-author-box">
-        <div class="post-avatar">${post.author_name.charAt(0).toUpperCase()}</div>
+        <div class="post-avatar">${avatarLetter}</div>
         <div>
-          <div class="post-author-name">${post.author_name}</div>
+          <div class="post-author-name">${displayAuthorName}</div>
           <div class="post-date">${dateFormatted} WIB</div>
         </div>
       </div>
@@ -197,7 +204,7 @@ function createPostCardElement(post) {
       document.getElementById("post-title-input").value = post.title;
       quill.root.innerHTML = post.content;
 
-      document.getElementById("form-post-heading").textContent = "✏️️ Edit Postingan Pengumuman";
+      document.getElementById("form-post-heading").textContent = "✏️ Edit Postingan Pengumuman";
       document.getElementById("btn-submit-post").textContent = "💾 Simpan Perubahan";
       document.getElementById("btn-cancel-edit-post").style.display = "inline-block";
 
@@ -239,6 +246,7 @@ function createPostCardElement(post) {
   loadCommentsForPost(post.id, post.author_id);
   return postCard;
 }
+
 
 // MEMUAT KOMENTAR PER POST DENGAN HAK AKSES HAPUS KOMENTAR
 async function loadCommentsForPost(postId, postAuthorId = null) {
