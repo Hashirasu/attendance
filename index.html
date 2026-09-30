@@ -7,27 +7,23 @@
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-  <!-- LIBRARY GENERATOR QR CODE UNTUK KIOS ADMIN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <!-- QUILL.JS RICH TEXT EDITOR FORUM FEED -->
   <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
   <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 </head>
 <body>
 
-  <!-- FLOATING THEME TOGGLE BUTTON -->
   <button id="theme-toggle-btn" class="theme-toggle-btn" type="button" title="Ganti Mode">
     <span id="theme-icon">🌙</span>
   </button>
 
-  <!-- LIVE ANIMATED MESH BACKGROUND (CALM GRADIENT) -->
   <div class="mesh-bg-container">
     <div class="mesh-ball ball-1"></div>
     <div class="mesh-ball ball-2"></div>
     <div class="mesh-ball ball-3"></div>
   </div>
 
-  <!-- CONTAINER LOGIN / SIGNUP (FORM TAMPILAN AWAL) -->
+  <!-- AUTH SECTION -->
   <main id="auth-container" class="auth-wrapper">
     <section id="login-section" class="auth-glass-card">
       <div class="brand-header">
@@ -37,7 +33,6 @@
         <h1 class="brand-title">MUDIVIVERSE</h1>
       </div>
 
-      <!-- FORM DAFTAR (DIBUKA SAAT REGISTER MODE) -->
       <div class="form-group-list" id="name-group" style="display: none;">
         <div class="input-field-box">
           <label for="register-name">Nama Lengkap</label>
@@ -60,7 +55,6 @@
         </div>
       </div>
 
-      <!-- FORM LOGIN AKUN -->
       <div class="form-group-list">
         <div class="input-field-box">
           <label for="email">Email Google</label>
@@ -82,7 +76,6 @@
         <button id="toggle-auth-btn" class="link-button">Daftar di sini</button>
       </div>
 
-      <!-- STATUS VERIFIKASI EMAIL -->
       <div id="unverified-section" class="unverified-card" style="display: none;">
         <div class="mail-icon">✉️</div>
         <h3>Verifikasi Email Diperlukan</h3>
@@ -101,10 +94,10 @@
     </section>
   </main>
 
-  <!-- DASHBOARD HOMESCREEN (MUNCUL SETELAH LOGIN) -->
+  <!-- WORKSPACE DESKTOP / MOBILE -->
   <div id="dashboard-workspace" class="app-workspace" style="display: none;">
     
-    <!-- SIDEBAR NAVIGASI DESKTOP / TOP-BOTTOM MOBILE NAV -->
+    <!-- SIDEBAR NAVIGASI DENGAN TOMBOL PROFILE -->
     <aside class="glass-sidebar">
       <div class="brand-header-sidebar">
         <div class="logo-box-mini">
@@ -126,13 +119,17 @@
           <span class="nav-icon">📋</span>
           <span>Presensi</span>
         </button>
+        <!-- NAVIGASI TAB PROFILE DEDICATED -->
+        <button type="button" id="nav-profile-btn" class="nav-btn">
+          <span class="nav-icon">👤</span>
+          <span>Profile</span>
+        </button>
         <button type="button" id="nav-admin-btn" class="nav-btn" style="display: none;">
           <span class="nav-icon">⚙️</span>
           <span>Admin</span>
         </button>
       </nav>
 
-      <!-- LOGOUT DESKTOP -->
       <div class="sidebar-footer desktop-only">
         <button id="logout-button" class="logout-btn">
           <span>🚪 Logout</span>
@@ -143,7 +140,6 @@
     <!-- MAIN CONTENT WINDOW -->
     <main class="glass-content-window">
       
-      <!-- TOP BAR INFO, JAM & LOGOUT MOBILE -->
       <header class="workspace-topbar">
         <div class="user-greeting">
           <h3>Halo, <span id="user-name-display">Member</span> 👋</h3>
@@ -155,34 +151,14 @@
             <span id="live-time">00:00:00</span>
             <span class="live-zone">WIB</span>
           </div>
-          <!-- LOGOUT SAFE MOBILE BUTTON -->
           <button id="mobile-logout-button" class="logout-btn-mobile mobile-only">
             🚪 Logout
           </button>
         </div>
       </header>
 
-      <!-- TAB 1: HOME (PROFIL, RECENT POSTS & QUOTES) -->
+      <!-- TAB 1: HOME (RECENT POSTS & QUOTES) -->
       <section id="tab-home-view" class="tab-content">
-        
-        <!-- PROFIL HEADER CARD SAYA -->
-        <div class="profile-card-header">
-          <div class="profile-avatar-wrapper">
-            <img id="user-avatar-display" src="https://api.dicebear.com/7.x/bottts/svg?seed=Mudivi" alt="Avatar" class="profile-avatar-img">
-          </div>
-          <h3 id="user-profile-fullname" style="font-size: 18px; font-weight: 800; color: var(--text-main);">Member</h3>
-          <p id="user-profile-bio" class="profile-bio-text">"Menghormati Guru, Menghargai Dharma, dan Tekun bersadhana."</p>
-
-          <div style="margin-top: 12px; display: flex; justify-content: center; align-items: center; gap: 10px;">
-            <div class="profile-points-badge">
-              🪙 <span id="user-points-display">0</span> Poin Vihara
-            </div>
-            <button id="btn-open-edit-profile" class="secondary-button" style="padding: 6px 12px; font-size: 12px; border-radius: 20px;">
-              ✏️ Edit Profil
-            </button>
-          </div>
-        </div>
-
         <!-- HERO QUOTE BUDDHIST -->
         <div class="hero-buddhist-card">
           <div class="flex-between-center">
@@ -193,7 +169,7 @@
           <span id="display-quote-source" class="quote-source">— Dhammapada, Yamakavagga</span>
         </div>
 
-        <!-- WADAH FORM UPLOAD POSTINGAN (PENGURUS, ADMIN & ADM1N) -->
+        <!-- FORM UPLOAD POSTINGAN -->
         <div id="post-editor-container" class="card-box admin-post-card-box" style="display: none; margin-bottom: 20px;">
           <div class="flex-between-center" style="margin-bottom: 12px;">
             <h3 id="form-post-heading" class="section-heading">📢 Buat Pengumuman / Postingan Baru</h3>
@@ -220,7 +196,6 @@
           </div>
         </div>
 
-        <!-- AREA RECENT POSTS -->
         <div class="flex-between-center" style="margin-bottom: 14px;">
           <h3 class="section-heading">📰 Postingan Terbaru</h3>
         </div>
@@ -235,7 +210,6 @@
           </button>
         </div>
 
-        <!-- INFO GRID VIHARA -->
         <div class="info-grid" style="margin-top: 20px;">
           <div class="card-box">
             <span class="card-badge">📢 Pengumuman Vihara</span>
@@ -254,7 +228,6 @@
           </div>
         </div>
 
-        <!-- PANDUAN ADINATA & MANTRA -->
         <div class="card-box" style="margin-top: 20px;">
           <div class="flex-between-center" style="margin-bottom: 16px;">
             <h3 class="section-heading">📿 Panduan Adinata & Mantra Zhen Fo Zong</h3>
@@ -264,7 +237,7 @@
         </div>
       </section>
 
-      <!-- TAB POSTS (SEMUA POSTINGAN FORUM) -->
+      <!-- TAB 2: POSTS FORUM -->
       <section id="tab-posts-view" class="tab-content" style="display: none;">
         <div class="flex-between-center" style="margin-bottom: 16px;">
           <h3 class="section-heading">📰 Forum & Komunitas Mudiviverse</h3>
@@ -276,7 +249,7 @@
         </div>
       </section>
 
-      <!-- TAB 2: PRESENSI -->
+      <!-- TAB 3: PRESENSI -->
       <section id="tab-presensi-view" class="tab-content" style="display: none;">
         <div class="today-grid">
           <div class="card-box">
@@ -286,7 +259,6 @@
             </div>
           </div>
 
-          <!-- SCANNER CARD -->
           <div class="card-box flex-column-between">
             <div>
               <span class="card-badge">Aksi Kehadiran</span>
@@ -304,7 +276,6 @@
           </div>
         </div>
 
-        <!-- STATISTIK BULANAN USER -->
         <div class="card-box" style="margin-bottom: 16px;">
           <div class="flex-between-center" style="margin-bottom: 12px;">
             <h3 class="section-heading">Statistik Kehadiran Bulan Ini</h3>
@@ -330,7 +301,6 @@
           </div>
         </div>
 
-        <!-- RIWAYAT ABSENSI -->
         <div class="card-box">
           <div class="flex-between-center" style="margin-bottom: 16px;">
             <h3 class="section-heading">Riwayat Presensi Saya</h3>
@@ -342,7 +312,58 @@
         </div>
       </section>
 
-      <!-- TAB 3: ADMIN PANEL -->
+      <!-- TAB 4: HALAMAN DEDICATED PROFILES (SESUAI GAMBAR 2 & 3) -->
+      <section id="tab-profile-view" class="tab-content" style="display: none;">
+        <div class="profile-page-header">
+          <div class="profile-main-display">
+            <!-- FOTO PROFIL UTAMA -->
+            <div class="profile-avatar-circle">
+              <img id="profile-page-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=Mudivi" alt="Avatar">
+              <label for="upload-avatar-file" class="avatar-edit-overlay" title="Ganti Foto Profil dari Galeri">
+                📷
+              </label>
+              <input type="file" id="upload-avatar-file" accept="image/*" style="display: none;">
+            </div>
+
+            <!-- DETAIL NAMA & BIO -->
+            <h2 id="profile-page-name" class="profile-display-name">Member</h2>
+            <p id="profile-page-code" class="profile-display-code">MDV-0000</p>
+
+            <div class="profile-badge-row">
+              <div class="points-pill">
+                🪙 <span id="profile-page-points">0</span> Poin Vihara
+              </div>
+              <button id="btn-open-edit-bio-modal" class="secondary-button-sm">✏️ Edit Bio</button>
+            </div>
+
+            <p id="profile-page-bio" class="profile-display-bio">
+              "Menghormati Guru, Menghargai Dharma, dan Tekun bersadhana."
+            </p>
+          </div>
+
+          <!-- WADAH KHUSUS SIMULASI AVATAR LUCU (PREPARATION UNTUK CLASSDOJO/ROBLOX STYLE) -->
+          <div class="avatar-character-box">
+            <div class="avatar-stage">
+              <div class="avatar-shadow"></div>
+              <!-- DUMMY PET/AVATAR CHARA (GAMBAR 3) -->
+              <img id="avatar-chara-img" src="https://api.dicebear.com/7.x/bottts/svg?seed=AvatarChara" class="chara-sprite" alt="Avatar Character">
+            </div>
+            <button id="btn-custom-avatar" class="secondary-button-sm" style="margin-top: 10px; opacity: 0.7;" disabled>
+              👕 Edit Kostum Avatar (Soon)
+            </button>
+          </div>
+        </div>
+
+        <!-- POSTINGAN SAYA SENSASI INSTAGRAM FEED -->
+        <div class="card-box" style="margin-top: 20px;">
+          <h3 class="section-heading" style="margin-bottom: 14px;">📸 Postingan & Aktivitas Saya</h3>
+          <div id="my-personal-feed-container">
+            <p style="color: var(--text-sub); text-align: center; padding: 20px;">Memuat postingan kamu...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: ADMIN PANEL -->
       <section id="tab-admin-view" class="tab-content" style="display: none;">
         <div class="admin-tabs">
           <button id="tab-rekap-btn" class="tab-btn active" type="button">Data Absensi</button>
@@ -350,7 +371,6 @@
           <button id="tab-kiosk-btn" class="tab-btn" type="button">📱 QR Code</button>
         </div>
 
-        <!-- SUB TAB 1: REKAP ABSENSI -->
         <div id="admin-view-rekap">
           <div class="card-box" style="margin-bottom: 16px;">
             <div class="flex-between-center" style="margin-bottom: 12px;">
@@ -398,7 +418,6 @@
           </div>
         </div>
 
-        <!-- SUB TAB 2: MANAGEMENT ANGGOTA -->
         <div id="admin-view-karyawan" style="display: none;">
           <div class="card-box">
             <h3 class="section-heading" style="margin-bottom: 16px;">Daftar Anggota</h3>
@@ -408,7 +427,6 @@
           </div>
         </div>
 
-        <!-- SUB TAB 3: GENERATOR QR KIOSK DINAMIS -->
         <div id="admin-view-kiosk" style="display: none;">
           <div class="card-box kiosk-card-display">
             <span class="card-badge">Official QR Code</span>
@@ -431,26 +449,21 @@
     </main>
   </div>
 
-  <!-- MODAL EDIT PROFIL SAYA -->
-  <div id="edit-profile-modal" class="modal" style="display: none;">
+  <!-- MODAL EDIT BIO -->
+  <div id="edit-bio-modal" class="modal" style="display: none;">
     <div class="modal-content">
-      <h3 style="font-weight: 700; font-size: 18px; margin-bottom: 18px; color: var(--text-main);">Edit Profil Saya</h3>
+      <h3 style="font-weight: 700; font-size: 18px; margin-bottom: 18px; color: var(--text-main);">Edit Bio Profil</h3>
 
       <div class="input-field-box">
-        <label>URL Foto Profil / Avatar</label>
-        <input type="text" id="edit-profile-avatar-input" class="custom-input" placeholder="https://api.dicebear.com/7.x/bottts/svg?seed=NAMA">
+        <label>Bio / Perenungan Favorit Kamu</label>
+        <textarea id="edit-bio-input-text" class="custom-input" rows="3" placeholder="Tulis bio singkat kamu..."></textarea>
       </div>
 
-      <div class="input-field-box">
-        <label>Bio / Perenungan Favorit</label>
-        <textarea id="edit-profile-bio-input" class="custom-input" rows="3" placeholder="Tulis bio singkat kamu..."></textarea>
-      </div>
-
-      <p id="edit-profile-modal-msg" style="font-size: 12px; color: #f87171; font-weight: 600; margin-top: 10px;"></p>
+      <p id="edit-bio-modal-msg" style="font-size: 12px; color: #f87171; font-weight: 600; margin-top: 10px;"></p>
 
       <div class="flex-gap-10" style="margin-top: 24px;">
-        <button id="cancel-edit-profile" class="secondary-button" type="button" style="flex: 1;">Batal</button>
-        <button id="save-edit-profile" class="main-button" type="button" style="flex: 1; margin: 0; background: #3b82f6; color: white;">Simpan</button>
+        <button id="cancel-edit-bio" class="secondary-button" type="button" style="flex: 1;">Batal</button>
+        <button id="save-edit-bio" class="main-button" type="button" style="flex: 1; margin: 0; background: #3b82f6; color: white;">Simpan</button>
       </div>
     </div>
   </div>
@@ -566,7 +579,6 @@
 
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      // Live Clock
       function updateClock() {
         const clockEl = document.getElementById("live-time");
         if (clockEl) {
@@ -577,20 +589,22 @@
       setInterval(updateClock, 1000);
       updateClock();
 
-      // Tab Switchers
+      // SWITCHER 5 TAB UTAMA (TERMASUK TAB PROFILE)
       const btnHome = document.getElementById("nav-home-btn");
       const btnPosts = document.getElementById("nav-posts-btn");
       const btnPresensi = document.getElementById("nav-presensi-btn");
+      const btnProfile = document.getElementById("nav-profile-btn");
       const btnAdmin = document.getElementById("nav-admin-btn");
 
       const viewHome = document.getElementById("tab-home-view");
       const viewPosts = document.getElementById("tab-posts-view");
       const viewPresensi = document.getElementById("tab-presensi-view");
+      const viewProfile = document.getElementById("tab-profile-view");
       const viewAdmin = document.getElementById("tab-admin-view");
 
       function resetTabs() {
-        [btnHome, btnPosts, btnPresensi, btnAdmin].forEach(b => b && b.classList.remove("active"));
-        [viewHome, viewPosts, viewPresensi, viewAdmin].forEach(v => v && (v.style.display = "none"));
+        [btnHome, btnPosts, btnPresensi, btnProfile, btnAdmin].forEach(b => b && b.classList.remove("active"));
+        [viewHome, viewPosts, viewPresensi, viewProfile, viewAdmin].forEach(v => v && (v.style.display = "none"));
       }
 
       if (btnHome) {
@@ -621,6 +635,14 @@
           resetTabs();
           btnPresensi.classList.add("active");
           viewPresensi.style.display = "block";
+        });
+      }
+
+      if (btnProfile) {
+        btnProfile.addEventListener("click", () => {
+          resetTabs();
+          btnProfile.classList.add("active");
+          viewProfile.style.display = "block";
         });
       }
 

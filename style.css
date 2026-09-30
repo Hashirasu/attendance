@@ -931,3 +931,169 @@ html, body {
 .btn-point-action:hover {
   background: #d97706;
 }
+
+
+
+/* =========================================
+   PROFILE PAGE & AVATAR CHARACTER DISPLAY STYLING
+========================================= */
+.profile-page-header {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-xl);
+  padding: 28px 20px;
+  display: grid;
+  grid-template-columns: 1fr 220px;
+  gap: 20px;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .profile-page-header {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+}
+
+.profile-main-display {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+@media (max-width: 768px) {
+  .profile-main-display {
+    align-items: center;
+  }
+}
+
+.profile-avatar-circle {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  margin-bottom: 12px;
+}
+
+.profile-avatar-circle img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--ios-blue);
+  background: var(--input-bg);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+}
+
+.avatar-edit-overlay {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  background: var(--ios-blue);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  transition: transform 0.2s;
+}
+
+.avatar-edit-overlay:hover {
+  transform: scale(1.1);
+}
+
+.profile-display-name {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-bottom: 2px;
+}
+
+.profile-display-code {
+  font-size: 12px;
+  color: var(--text-sub);
+  margin-bottom: 12px;
+}
+
+.profile-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.points-pill {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: 800;
+  font-size: 13px;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.secondary-button-sm {
+  background: var(--input-bg);
+  color: var(--text-main);
+  border: 1px solid var(--card-border);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.profile-display-bio {
+  font-size: 13px;
+  color: var(--text-main);
+  font-style: italic;
+  line-height: 1.5;
+  max-width: 450px;
+}
+
+/* AVATAR CHARACTER BOX (CLASSDOJO STYLE) */
+.avatar-character-box {
+  background: var(--input-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.avatar-stage {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chara-sprite {
+  width: 90px;
+  height: 90px;
+  z-index: 2;
+  animation: charaBounce 3s ease-in-out infinite;
+}
+
+.avatar-shadow {
+  position: absolute;
+  bottom: 8px;
+  width: 70px;
+  height: 12px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 50%;
+  z-index: 1;
+}
+
+@keyframes charaBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}

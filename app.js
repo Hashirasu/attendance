@@ -294,7 +294,7 @@ function showLoginSection() {
 }
 
 // ==============================
-// LOAD USER PROFILE & POINTS
+// LOAD USER PROFILE & DEDICATED TAB PROFILES
 // ==============================
 async function loadUserProfile() {
   const { data: { user } } = await supabase.auth.getUser();
@@ -325,16 +325,20 @@ async function loadUserProfile() {
     if (userNameDisplay) userNameDisplay.textContent = empData.name;
     if (userCodeEl) userCodeEl.textContent = `Kode: ${empData.employee_code}`;
 
-    // POPULASI KARTU PROFIL HOME & POIN
-    const profileFullname = document.getElementById("user-profile-fullname");
-    const profileBio = document.getElementById("user-profile-bio");
-    const profileAvatar = document.getElementById("user-avatar-display");
-    const profilePoints = document.getElementById("user-points-display");
+    // POPULASI DEDICATED TAB PROFILE (GAMBAR 2)
+    const profilePageAvatar = document.getElementById("profile-page-avatar");
+    const profilePageName = document.getElementById("profile-page-name");
+    const profilePageCode = document.getElementById("profile-page-code");
+    const profilePagePoints = document.getElementById("profile-page-points");
+    const profilePageBio = document.getElementById("profile-page-bio");
 
-    if (profileFullname) profileFullname.textContent = empData.name;
-    if (profileBio) profileBio.textContent = `"${empData.bio || 'Menghormati Guru, Menghargai Dharma, dan Tekun bersadhana.'}"`;
-    if (profileAvatar) profileAvatar.src = empData.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${empData.name}`;
-    if (profilePoints) profilePoints.textContent = empData.points || 0;
+    const avatarUrl = empData.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${empData.name}`;
+
+    if (profilePageAvatar) profilePageAvatar.src = avatarUrl;
+    if (profilePageName) profilePageName.textContent = empData.name;
+    if (profilePageCode) profilePageCode.textContent = `Kode Anggota: ${empData.employee_code}`;
+    if (profilePagePoints) profilePagePoints.textContent = empData.points || 0;
+    if (profilePageBio) profilePageBio.textContent = `"${empData.bio || 'Menghormati Guru, Menghargai Dharma, dan Tekun bersadhana.'}"`;
 
     const navAdminBtn = document.getElementById("nav-admin-btn");
     if (currentUserRole === "admin" || currentUserRole === "adm1n" || currentUserRole === "pengurus") {
@@ -357,6 +361,102 @@ async function loadUserProfile() {
   if (window.initFeedSystem) {
     await window.initFeedSystem();
   }
+}
+
+// ==============================
+// LOGIKA UPLOAD FOTO PROFIL DARI GALERI KE SUPABASE STORAGE
+// ==============================
+const uploadAvatarFileInput = document.getElementById("upload-avatar-file");
+
+if (uploadAvatarFileInput) {
+  uploadAvatarFileInput.addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file || !currentUserId) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Harap pilih file gambar (JPG, PNG, WebP)!");
+      return;
+    }
+
+    if (file.size > 3 * 1024 * 1024) { // Limit 3MB
+      alert("Ukuran file gambar maksimal 3MB!");
+      return;
+    }
+
+    const fileExt = file.name.split('.').pop();
+    const filePath = `${currentUserId}/avatar_${Date.now()}.${fileExt}`;
+
+    try {
+      // 1. UPLOAD FILE KE BUCKET STORAGE 'avatars'
+      const { error: uploadErr } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadErr) throw uploadErr;
+
+      // 2. DAPATKAN PUBLIC URL GAMBAR
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      // 3. UPDATE URL FOTO PROFIL DI TABEL EMPLOYEES
+      const { error: updateErr } = await supabase
+        .from('employees')
+        .update({ avatar_url: publicUrl })
+        .eq('id', currentUserId);
+
+      if (updateErr) throw updateErr;
+
+      alert("✅ Foto profil berhasil diperbarui!");
+      await loadUserProfile();
+
+    } catch (err) {
+      alert("Gagal mengunggah foto profil: " + err.message);
+    }
+  });
+}
+
+// LOGIKA MODAL EDIT BIO
+const btnOpenEditBioModal = document.getElementById("btn-open-edit-bio-modal");
+const editBioModal = document.getElementById("edit-bio-modal");
+const editBioInputText = document.getElementById("edit-bio-input-text");
+const cancelEditBioBtn = document.getElementById("cancel-edit-bio");
+const saveEditBioBtn = document.getElementById("save-edit-bio");
+const editBioMsg = document.getElementById("edit-bio-modal-msg");
+
+if (btnOpenEditBioModal) {
+  btnOpenEditBioModal.addEventListener("click", () => {
+    if (currentEmployeeData) {
+      editBioInputText.value = currentEmployeeData.bio || "";
+    }
+    if (editBioMsg) editBioMsg.textContent = "";
+    if (editBioModal) editBioModal.style.display = "flex";
+  });
+}
+
+if (cancelEditBioBtn) {
+  cancelEditBioBtn.addEventListener("click", () => {
+    if (editBioModal) editBioModal.style.display = "none";
+  });
+}
+
+if (saveEditBioBtn) {
+  saveEditBioBtn.addEventListener("click", async () => {
+    const bioText = editBioInputText.value.trim();
+
+    saveEditBioBtn.textContent = "Menyimpan...";
+    const { error } = await supabase.from("employees").update({
+      bio: bioText
+    }).eq("id", currentUserId);
+
+    if (error) {
+      if (editBioMsg) editBioMsg.textContent = "Gagal menyimpan: " + error.message;
+    } else {
+      if (editBioModal) editBioModal.style.display = "none";
+      await loadUserProfile();
+    }
+    saveEditBioBtn.textContent = "Simpan";
+  });
 }
 
 async function loadTodayStatus() {
@@ -499,55 +599,6 @@ if (closeScannerBtn) {
       html5QrCode.clear();
     }
     scannerModal.style.display = "none";
-  });
-}
-
-// ==============================
-// LOGIKA MODAL EDIT PROFIL SAYA
-// ==============================
-const btnOpenEditProfile = document.getElementById("btn-open-edit-profile");
-const editProfileModal = document.getElementById("edit-profile-modal");
-const editAvatarInput = document.getElementById("edit-profile-avatar-input");
-const editBioInput = document.getElementById("edit-profile-bio-input");
-const cancelEditProfileBtn = document.getElementById("cancel-edit-profile");
-const saveEditProfileBtn = document.getElementById("save-edit-profile");
-const editProfileMsg = document.getElementById("edit-profile-modal-msg");
-
-if (btnOpenEditProfile) {
-  btnOpenEditProfile.addEventListener("click", () => {
-    if (currentEmployeeData) {
-      editAvatarInput.value = currentEmployeeData.avatar_url || "";
-      editBioInput.value = currentEmployeeData.bio || "";
-    }
-    if (editProfileMsg) editProfileMsg.textContent = "";
-    if (editProfileModal) editProfileModal.style.display = "flex";
-  });
-}
-
-if (cancelEditProfileBtn) {
-  cancelEditProfileBtn.addEventListener("click", () => {
-    if (editProfileModal) editProfileModal.style.display = "none";
-  });
-}
-
-if (saveEditProfileBtn) {
-  saveEditProfileBtn.addEventListener("click", async () => {
-    const avatarUrl = editAvatarInput.value.trim();
-    const bioText = editBioInput.value.trim();
-
-    saveEditProfileBtn.textContent = "Menyimpan...";
-    const { error } = await supabase.from("employees").update({
-      avatar_url: avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${currentEmployeeData.name}`,
-      bio: bioText
-    }).eq("id", currentUserId);
-
-    if (error) {
-      if (editProfileMsg) editProfileMsg.textContent = "Gagal menyimpan: " + error.message;
-    } else {
-      if (editProfileModal) editProfileModal.style.display = "none";
-      await loadUserProfile();
-    }
-    saveEditProfileBtn.textContent = "Simpan";
   });
 }
 
