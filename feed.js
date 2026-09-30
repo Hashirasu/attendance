@@ -5,27 +5,11 @@ let currentUserId = null;
 let currentUserName = "Member";
 let currentUserRole = "user";
 let editingPostId = null;
-let isFeedSubscribed = false;
 
-export async function initFeedSystem() {
-  await loadPosts();
-
-  // Hanya subscribe ke realtime SEKALI saja
-  if (!isFeedSubscribed) {
-    supabase
-      .channel("public-posts-channel")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "posts" },
-        () => {
-          loadPosts();
-        }
-      )
-      .subscribe();
-
-    isFeedSubscribed = true;
-  }
-}
+// VARIABEL PENAMPUNG CHANNEL REALTIME
+let postsChannel = null;
+let commentsChannel = null;
+let quotesChannel = null;
 
 // INIT QUILL EDITOR
 function initQuillEditor() {
@@ -60,7 +44,7 @@ export async function initFeedSystem() {
 
   currentUserId = session.user.id;
 
-  // 1. DAHULUKAN MEMBACA EMPLOYEE & ROLE DENGAN AWAIT HINGGA SELESAI
+  // 1. MEMBACA DATA EMPLOYEE & ROLE
   const { data: empData, error } = await supabase
     .from("employees")
     .select("name, role")
@@ -71,7 +55,7 @@ export async function initFeedSystem() {
     currentUserName = empData.name;
     currentUserRole = empData.role;
 
-    // KONTROL VISIBILITAS FORM UPLOAD (Pengurus, Admin, Adm1n)
+    // KONTROL VISIBILITAS FORM UPLOAD
     const canUploadPost = (currentUserRole === "pengurus" || currentUserRole === "admin" || currentUserRole === "adm1n");
     const postEditorContainer = document.getElementById("post-editor-container");
 
@@ -79,7 +63,7 @@ export async function initFeedSystem() {
       postEditorContainer.style.display = canUploadPost ? "block" : "none";
     }
 
-    // KONTROL EDIT PERENUNGAN HARI INI (Khusus Admin & Adm1n)
+    // KONTROL EDIT PERENUNGAN HARI INI
     const canEditQuote = (currentUserRole === "admin" || currentUserRole === "adm1n");
     const editQuoteBtn = document.getElementById("btn-edit-quote-trigger");
 
@@ -88,19 +72,28 @@ export async function initFeedSystem() {
     }
   }
 
-  // 2. SETELAH ROLE PASTI TERDAPATKAN, BARU MUAT DAILY QUOTE & FEED POSTS
+  // 2. MUAT DAILY QUOTE & FEED POSTS
   await loadDailyQuote();
   await loadFeedPosts();
 
-  // REALTIME SUBSCRIPTIONS
-  supabase
+  // 3. SETUP REALTIME SUBSCRIPTIONS SECARA AMAN (UNSUBSCRIBE DULU JIKA SUDAH ADA)
+  setupRealtimeSubscriptions();
+}
+
+function setupRealtimeSubscriptions() {
+  // Hapus channel lama jika sudah ada agar tidak memicu error double subscribe
+  if (postsChannel) supabase.removeChannel(postsChannel);
+  if (commentsChannel) supabase.removeChannel(commentsChannel);
+  if (quotesChannel) supabase.removeChannel(quotesChannel);
+
+  postsChannel = supabase
     .channel('public:posts')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, () => {
       loadFeedPosts();
     })
     .subscribe();
 
-  supabase
+  commentsChannel = supabase
     .channel('public:comments')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, (payload) => {
       if (payload.new && payload.new.post_id) {
@@ -111,7 +104,7 @@ export async function initFeedSystem() {
     })
     .subscribe();
 
-  supabase
+  quotesChannel = supabase
     .channel('public:daily_quotes')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'daily_quotes' }, () => {
       loadDailyQuote();
@@ -119,7 +112,7 @@ export async function initFeedSystem() {
     .subscribe();
 }
 
-// DAFTARKAN FUNGSI AGAR BISA DIPANGGIL SECARA GLOBAL SETELAH AUTO-LOGIN
+// DAFTARKAN FUNGSI AGAR BISA DIPANGGIL SECARA GLOBAL
 window.initFeedSystem = initFeedSystem;
 
 // MEMUAT & SINKRONISASI PERENUNGAN HARI INI
@@ -185,9 +178,7 @@ function createPostCardElement(post) {
   const isManagement = (currentUserRole === "pengurus" || currentUserRole === "admin" || currentUserRole === "adm1n");
   const isAuthorOrAdmin = (currentUserId === post.author_id || isManagement);
 
-  // LOGIKA HUMAS MUDIVIVA:
-  // Pengurus/Admin/Adm1n melihat nama asli pembuat post.
-  // Anggota biasa (user) hanya melihat "Humas Mudiviva".
+  // LOGIKA HUMAS MUDIVIVA
   const displayAuthorName = isManagement ? post.author_name : "Humas Mudiviva";
 
   postCard.innerHTML = `
@@ -275,7 +266,7 @@ function createPostCardElement(post) {
   return postCard;
 }
 
-// MEMUAT KOMENTAR PER POST DENGAN HAK AKSES HAPUS KOMENTAR
+// MEMUAT KOMENTAR PER POST
 async function loadCommentsForPost(postId, postAuthorId = null) {
   const commentListEls = document.querySelectorAll(`#comments-list-${postId}`);
   if (!commentListEls || commentListEls.length === 0) return;
