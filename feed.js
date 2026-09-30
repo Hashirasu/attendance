@@ -46,7 +46,7 @@ async function initFeedSystem() {
     currentUserName = empData.name;
     currentUserRole = empData.role;
 
-    // 1. UPLOAD POSTINGAN: BISA UNTUK Pengurus, Admin, DAN Adm1n
+    // UPLOAD POSTINGAN: BISA UNTUK Pengurus, Admin, DAN Adm1n
     const canUploadPost = (currentUserRole === "pengurus" || currentUserRole === "admin" || currentUserRole === "adm1n");
     const postEditorContainer = document.getElementById("post-editor-container");
 
@@ -54,7 +54,7 @@ async function initFeedSystem() {
       postEditorContainer.style.display = "block";
     }
 
-    // 2. EDIT PERENUNGAN HARI INI: HANYA UNTUK Admin DAN Adm1n (PENGURUS TIDAK BISA)
+    // EDIT PERENUNGAN HARI INI: HANYA UNTUK Admin DAN Adm1n
     const canEditQuote = (currentUserRole === "admin" || currentUserRole === "adm1n");
     const editQuoteBtn = document.getElementById("btn-edit-quote-trigger");
 
@@ -197,7 +197,7 @@ function createPostCardElement(post) {
       document.getElementById("post-title-input").value = post.title;
       quill.root.innerHTML = post.content;
 
-      document.getElementById("form-post-heading").textContent = "✏️ Edit Postingan Pengumuman";
+      document.getElementById("form-post-heading").textContent = "✏️️ Edit Postingan Pengumuman";
       document.getElementById("btn-submit-post").textContent = "💾 Simpan Perubahan";
       document.getElementById("btn-cancel-edit-post").style.display = "inline-block";
 
@@ -232,16 +232,16 @@ function createPostCardElement(post) {
       });
 
       input.value = "";
-      await loadCommentsForPost(post.id);
+      await loadCommentsForPost(post.id, post.author_id);
     });
   }
 
-  loadCommentsForPost(post.id);
+  loadCommentsForPost(post.id, post.author_id);
   return postCard;
 }
 
-// MEMUAT KOMENTAR PER POST
-async function loadCommentsForPost(postId) {
+// MEMUAT KOMENTAR PER POST DENGAN HAK AKSES HAPUS KOMENTAR
+async function loadCommentsForPost(postId, postAuthorId = null) {
   const commentListEls = document.querySelectorAll(`#comments-list-${postId}`);
   if (!commentListEls || commentListEls.length === 0) return;
 
@@ -259,12 +259,36 @@ async function loadCommentsForPost(postId) {
 
     commentListEl.innerHTML = "";
     comments.forEach(c => {
+      // HAK HAPUS KOMENTAR:
+      // Penulis Komentar BISA Hapus, Pembuat Post BISA Hapus, Pengurus/Admin BISA Hapus
+      const canDeleteComment = (
+        currentUserId === c.user_id || 
+        currentUserId === postAuthorId || 
+        currentUserRole === "pengurus" || 
+        currentUserRole === "admin" || 
+        currentUserRole === "adm1n"
+      );
+
       const cItem = document.createElement("div");
       cItem.className = "comment-item";
       cItem.innerHTML = `
-        <div class="comment-author">${c.user_name}</div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div class="comment-author">${c.user_name}</div>
+          ${canDeleteComment ? `<button class="btn-delete-comment" data-cid="${c.id}">Hapus</button>` : ''}
+        </div>
         <div class="comment-text">${c.comment_text}</div>
       `;
+
+      const delBtn = cItem.querySelector(".btn-delete-comment");
+      if (delBtn) {
+        delBtn.addEventListener("click", async () => {
+          if (confirm("Hapus komentar ini?")) {
+            await supabase.from("comments").delete().eq("id", c.id);
+            await loadCommentsForPost(postId, postAuthorId);
+          }
+        });
+      }
+
       commentListEl.appendChild(cItem);
     });
   });

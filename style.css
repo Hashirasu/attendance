@@ -809,3 +809,58 @@ html, body {
 .admin-post-card-box {
   border: 1px solid rgba(59, 130, 246, 0.4);
 }
+
+/* =========================================
+   QUILL EDITOR DARK & LIGHT MODE TEXT FIX
+========================================= */
+/* Warna teks yang diketik di Quill Editor */
+.ql-editor {
+  color: var(--text-main) !important;
+  font-size: 14px;
+}
+
+/* Warna placeholder (teks bawaan background) saat Dark Mode */
+.ql-editor.ql-blank::before {
+  color: #94a3b8 !important; /* Warna abu-abu terang agar jelas terbaca */
+  font-style: italic;
+}
+
+/* Warna Toolbar & Ikon Quill saat Dark Mode */
+.ql-toolbar.ql-snow {
+  background: var(--input-bg) !important;
+  border-color: var(--input-border) !important;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
+}
+
+.ql-toolbar.ql-snow .ql-stroke {
+  stroke: var(--text-main) !important;
+}
+
+.ql-toolbar.ql-snow .ql-fill {
+  fill: var(--text-main) !important;
+}
+
+.ql-toolbar.ql-snow .ql-picker {
+  color: var(--text-main) !important;
+}
+
+.ql-container.ql-snow {
+  border-color: var(--input-border) !important;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg) !important;
+  background: var(--input-bg) !important;
+}
+
+/* Penyesuaian Tombol Hapus Komentar */
+.btn-delete-comment {
+  background: none;
+  border: none;
+  color: #f87171;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.btn-delete-comment:hover {
+  text-decoration: underline;
+}
