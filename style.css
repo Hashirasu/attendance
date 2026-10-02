@@ -63,11 +63,11 @@ body.light-mode {
 
 html, body {
   width: 100vw;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
   background-color: var(--bg-color);
   color: var(--text-main);
   transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
 }
 
 /* FLOATING THEME TOGGLE BUTTON */
@@ -126,15 +126,14 @@ html, body {
   100% { transform: translate(-50px, 90px) scale(0.9); }
 }
 
-/* 2. AUTH / LOGIN FORM DESIGN FIX */
+/* 2. AUTH / LOGIN FORM DESIGN */
 .auth-wrapper {
   width: 100vw;
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
-  overflow-y: auto;
 }
 
 .auth-glass-card {
@@ -286,8 +285,8 @@ html, body {
 .app-workspace {
   display: flex;
   width: 95vw;
-  height: 90vh;
-  margin: 5vh auto;
+  min-height: calc(100vh - 160px);
+  margin: 3vh auto;
   gap: 20px;
 }
 
@@ -303,6 +302,7 @@ html, body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  flex-shrink: 0;
 }
 
 .brand-header-sidebar {
@@ -340,6 +340,7 @@ html, body {
   cursor: pointer;
   transition: all 0.2s ease;
   text-align: left;
+  white-space: nowrap;
 }
 
 .nav-btn:hover, .nav-btn.active {
@@ -375,7 +376,6 @@ html, body {
   box-shadow: var(--glass-shadow);
   border-radius: var(--radius-xl);
   padding: 28px;
-  overflow-y: auto;
 }
 
 .workspace-topbar {
@@ -501,9 +501,7 @@ html, body {
 
 .custom-select-sm { width: auto; padding: 6px 10px; font-size: 12px; background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 8px; color: var(--text-main); }
 
-/* =========================================
-   PERBAIKAN GRAFIK KEHADIRAN ADMIN (KONTEN HORIZONTAL FIT)
-========================================= */
+/* CHART CONTAINER */
 .chart-container-box {
   display: flex;
   flex-direction: row;
@@ -518,7 +516,7 @@ html, body {
 }
 
 /* =========================================
-   PERBAIKAN CENTER KIOSK QR CODE DISPLAY
+   PERBAIKAN QR CODE GANDA (TAMPILKAN HANYA 1 GAMBAR)
 ========================================= */
 .kiosk-card-display {
   display: flex;
@@ -551,9 +549,16 @@ html, body {
   margin: 0 auto;
 }
 
-.qr-code-box img, .qr-code-box canvas {
+/* Sembunyikan canvas bawaan qrcode.js agar tidak ganda dengan img */
+.qr-code-box canvas {
+  display: none !important;
+}
+
+.qr-code-box img {
   display: block !important;
   margin: 0 auto !important;
+  width: 220px !important;
+  height: 220px !important;
 }
 
 .kiosk-timer-bar {
@@ -586,15 +591,10 @@ html, body {
 .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 100; }
 .modal-content { background: var(--bg-color); border-radius: var(--radius-xl); padding: 24px; width: 100%; max-width: 400px; border: 1px solid var(--glass-border); }
 
-.unverified-card { text-align: center; padding: 20px; margin-top: 15px; background: var(--card-bg); border-radius: 14px; border: 1px solid var(--card-border); }
-.mail-icon { font-size: 28px; margin-bottom: 10px; }
-.btn-resend { width: 100%; margin-bottom: 10px; padding: 10px; font-size: 13px; }
-.btn-back { background: none; border: none; color: #93c5fd; font-size: 13px; cursor: pointer; text-decoration: underline; }
-
-/* 4. RESPONSIVE FIX UNTUK LAYAR HP */
+/* =========================================
+   PERBAIKAN RESPONSIVE HP (SIDEBAR & NAV)
+========================================= */
 @media (max-width: 768px) {
-  body { overflow-y: auto; }
-  
   .desktop-only { display: none !important; }
   .mobile-only { display: inline-block !important; }
 
@@ -602,7 +602,7 @@ html, body {
     flex-direction: column;
     width: 100vw;
     height: auto;
-    min-height: 100vh;
+    min-height: auto;
     margin: 0;
     padding: 12px;
     gap: 12px;
@@ -610,7 +610,7 @@ html, body {
 
   .glass-sidebar {
     width: 100%;
-    padding: 12px 16px;
+    padding: 12px 14px;
     border-radius: 16px;
   }
 
@@ -618,16 +618,21 @@ html, body {
     justify-content: center;
   }
 
+  /* Navigasi horizontal yang bisa di-scroll di HP */
   .nav-menu {
     flex-direction: row;
     margin-top: 10px;
-    gap: 6px;
+    gap: 8px;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
   }
 
   .nav-btn {
-    flex: 1;
+    flex: 0 0 auto;
     justify-content: center;
-    padding: 10px 8px;
+    padding: 8px 12px;
     font-size: 12px;
   }
 
@@ -671,19 +676,6 @@ html, body {
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.post-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--ios-blue);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 14px;
 }
 
 .post-author-name {
@@ -773,13 +765,7 @@ html, body {
   cursor: pointer;
 }
 
-.admin-post-card-box {
-  border: 1px solid rgba(59, 130, 246, 0.4);
-}
-
-/* =========================================
-   PERBAIKAN WARNA TEKS & TOOLBAR QUILL EDITOR (DARK & LIGHT MODE)
-========================================= */
+/* QUILL EDITOR DARK/LIGHT FIX */
 .ql-toolbar.ql-snow {
   background: var(--input-bg) !important;
   border-color: var(--input-border) !important;
@@ -822,88 +808,8 @@ html, body {
   font-style: italic;
 }
 
-.btn-delete-comment {
-  background: none;
-  border: none;
-  color: #f87171;
-  font-size: 10px;
-  font-weight: 700;
-  cursor: pointer;
-  padding: 0 4px;
-}
-
-.btn-delete-comment:hover {
-  text-decoration: underline;
-}
-
 /* =========================================
-   PROFIL & MANAJEMEN POIN STYLING
-========================================= */
-.profile-card-header {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-xl);
-  padding: 24px;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-  margin-bottom: 20px;
-}
-
-.profile-avatar-wrapper {
-  position: relative;
-  width: 90px;
-  height: 90px;
-  margin: 0 auto 14px auto;
-}
-
-.profile-avatar-img {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 3px solid var(--ios-blue);
-  background: var(--input-bg);
-}
-
-.profile-points-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  color: white;
-  padding: 6px 16px;
-  border-radius: 20px;
-  font-weight: 800;
-  font-size: 14px;
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
-}
-
-.profile-bio-text {
-  font-size: 13px;
-  color: var(--text-sub);
-  margin-top: 8px;
-  font-style: italic;
-  line-height: 1.5;
-}
-
-.btn-point-action {
-  padding: 4px 10px;
-  font-size: 11px;
-  border-radius: 8px;
-  font-weight: 700;
-  background: #f59e0b;
-  color: white;
-  border: none;
-  cursor: pointer;
-}
-
-.btn-point-action:hover {
-  background: #d97706;
-}
-
-/* =========================================
-   PROFILE PAGE & AVATAR CHARACTER DISPLAY STYLING
+   PROFILE PAGE & AVATAR CHARACTER STYLING
 ========================================= */
 .profile-page-header {
   background: var(--card-bg);
@@ -1065,9 +971,6 @@ html, body {
   50% { transform: translateY(-6px); }
 }
 
-/* =========================================
-   ACHIEVEMENT BADGES & FRIENDS SECTION
-========================================= */
 .profile-grid-two {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1120,67 +1023,146 @@ html, body {
   border: 1px solid var(--card-border);
 }
 
-.badge-info {
-  flex: 1;
-}
-
-.badge-info h4 {
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--text-main);
-  margin-bottom: 2px;
-}
-
-.badge-info p {
-  font-size: 11px;
-  color: var(--text-sub);
-  margin-bottom: 6px;
-}
+.badge-info { flex: 1; }
+.badge-info h4 { font-size: 14px; font-weight: 800; color: var(--text-main); margin-bottom: 2px; }
+.badge-info p { font-size: 11px; color: var(--text-sub); margin-bottom: 6px; }
 
 .badge-progress-track {
-  width: 100%;
-  height: 6px;
-  background: var(--card-border);
-  border-radius: 10px;
-  overflow: hidden;
-  margin-bottom: 4px;
+  width: 100%; height: 6px; background: var(--card-border); border-radius: 10px; overflow: hidden; margin-bottom: 4px;
 }
 
 .badge-progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #f59e0b, #10b981);
-  border-radius: 10px;
-  transition: width 0.4s ease;
+  height: 100%; background: linear-gradient(90deg, #f59e0b, #10b981); border-radius: 10px; transition: width 0.4s ease;
 }
 
-.badge-status-text {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--text-sub);
-}
+.badge-status-text { font-size: 10px; font-weight: 700; color: var(--text-sub); }
 
 .friends-placeholder-box {
-  text-align: center;
-  padding: 30px 16px;
-  background: var(--input-bg);
-  border: 1px dashed var(--card-border);
-  border-radius: var(--radius-lg);
+  text-align: center; padding: 30px 16px; background: var(--input-bg); border: 1px dashed var(--card-border); border-radius: var(--radius-lg);
 }
 
-.friends-empty-icon {
-  font-size: 36px;
-  margin-bottom: 8px;
+.friends-empty-icon { font-size: 36px; margin-bottom: 8px; }
+.friends-placeholder-box h4 { font-size: 15px; font-weight: 700; color: var(--text-main); margin-bottom: 6px; }
+.friends-placeholder-box p { font-size: 12px; color: var(--text-sub); line-height: 1.5; }
+
+/* =========================================
+   FOOTER STYLE (GAYA FANDOM MODERN)
+========================================= */
+.app-footer {
+  width: 100vw;
+  background: rgba(11, 15, 25, 0.95);
+  border-top: 1px solid var(--glass-border);
+  padding: 32px 24px 20px 24px;
+  margin-top: 40px;
+  position: relative;
+  z-index: 10;
 }
 
-.friends-placeholder-box h4 {
-  font-size: 15px;
-  font-weight: 700;
+body.light-mode .app-footer {
+  background: rgba(226, 232, 240, 0.95);
+}
+
+.footer-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.footer-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.footer-title {
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
   color: var(--text-main);
-  margin-bottom: 6px;
 }
 
-.friends-placeholder-box p {
+.footer-subtext {
   font-size: 12px;
   color: var(--text-sub);
-  line-height: 1.5;
+  letter-spacing: 0.5px;
+}
+
+.footer-contact-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.footer-heading {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--label-color);
+  text-transform: uppercase;
+}
+
+.social-links-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.social-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  color: white;
+}
+
+.social-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+.wa-btn {
+  background: #25D366;
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+}
+
+.ig-btn {
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  box-shadow: 0 4px 12px rgba(220, 39, 67, 0.3);
+}
+
+.footer-bottom-copy {
+  max-width: 1100px;
+  margin: 16px auto 0 auto;
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-sub);
+  opacity: 0.8;
+}
+
+@media (max-width: 768px) {
+  .footer-content {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .footer-brand {
+    align-items: center;
+  }
+
+  .footer-contact-section {
+    align-items: center;
+  }
 }
