@@ -1277,4 +1277,74 @@ function initThemeToggle() {
   }
 }
 
+
+// =========================================
+// SISTEM HISTORY & NAVIGATION (MENCEGAH EXIT SAAT BACK HP)
+// =========================================
+
+// Fungsi untuk berpindah tab/tampilan
+function switchTab(tabName, pushToHistory = true) {
+  // Sembunyikan semua section utama jika ada
+  const sections = {
+    home: document.getElementById("tab-home-section"),
+    feed: document.getElementById("tab-feed-section"),
+    presensi: document.getElementById("tab-presensi-section"),
+    profile: document.getElementById("tab-profile-section"),
+    admin: document.getElementById("admin-section")
+  };
+
+  // Sembunyikan semua tab
+  Object.keys(sections).forEach(key => {
+    if (sections[key]) sections[key].style.display = "none";
+  });
+
+  // Hapus kelas 'active' dari semua tombol navigasi
+  document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.remove("active"));
+
+  // Tampilkan tab yang dipilih
+  if (sections[tabName]) {
+    sections[tabName].style.display = "block";
+  }
+
+  // Tandai tombol navigasi yang sesuai menjadi active
+  const activeBtn = document.querySelector(`.nav-btn[data-tab="${tabName}"]`);
+  if (activeBtn) activeBtn.classList.add("active");
+
+  // Push state ke history browser jika dipicu dari klik manual
+  if (pushToHistory) {
+    history.pushState({ tab: tabName }, "", `#${tabName}`);
+  }
+}
+
+// Hubungkan semua tombol navigasi (.nav-btn) dengan fungsi switchTab
+document.querySelectorAll(".nav-btn").forEach(btn => {
+  btn.addEventListener("click", (e) => {
+    const targetTab = btn.getAttribute("data-tab");
+    if (targetTab) {
+      switchTab(targetTab, true);
+    }
+  });
+});
+
+// Event listener saat tombol BACK di HP dipencet
+window.addEventListener("popstate", (event) => {
+  if (event.state && event.state.tab) {
+    // Tampilkan tampilan sesuai state history sebelumnya
+    switchTab(event.state.tab, false);
+  } else if (window.location.hash) {
+    // Jika ada hash URL
+    const hashTab = window.location.hash.replace("#", "");
+    switchTab(hashTab, false);
+  } else {
+    // Default balik ke home jika history habis
+    switchTab("home", false);
+  }
+});
+
+// Set state awal saat pertama kali masuk/login
+window.addEventListener("DOMContentLoaded", () => {
+  const initialTab = window.location.hash ? window.location.hash.replace("#", "") : "home";
+  // Ganti current state tanpa menambah entry baru
+  history.replaceState({ tab: initialTab }, "", `#${initialTab}`);
+});
 initThemeToggle();

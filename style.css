@@ -592,7 +592,41 @@ html, body {
 .modal-content { background: var(--bg-color); border-radius: var(--radius-xl); padding: 24px; width: 100%; max-width: 400px; border: 1px solid var(--glass-border); }
 
 /* =========================================
-   PERBAIKAN RESPONSIVE HP (SIDEBAR & NAV)
+   NAVIGASI DESKTOP / LAPTOP (Tetap Ringkas)
+========================================= */
+.nav-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  color: var(--text-sub);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  white-space: nowrap;
+  width: 100%; /* Pas di sidebar laptop */
+}
+
+.nav-btn:hover, .nav-btn.active {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: var(--text-main);
+}
+
+/* =========================================
+   NAVIGASI STICKY & SCROLLABLE KHUSUS HP
 ========================================= */
 @media (max-width: 768px) {
   .desktop-only { display: none !important; }
@@ -604,53 +638,53 @@ html, body {
     height: auto;
     min-height: auto;
     margin: 0;
-    padding: 12px;
+    padding: 10px;
     gap: 12px;
   }
 
+  /* Sidebar menjadi header/sticky bar di HP */
   .glass-sidebar {
     width: 100%;
-    padding: 12px 14px;
+    padding: 10px 12px;
     border-radius: 16px;
+    position: sticky;
+    top: 8px;
+    z-index: 1000; /* Tetap menempel di atas saat konten di-scroll */
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
   }
 
   .brand-header-sidebar {
     justify-content: center;
   }
 
-  /* Navigasi horizontal yang bisa di-scroll di HP */
+  /* Navigasi horizontal yang bisa di-swipe KHUSUS HP */
   .nav-menu {
     flex-direction: row;
-    margin-top: 10px;
-    gap: 8px;
+    margin-top: 8px;
+    gap: 6px;
     overflow-x: auto;
     white-space: nowrap;
-    padding-bottom: 4px;
+    padding-bottom: 2px;
     -webkit-overflow-scrolling: touch;
+  }
+
+  /* Sembunyikan scrollbar di HP agar lebih estetik */
+  .nav-menu::-webkit-scrollbar {
+    display: none;
   }
 
   .nav-btn {
     flex: 0 0 auto;
+    width: auto;
     justify-content: center;
     padding: 8px 12px;
     font-size: 12px;
   }
 
   .glass-content-window {
-    padding: 18px 14px;
+    padding: 16px 12px;
     border-radius: 16px;
-  }
-
-  .workspace-topbar {
-    align-items: flex-start;
-  }
-
-  .user-greeting h3 {
-    font-size: 18px;
-  }
-
-  .info-grid, .today-grid {
-    grid-template-columns: 1fr;
   }
 }
 
