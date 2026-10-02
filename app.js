@@ -271,7 +271,9 @@ async function handleLogout() {
 }
 
 const mobileLogoutBtn = document.getElementById("mobile-logout-button");
+const mobileOverlayLogoutBtn = document.getElementById("mobile-overlay-logout");
 if (mobileLogoutBtn) mobileLogoutBtn.addEventListener("click", handleLogout);
+if (mobileOverlayLogoutBtn) mobileOverlayLogoutBtn.addEventListener("click", handleLogout);
 if (logoutBtn) logoutBtn.addEventListener("click", handleLogout);
 if (adminLogoutBtn) adminLogoutBtn.addEventListener("click", handleLogout);
 
@@ -340,14 +342,14 @@ async function loadUserProfile() {
     if (profilePagePoints) profilePagePoints.textContent = empData.points || 0;
     if (profilePageBio) profilePageBio.textContent = `"${empData.bio || 'Halo, salam kenal ya!'}"`;
 
-    const navAdminBtn = document.getElementById("nav-admin-btn");
+    const navAdminBtns = document.querySelectorAll(".nav-admin-btn");
     if (currentUserRole === "admin" || currentUserRole === "adm1n" || currentUserRole === "pengurus") {
       if (switchToAdminBtn) switchToAdminBtn.style.display = "inline-block";
-      if (navAdminBtn) navAdminBtn.style.display = "flex";
+      navAdminBtns.forEach(btn => btn.style.display = "flex");
       if (tabKioskBtn) tabKioskBtn.style.display = "inline-block";
     } else {
       if (switchToAdminBtn) switchToAdminBtn.style.display = "none";
-      if (navAdminBtn) navAdminBtn.style.display = "none";
+      navAdminBtns.forEach(btn => btn.style.display = "none");
       if (tabKioskBtn) tabKioskBtn.style.display = "none";
     }
   }
@@ -432,7 +434,6 @@ async function loadUserAchievements() {
   }
 }
 
-/* PERBAIKAN: UKURAN FOTO MAXIMAL DITINGKATKAN MENJADI 10 MB */
 const uploadAvatarFileInput = document.getElementById("upload-avatar-file");
 
 if (uploadAvatarFileInput) {
@@ -884,7 +885,6 @@ async function loadAdminAttendance() {
   });
 }
 
-/* PERBAIKAN GRAFIK KEHADIRAN AGAR TIDAK TUMPAH TINDIH */
 async function loadAdminChart() {
   if (!adminChartContainer) return;
   adminChartContainer.innerHTML = "<p style='font-size: 12px; color: var(--text-sub); margin: auto;'>Memuat grafik...</p>";
@@ -1277,74 +1277,119 @@ function initThemeToggle() {
   }
 }
 
-
 // =========================================
-// SISTEM HISTORY & NAVIGATION (MENCEGAH EXIT SAAT BACK HP)
+// 10. HAMBURGER MENU & HISTORY API (BACK BUTTON FIX)
 // =========================================
 
-// Fungsi untuk berpindah tab/tampilan
+const mobileHamburgerBtn = document.getElementById("mobile-hamburger-btn");
+const mobileNavOverlay = document.getElementById("mobile-nav-overlay");
+const closeMobileNavBtn = document.getElementById("close-mobile-nav");
+
+if (mobileHamburgerBtn && mobileNavOverlay) {
+  mobileHamburgerBtn.addEventListener("click", () => {
+    mobileNavOverlay.classList.add("open");
+  });
+}
+
+if (closeMobileNavBtn && mobileNavOverlay) {
+  closeMobileNavBtn.addEventListener("click", () => {
+    mobileNavOverlay.classList.remove("open");
+  });
+}
+
+if (mobileNavOverlay) {
+  mobileNavOverlay.addEventListener("click", (e) => {
+    if (e.target === mobileNavOverlay) {
+      mobileNavOverlay.classList.remove("open");
+    }
+  });
+}
+
+// FUNGSI SWITCH TAB DENGAN SUPPORT HISTORY BROWSER
 function switchTab(tabName, pushToHistory = true) {
-  // Sembunyikan semua section utama jika ada
-  const sections = {
-    home: document.getElementById("tab-home-section"),
-    feed: document.getElementById("tab-feed-section"),
-    presensi: document.getElementById("tab-presensi-section"),
-    profile: document.getElementById("tab-profile-section"),
-    admin: document.getElementById("admin-section")
+  const views = {
+    home: document.getElementById("tab-home-view"),
+    posts: document.getElementById("tab-posts-view"),
+    presensi: document.getElementById("tab-presensi-view"),
+    profile: document.getElementById("tab-profile-view"),
+    admin: document.getElementById("tab-admin-view")
   };
 
-  // Sembunyikan semua tab
-  Object.keys(sections).forEach(key => {
-    if (sections[key]) sections[key].style.display = "none";
+  // Sembunyikan semua tab view
+  Object.keys(views).forEach(key => {
+    if (views[key]) views[key].style.display = "none";
   });
 
-  // Hapus kelas 'active' dari semua tombol navigasi
+  // Reset kelas active di semua tombol navigasi (Desktop & Mobile)
   document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.remove("active"));
 
-  // Tampilkan tab yang dipilih
-  if (sections[tabName]) {
-    sections[tabName].style.display = "block";
+  // Tampilkan tab target
+  if (views[tabName]) {
+    views[tabName].style.display = "block";
   }
 
-  // Tandai tombol navigasi yang sesuai menjadi active
-  const activeBtn = document.querySelector(`.nav-btn[data-tab="${tabName}"]`);
-  if (activeBtn) activeBtn.classList.add("active");
+  // Aktifkan indikator tombol yang sesuai
+  document.querySelectorAll(`.nav-btn[data-tab="${tabName}"]`).forEach(btn => {
+    btn.classList.add("active");
+  });
 
-  // Push state ke history browser jika dipicu dari klik manual
+  // Tutup overlay mobile jika sedang terbuka
+  if (mobileNavOverlay) {
+    mobileNavOverlay.classList.remove("open");
+  }
+
+  // Simpan ke History Browser agar Back HP bekerja dengan benar
   if (pushToHistory) {
     history.pushState({ tab: tabName }, "", `#${tabName}`);
   }
 }
 
-// Hubungkan semua tombol navigasi (.nav-btn) dengan fungsi switchTab
-document.querySelectorAll(".nav-btn").forEach(btn => {
-  btn.addEventListener("click", (e) => {
+// Delegasi Event Klik untuk seluruh tombol .nav-btn
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest(".nav-btn");
+  if (btn) {
     const targetTab = btn.getAttribute("data-tab");
     if (targetTab) {
       switchTab(targetTab, true);
     }
-  });
+  }
 });
 
-// Event listener saat tombol BACK di HP dipencet
+// Event listener 'See More Posts'
+const btnSeeMore = document.getElementById("btn-see-more-posts");
+if (btnSeeMore) {
+  btnSeeMore.addEventListener("click", () => {
+    switchTab("posts", true);
+  });
+}
+
+// Event Listener saat Tombol BACK di HP Dipencet
 window.addEventListener("popstate", (event) => {
   if (event.state && event.state.tab) {
-    // Tampilkan tampilan sesuai state history sebelumnya
     switchTab(event.state.tab, false);
   } else if (window.location.hash) {
-    // Jika ada hash URL
     const hashTab = window.location.hash.replace("#", "");
     switchTab(hashTab, false);
   } else {
-    // Default balik ke home jika history habis
     switchTab("home", false);
   }
 });
 
-// Set state awal saat pertama kali masuk/login
-window.addEventListener("DOMContentLoaded", () => {
+// Setup Jam Realtime
+document.addEventListener("DOMContentLoaded", () => {
+  function updateClock() {
+    const clockEl = document.getElementById("live-time");
+    if (clockEl) {
+      const now = new Date();
+      clockEl.textContent = now.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Asia/Jakarta' });
+    }
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  // Inisialisasi State History
   const initialTab = window.location.hash ? window.location.hash.replace("#", "") : "home";
-  // Ganti current state tanpa menambah entry baru
   history.replaceState({ tab: initialTab }, "", `#${initialTab}`);
 });
+
 initThemeToggle();
