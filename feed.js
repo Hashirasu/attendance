@@ -12,11 +12,12 @@ let quotesChannel = null;
 
 function initQuillEditor() {
   const editorEl = document.getElementById("quill-editor");
-  if (!editorEl || document.querySelector('.ql-toolbar')) return;
+  if (!editorEl) return;
+  if (document.querySelector('.ql-toolbar')) return;
 
   quill = new Quill('#quill-editor', {
     theme: 'snow',
-    placeholder: 'Tulis isi pengumuman...',
+    placeholder: 'Tulis isi pengumuman... Kamu bisa memasukkan foto via ikon gambar di toolbar.',
     modules: {
       toolbar: [
         [{ 'header': [1, 2, false] }],
@@ -50,15 +51,22 @@ export async function initFeedSystem() {
 
     const canUploadPost = (currentUserRole === "pengurus" || currentUserRole === "admin" || currentUserRole === "adm1n");
     const postEditorContainer = document.getElementById("post-editor-container");
-    if (postEditorContainer) postEditorContainer.style.display = canUploadPost ? "block" : "none";
+
+    if (postEditorContainer) {
+      postEditorContainer.style.display = canUploadPost ? "block" : "none";
+    }
 
     const canEditQuote = (currentUserRole === "admin" || currentUserRole === "adm1n");
     const editQuoteBtn = document.getElementById("btn-edit-quote-trigger");
-    if (editQuoteBtn) editQuoteBtn.style.display = canEditQuote ? "inline-block" : "none";
+
+    if (editQuoteBtn) {
+      editQuoteBtn.style.display = canEditQuote ? "inline-block" : "none";
+    }
   }
 
   await loadDailyQuote();
   await loadFeedPosts();
+
   setupRealtimeSubscriptions();
 }
 
@@ -67,12 +75,30 @@ function setupRealtimeSubscriptions() {
   if (commentsChannel) supabase.removeChannel(commentsChannel);
   if (quotesChannel) supabase.removeChannel(quotesChannel);
 
-  postsChannel = supabase.channel('public:posts').on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, loadFeedPosts).subscribe();
-  commentsChannel = supabase.channel('public:comments').on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, (payload) => {
-    if (payload.new && payload.new.post_id) loadCommentsForPost(payload.new.post_id);
-    else loadFeedPosts();
-  }).subscribe();
-  quotesChannel = supabase.channel('public:daily_quotes').on('postgres_changes', { event: '*', schema: 'public', table: 'daily_quotes' }, loadDailyQuote).subscribe();
+  postsChannel = supabase
+    .channel('public:posts')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, () => {
+      loadFeedPosts();
+    })
+    .subscribe();
+
+  commentsChannel = supabase
+    .channel('public:comments')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, (payload) => {
+      if (payload.new && payload.new.post_id) {
+        loadCommentsForPost(payload.new.post_id);
+      } else {
+        loadFeedPosts();
+      }
+    })
+    .subscribe();
+
+  quotesChannel = supabase
+    .channel('public:daily_quotes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'daily_quotes' }, () => {
+      loadDailyQuote();
+    })
+    .subscribe();
 }
 
 window.initFeedSystem = initFeedSystem;
@@ -82,7 +108,12 @@ async function loadDailyQuote() {
   const quoteSourceEl = document.getElementById("display-quote-source");
   if (!quoteTextEl || !quoteSourceEl) return;
 
-  const { data } = await supabase.from("daily_quotes").select("quote_text, quote_source").eq("id", 1).maybeSingle();
+  const { data } = await supabase
+    .from("daily_quotes")
+    .select("quote_text, quote_source")
+    .eq("id", 1)
+    .maybeSingle();
+
   if (data) {
     quoteTextEl.textContent = `"${data.quote_text}"`;
     quoteSourceEl.textContent = `— ${data.quote_source}`;
@@ -107,12 +138,17 @@ async function loadFeedPosts() {
 
   if (recentContainer) {
     recentContainer.innerHTML = "";
-    posts.slice(0, 3).forEach(post => recentContainer.appendChild(createPostCardElement(post)));
+    const recentPosts = posts.slice(0, 3);
+    recentPosts.forEach(post => {
+      recentContainer.appendChild(createPostCardElement(post));
+    });
   }
 
   if (fullContainer) {
     fullContainer.innerHTML = "";
-    posts.forEach(post => fullContainer.appendChild(createPostCardElement(post)));
+    posts.forEach(post => {
+      fullContainer.appendChild(createPostCardElement(post));
+    });
   }
 }
 
@@ -128,12 +164,14 @@ function createPostCardElement(post) {
   const isAuthorOrAdmin = (currentUserId === post.author_id || isManagement);
   const displayAuthorName = isManagement ? post.author_name : "Humas Mudiviva";
 
-  const authorAvatarUrl = (post.employees && post.employees.avatar_url) ? post.employees.avatar_url : `https://api.dicebear.com/7.x/bottts/svg?seed=${post.author_name}`;
+  const authorAvatarUrl = (post.employees && post.employees.avatar_url) 
+    ? post.employees.avatar_url 
+    : `https://api.dicebear.com/7.x/bottts/svg?seed=${post.author_name}`;
 
   postCard.innerHTML = `
     <div class="post-header">
       <div class="post-author-box">
-        <img src="${authorAvatarUrl}" alt="Avatar" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1px solid var(--ios-blue);">
+        <img src="${authorAvatarUrl}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1px solid var(--ios-blue);">
         <div>
           <div class="post-author-name">${displayAuthorName}</div>
           <div class="post-date">${dateFormatted} WIB</div>
@@ -169,9 +207,11 @@ function createPostCardElement(post) {
       document.getElementById("edit-post-id-val").value = post.id;
       document.getElementById("post-title-input").value = post.title;
       quill.root.innerHTML = post.content;
+
       document.getElementById("form-post-heading").textContent = "✏️ Edit Postingan Pengumuman";
       document.getElementById("btn-submit-post").textContent = "💾 Simpan Perubahan";
       document.getElementById("btn-cancel-edit-post").style.display = "inline-block";
+
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   }
@@ -235,7 +275,9 @@ async function loadCommentsForPost(postId, postAuthorId = null) {
         currentUserRole === "adm1n"
       );
 
-      const cAvatar = (c.employees && c.employees.avatar_url) ? c.employees.avatar_url : `https://api.dicebear.com/7.x/bottts/svg?seed=${c.user_name}`;
+      const cAvatar = (c.employees && c.employees.avatar_url) 
+        ? c.employees.avatar_url 
+        : `https://api.dicebear.com/7.x/bottts/svg?seed=${c.user_name}`;
 
       const cItem = document.createElement("div");
       cItem.className = "comment-item";
@@ -317,10 +359,14 @@ function resetPostForm() {
   if (btnCancelEditPost) btnCancelEditPost.style.display = "none";
 }
 
-if (btnCancelEditPost) btnCancelEditPost.addEventListener("click", resetPostForm);
+if (btnCancelEditPost) {
+  btnCancelEditPost.addEventListener("click", resetPostForm);
+}
 
 const btnRefreshFeed = document.getElementById("btn-refresh-feed");
-if (btnRefreshFeed) btnRefreshFeed.addEventListener("click", loadFeedPosts);
+if (btnRefreshFeed) {
+  btnRefreshFeed.addEventListener("click", loadFeedPosts);
+}
 
 const btnEditQuoteTrigger = document.getElementById("btn-edit-quote-trigger");
 const editQuoteModal = document.getElementById("edit-quote-modal");
@@ -342,7 +388,9 @@ if (btnEditQuoteTrigger) {
   });
 }
 
-if (cancelEditQuote) cancelEditQuote.addEventListener("click", () => editQuoteModal.style.display = "none");
+if (cancelEditQuote) {
+  cancelEditQuote.addEventListener("click", () => editQuoteModal.style.display = "none");
+}
 
 if (saveEditQuote) {
   saveEditQuote.addEventListener("click", async () => {

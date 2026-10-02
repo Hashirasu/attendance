@@ -295,7 +295,7 @@ function showLoginSection() {
 }
 
 // ==============================
-// 3. LOAD USER PROFILE, ACHIEVEMENTS & DEDICATED PROFILE
+// 3. LOAD USER PROFILE & ACHIEVEMENTS
 // ==============================
 async function loadUserProfile() {
   const { data: { user } } = await supabase.auth.getUser();
@@ -326,7 +326,6 @@ async function loadUserProfile() {
     if (userNameDisplay) userNameDisplay.textContent = empData.name;
     if (userCodeEl) userCodeEl.textContent = `Kode: ${empData.employee_code}`;
 
-    // POPULASI DEDICATED TAB PROFILE
     const profilePageAvatar = document.getElementById("profile-page-avatar");
     const profilePageName = document.getElementById("profile-page-name");
     const profilePageCode = document.getElementById("profile-page-code");
@@ -365,7 +364,6 @@ async function loadUserProfile() {
   }
 }
 
-// LOGIKA KALKULASI ACHIEVEMENT BADGES SYSTEM
 async function loadUserAchievements() {
   if (!currentUserId) return;
 
@@ -377,7 +375,6 @@ async function loadUserAchievements() {
   const totalAbsen = count || 0;
   let unlockedCount = 0;
 
-  // BADGE 1: 10 KALI ABSEN (Keep it up!)
   const item10 = document.getElementById("badge-item-10");
   const bar10 = document.getElementById("badge-bar-10");
   const status10 = document.getElementById("badge-status-10");
@@ -395,7 +392,6 @@ async function loadUserAchievements() {
     }
   }
 
-  // BADGE 2: 30 KALI ABSEN (Well done!)
   const item30 = document.getElementById("badge-item-30");
   const bar30 = document.getElementById("badge-bar-30");
   const status30 = document.getElementById("badge-status-30");
@@ -413,7 +409,6 @@ async function loadUserAchievements() {
     }
   }
 
-  // BADGE 3: 90 KALI ABSEN (Loyal Member)
   const item90 = document.getElementById("badge-item-90");
   const bar90 = document.getElementById("badge-bar-90");
   const status90 = document.getElementById("badge-status-90");
@@ -437,7 +432,7 @@ async function loadUserAchievements() {
   }
 }
 
-// LOGIKA UPLOAD FOTO PROFIL DARI GALERI KE SUPABASE STORAGE
+/* PERBAIKAN: UKURAN FOTO MAXIMAL DITINGKATKAN MENJADI 10 MB */
 const uploadAvatarFileInput = document.getElementById("upload-avatar-file");
 
 if (uploadAvatarFileInput) {
@@ -450,8 +445,8 @@ if (uploadAvatarFileInput) {
       return;
     }
 
-    if (file.size > 3 * 1024 * 1024) { 
-      alert("Ukuran file gambar maksimal 3MB!");
+    if (file.size > 10 * 1024 * 1024) { 
+      alert("Ukuran file gambar maksimal 10MB!");
       return;
     }
 
@@ -459,19 +454,16 @@ if (uploadAvatarFileInput) {
     const filePath = `${currentUserId}/avatar_${Date.now()}.${fileExt}`;
 
     try {
-      // 1. Upload File Gambar ke Bucket 'avatars'
       const { error: uploadErr } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, { upsert: true });
 
       if (uploadErr) throw uploadErr;
 
-      // 2. Ambil Public URL Gambar
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
 
-      // 3. Update Kolom avatar_url di Tabel employees
       const { error: updateErr } = await supabase
         .from('employees')
         .update({ avatar_url: publicUrl })
@@ -479,7 +471,6 @@ if (uploadAvatarFileInput) {
 
       if (updateErr) throw updateErr;
 
-      // Update tampilan gambar profil di layar secara langsung tanpa reload feed/realtime
       const profilePageAvatar = document.getElementById("profile-page-avatar");
       if (profilePageAvatar) profilePageAvatar.src = publicUrl;
 
@@ -491,8 +482,6 @@ if (uploadAvatarFileInput) {
   });
 }
 
-
-// LOGIKA MODAL EDIT BIO
 const btnOpenEditBioModal = document.getElementById("btn-open-edit-bio-modal");
 const editBioModal = document.getElementById("edit-bio-modal");
 const editBioInputText = document.getElementById("edit-bio-input-text");
@@ -639,47 +628,59 @@ let html5QrCode = null;
 async function startQrScanner() {
   if (!scannerModal) return;
   scannerModal.style.display = "flex";
-  html5QrCode = new Html5Qrcode("reader");
   
+  if (!html5QrCode) {
+    html5QrCode = new Html5Qrcode("reader");
+  }
+
   try {
-    await html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, async (text) => {
-      await html5QrCode.stop();
-      html5QrCode.clear();
-      scannerModal.style.display = "none";
-      try {
-        const url = new URL(text);
-        const secret = url.searchParams.get("secret");
-        const block = url.searchParams.get("block");
-        if (secret && block) {
-          sessionStorage.setItem("pending_secret", secret);
-          sessionStorage.setItem("pending_block", block);
-          await checkUrlAutoAttendance();
-        } else {
-          alert("QR Code tidak valid.");
+    await html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      async (text) => {
+        await stopQrScanner();
+        try {
+          const url = new URL(text);
+          const secret = url.searchParams.get("secret");
+          const block = url.searchParams.get("block");
+          if (secret && block) {
+            sessionStorage.setItem("pending_secret", secret);
+            sessionStorage.setItem("pending_block", block);
+            await checkUrlAutoAttendance();
+          } else {
+            alert("QR Code tidak valid.");
+          }
+        } catch {
+          alert("Format QR tidak dikenali.");
         }
-      } catch {
-        alert("Format QR tidak dikenali.");
-      }
-    }, () => {});
-  } catch {
-    alert("Gagal membuka kamera.");
+      },
+      () => {}
+    );
+  } catch (err) {
+    alert("Gagal membuka kamera: " + (err.message || err));
     scannerModal.style.display = "none";
   }
 }
 
-if (openScannerBtnUser) openScannerBtnUser.addEventListener("click", startQrScanner);
-if (closeScannerBtn) {
-  closeScannerBtn.addEventListener("click", async () => {
-    if (html5QrCode && html5QrCode.isScanning) {
-      await html5QrCode.stop();
+async function stopQrScanner() {
+  if (html5QrCode) {
+    try {
+      if (html5QrCode.isScanning) {
+        await html5QrCode.stop();
+      }
       html5QrCode.clear();
+    } catch (e) {
+      console.log("Scanner cleanup:", e);
     }
-    scannerModal.style.display = "none";
-  });
+  }
+  if (scannerModal) scannerModal.style.display = "none";
 }
 
+if (openScannerBtnUser) openScannerBtnUser.addEventListener("click", startQrScanner);
+if (closeScannerBtn) closeScannerBtn.addEventListener("click", stopQrScanner);
+
 // ==============================
-// 5. MANAJEMEN POIN MEMBER (ADMIN)
+// 5. MANAJEMEN POIN MEMBER
 // ==============================
 document.addEventListener("click", (e) => {
   if (e.target.classList.contains("btn-add-points")) {
@@ -883,6 +884,7 @@ async function loadAdminAttendance() {
   });
 }
 
+/* PERBAIKAN GRAFIK KEHADIRAN AGAR TIDAK TUMPAH TINDIH */
 async function loadAdminChart() {
   if (!adminChartContainer) return;
   adminChartContainer.innerHTML = "<p style='font-size: 12px; color: var(--text-sub); margin: auto;'>Memuat grafik...</p>";
@@ -912,13 +914,13 @@ async function loadAdminChart() {
 
   keys.forEach(k => {
     const total = grouped[k].total;
-    const height = Math.round((total / max) * 100);
+    const heightPercentage = Math.round((total / max) * 100);
     const wrapper = document.createElement("div");
-    wrapper.style.cssText = "display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end;";
+    wrapper.style.cssText = "display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; min-width: 32px;";
     wrapper.innerHTML = `
-      <div style="font-size: 10px; color: var(--text-sub); margin-bottom: 4px;">${total}</div>
-      <div style="width: 100%; max-width: 24px; height: ${Math.max(height, 10)}%; background: var(--ios-blue); border-radius: 4px 4px 0 0;"></div>
-      <div style="font-size: 9px; color: var(--text-sub); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; max-width: 45px;">${k}</div>
+      <div style="font-size: 11px; font-weight: 700; color: #60a5fa; margin-bottom: 4px;">${total}</div>
+      <div style="width: 100%; max-width: 24px; height: ${Math.max(heightPercentage, 12)}%; background: linear-gradient(180deg, #3b82f6, #1d4ed8); border-radius: 6px 6px 0 0;"></div>
+      <div style="font-size: 10px; color: var(--text-sub); margin-top: 6px; white-space: nowrap; font-weight: 600;">${k}</div>
     `;
     adminChartContainer.appendChild(wrapper);
   });
