@@ -1,12 +1,12 @@
 /* =========================================
-   MUDIVIVERSE - HIGH-END GLASS UI & DUAL THEME FIX
+   MUDIVIVERSE - HIGH-END GLASS UI & FULL STYLING
 ========================================= */
 
 :root {
   /* DEFAULT DARK MODE VARIABLES */
   --bg-color: #0b0f19;
   --mesh-bg: #0f172a;
-  --glass-bg: rgba(15, 23, 42, 0.65);
+  --glass-bg: rgba(15, 23, 42, 0.75);
   --glass-border: rgba(255, 255, 255, 0.18);
   --glass-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
   
@@ -35,7 +35,7 @@
 body.light-mode {
   --bg-color: #f1f5f9;
   --mesh-bg: #e2e8f0;
-  --glass-bg: rgba(255, 255, 255, 0.75);
+  --glass-bg: rgba(255, 255, 255, 0.85);
   --glass-border: rgba(0, 0, 0, 0.12);
   --glass-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
   
@@ -61,13 +61,16 @@ body.light-mode {
   -webkit-tap-highlight-color: transparent;
 }
 
+body, .card-box, .auth-glass-card, .glass-sidebar, .glass-content-window, .custom-input, .custom-select {
+  transition: background-color 0.35s ease, color 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+}
+
 html, body {
   width: 100vw;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  overflow-x: hidden;
   background-color: var(--bg-color);
   color: var(--text-main);
-  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* FLOATING THEME TOGGLE BUTTON */
@@ -126,15 +129,14 @@ html, body {
   100% { transform: translate(-50px, 90px) scale(0.9); }
 }
 
-/* 2. AUTH / LOGIN FORM DESIGN FIX */
+/* 2. AUTH / LOGIN FORM DESIGN */
 .auth-wrapper {
   width: 100vw;
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
-  overflow-y: auto;
 }
 
 .auth-glass-card {
@@ -184,13 +186,6 @@ html, body {
   color: var(--text-main);
 }
 
-.brand-subtitle {
-  font-size: 12px;
-  color: var(--text-sub);
-  margin-top: 4px;
-}
-
-/* FORM SPACING & INPUT FIX */
 .form-group-list {
   display: flex;
   flex-direction: column;
@@ -201,13 +196,13 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  margin-bottom: 16px; /* Memberi jarak antara No. WhatsApp dengan Email Google */
+  margin-bottom: 16px;
 }
 
 .input-field-box {
   display: flex;
   flex-direction: column;
-  gap: 8px; /* Jarak antara label dan kotak input */
+  gap: 8px;
 }
 
 .input-field-box label {
@@ -235,8 +230,6 @@ html, body {
   border-color: var(--ios-blue);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
 }
-
-.custom-select option { background: var(--bg-color); color: var(--text-main); }
 
 .main-button {
   width: 100%;
@@ -272,8 +265,6 @@ html, body {
   cursor: pointer;
   margin-left: 4px;
 }
-
-.link-button:hover { text-decoration: underline; }
 
 .error-message-text {
   margin-top: 14px;
@@ -456,8 +447,6 @@ html, body {
 .card-title { font-size: 15px; font-weight: 700; color: var(--text-main); margin-top: 8px; }
 .card-desc { font-size: 13px; color: var(--text-sub); margin-top: 6px; line-height: 1.5; }
 
-.sub-text-center { font-size: 11px; color: var(--label-color); text-align: center; margin-top: 6px; }
-
 .stats-row { display: flex; justify-content: space-around; text-align: center; margin-bottom: 12px; }
 .stat-number { font-size: 20px; font-weight: 800; }
 .stat-blue { color: #60a5fa; }
@@ -483,9 +472,6 @@ html, body {
 }
 
 .btn-scan { width: 100%; padding: 12px; font-size: 13px; font-weight: 700; margin: 0; background: #3b82f6; color: white; }
-.btn-sheet-link { flex: 1; background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; border-radius: 10px; font-size: 12px; font-weight: 700; }
-.btn-sync { flex: 1; background: rgba(59, 130, 246, 0.25); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); padding: 10px; border-radius: 10px; font-size: 12px; font-weight: 700; }
-.btn-export { width: 100%; padding: 10px; border-radius: 10px; font-size: 12px; font-weight: 700; background: #3b82f6; color: #fff; border: none; }
 
 .history-item, .emp-card-item {
   background: var(--input-bg); border-radius: var(--radius-lg); padding: 14px 18px;
@@ -500,71 +486,35 @@ html, body {
 .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 10px; background: transparent; font-weight: 700; font-size: 14px; color: var(--text-sub); cursor: pointer; }
 .tab-btn.active { background: var(--card-bg); color: var(--text-main); }
 
-.custom-select-sm { width: auto; padding: 6px 10px; font-size: 12px; background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 8px; color: var(--text-main); }
-
-.chart-container-box { display: flex; align-items: flex-end; gap: 8px; height: 140px; padding-top: 20px; border-bottom: 2px solid var(--card-border); overflow-x: auto; }
-
-/* KIOSK QR CODE DISPLAY */
-.kiosk-card-display {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+/* FOOTER */
+.app-footer {
   text-align: center;
-  padding: 30px 20px;
-}
-
-.qr-container-wrapper {
-  margin-top: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-}
-
-.qr-code-box {
-  background: #ffffff;
-  padding: 18px;
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-}
-
-.kiosk-timer-bar {
-  width: 220px;
-  height: 6px;
-  background: var(--input-border);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.kiosk-progress-fill {
-  width: 100%;
-  height: 100%;
-  background: var(--ios-blue);
-  transition: width 1s linear;
-}
-
-.kiosk-timer-text {
-  font-size: 12px;
-  font-weight: 600;
+  padding: 30px 20px 10px 20px;
+  margin-top: 30px;
+  border-top: 1px solid var(--card-border);
   color: var(--text-sub);
+  font-size: 12px;
 }
 
-.modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
-.scanner-modal-card { background: var(--bg-color); padding: 20px; border-radius: 16px; width: 90%; max-width: 400px; text-align: center; border: 1px solid var(--glass-border); }
-.btn-close-scanner { margin-top: 15px; background: #ef4444; color: white; padding: 10px; border-radius: 8px; border: none; width: 100%; font-weight: 700; cursor: pointer; }
+.footer-social-links {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
 
-.modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 100; }
-.modal-content { background: var(--bg-color); border-radius: var(--radius-xl); padding: 24px; width: 100%; max-width: 400px; border: 1px solid var(--glass-border); }
+.footer-social-links a {
+  color: var(--ios-blue);
+  text-decoration: none;
+  font-weight: 700;
+}
 
-.unverified-card { text-align: center; padding: 20px; margin-top: 15px; background: var(--card-bg); border-radius: 14px; border: 1px solid var(--card-border); }
-.mail-icon { font-size: 28px; margin-bottom: 10px; }
-.btn-resend { width: 100%; margin-bottom: 10px; padding: 10px; font-size: 13px; }
-.btn-back { background: none; border: none; color: #93c5fd; font-size: 13px; cursor: pointer; text-decoration: underline; }
+.footer-social-links a:hover {
+  text-decoration: underline;
+}
 
-/* 4. RESPONSIVE FIX UNTUK LAYAR HP */
+/* RESPONSIVE MOBILE */
 @media (max-width: 768px) {
-  body { overflow-y: auto; }
-  
   .desktop-only { display: none !important; }
   .mobile-only { display: inline-block !important; }
 
@@ -606,43 +556,12 @@ html, body {
     border-radius: 16px;
   }
 
-  .workspace-topbar {
-    align-items: flex-start;
-  }
-
-  .user-greeting h3 {
-    font-size: 18px;
-  }
-
   .info-grid, .today-grid {
     grid-template-columns: 1fr;
   }
 }
 
-
-
-/* =========================================
-   COMMUNITY FEED & FORUM STYLING
-========================================= */
-.ql-toolbar.ql-snow {
-  background: var(--card-bg) !important;
-  border-color: var(--card-border) !important;
-  border-radius: 12px 12px 0 0 !important;
-}
-
-.ql-container.ql-snow {
-  border-color: var(--card-border) !important;
-  border-radius: 0 0 12px 12px !important;
-  color: var(--text-main) !important;
-}
-
-.ql-editor img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 12px;
-  margin: 10px 0;
-}
-
+/* FORUM & FEED STYLING */
 .post-card {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
@@ -664,19 +583,6 @@ html, body {
   gap: 10px;
 }
 
-.post-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--ios-blue);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 14px;
-}
-
 .post-author-name {
   font-size: 14px;
   font-weight: 700;
@@ -693,23 +599,25 @@ html, body {
   font-weight: 800;
   color: var(--text-main);
   margin-bottom: 10px;
+  word-break: break-word;
 }
 
 .post-body-content {
   font-size: 14px;
   line-height: 1.6;
   color: var(--text-main);
+  word-break: break-word;
 }
 
-.post-body-content img {
-  width: 100%;
-  max-height: 400px;
-  object-fit: cover;
-  border-radius: 14px;
-  margin: 12px 0;
+.post-body-content img, .ql-editor img {
+  max-width: 100% !important;
+  height: auto !important;
+  object-fit: contain !important;
+  border-radius: 12px;
+  margin: 10px 0;
+  display: block;
 }
 
-/* SECTION KOMENTAR */
 .comments-wrapper {
   margin-top: 16px;
   padding-top: 12px;
@@ -727,11 +635,11 @@ html, body {
 .comment-author {
   font-weight: 700;
   color: #60a5fa;
-  margin-bottom: 2px;
 }
 
 .comment-text {
   color: var(--text-main);
+  word-break: break-word;
 }
 
 .comment-input-box {
@@ -761,182 +669,7 @@ html, body {
   cursor: pointer;
 }
 
-
-
-/* =========================================
-   PERBAIKAN GAMBAR, TEXT WRAPPING & FEED UI
-========================================= */
-.post-title {
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--text-main);
-  margin-bottom: 10px;
-  word-break: break-word;
-  overflow-wrap: break-word;
-}
-
-.post-body-content {
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--text-main);
-  word-break: break-word;
-  overflow-wrap: break-word;
-  white-space: pre-wrap; /* Mencegah teks rata tengah nembus box */
-}
-
-.post-body-content p {
-  margin-bottom: 8px;
-  word-break: break-word;
-  overflow-wrap: break-word;
-}
-
-/* GAMBAR UTUH TANPA TERPOTONG */
-.post-body-content img, .ql-editor img {
-  max-width: 100% !important;
-  height: auto !important;
-  object-fit: contain !important; /* Mencegah gambar terpotong */
-  border-radius: 12px;
-  margin: 10px 0;
-  display: block;
-}
-
-.comment-text {
-  color: var(--text-main);
-  word-break: break-word;
-  overflow-wrap: break-word;
-}
-
-.admin-post-card-box {
-  border: 1px solid rgba(59, 130, 246, 0.4);
-}
-
-/* =========================================
-   QUILL EDITOR DARK & LIGHT MODE TEXT FIX
-========================================= */
-/* Warna teks yang diketik di Quill Editor */
-.ql-editor {
-  color: var(--text-main) !important;
-  font-size: 14px;
-}
-
-/* Warna placeholder (teks bawaan background) saat Dark Mode */
-.ql-editor.ql-blank::before {
-  color: #94a3b8 !important; /* Warna abu-abu terang agar jelas terbaca */
-  font-style: italic;
-}
-
-/* Warna Toolbar & Ikon Quill saat Dark Mode */
-.ql-toolbar.ql-snow {
-  background: var(--input-bg) !important;
-  border-color: var(--input-border) !important;
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
-}
-
-.ql-toolbar.ql-snow .ql-stroke {
-  stroke: var(--text-main) !important;
-}
-
-.ql-toolbar.ql-snow .ql-fill {
-  fill: var(--text-main) !important;
-}
-
-.ql-toolbar.ql-snow .ql-picker {
-  color: var(--text-main) !important;
-}
-
-.ql-container.ql-snow {
-  border-color: var(--input-border) !important;
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg) !important;
-  background: var(--input-bg) !important;
-}
-
-/* Penyesuaian Tombol Hapus Komentar */
-.btn-delete-comment {
-  background: none;
-  border: none;
-  color: #f87171;
-  font-size: 10px;
-  font-weight: 700;
-  cursor: pointer;
-  padding: 0 4px;
-}
-
-.btn-delete-comment:hover {
-  text-decoration: underline;
-}
-
-
-/* =========================================
-   PROFIL & MANAJEMEN POIN STYLING
-========================================= */
-.profile-card-header {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-xl);
-  padding: 24px;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-  margin-bottom: 20px;
-}
-
-.profile-avatar-wrapper {
-  position: relative;
-  width: 90px;
-  height: 90px;
-  margin: 0 auto 14px auto;
-}
-
-.profile-avatar-img {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 3px solid var(--ios-blue);
-  background: var(--input-bg);
-}
-
-.profile-points-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  color: white;
-  padding: 6px 16px;
-  border-radius: 20px;
-  font-weight: 800;
-  font-size: 14px;
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
-}
-
-.profile-bio-text {
-  font-size: 13px;
-  color: var(--text-sub);
-  margin-top: 8px;
-  font-style: italic;
-  line-height: 1.5;
-}
-
-.btn-point-action {
-  padding: 4px 10px;
-  font-size: 11px;
-  border-radius: 8px;
-  font-weight: 700;
-  background: #f59e0b;
-  color: white;
-  border: none;
-  cursor: pointer;
-}
-
-.btn-point-action:hover {
-  background: #d97706;
-}
-
-
-
-/* =========================================
-   PROFILE PAGE & AVATAR CHARACTER DISPLAY STYLING
-========================================= */
+/* PROFILE PAGE & BADGES */
 .profile-page-header {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
@@ -998,12 +731,6 @@ html, body {
   justify-content: center;
   font-size: 14px;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-  transition: transform 0.2s;
-}
-
-.avatar-edit-overlay:hover {
-  transform: scale(1.1);
 }
 
 .profile-display-name {
@@ -1033,7 +760,6 @@ html, body {
   border-radius: 20px;
   font-weight: 800;
   font-size: 13px;
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
 }
 
 .secondary-button-sm {
@@ -1055,7 +781,6 @@ html, body {
   max-width: 450px;
 }
 
-/* AVATAR CHARACTER BOX (CLASSDOJO STYLE) */
 .avatar-character-box {
   background: var(--input-bg);
   border: 1px solid var(--card-border);
@@ -1098,12 +823,6 @@ html, body {
   50% { transform: translateY(-6px); }
 }
 
-
-
-
-/* =========================================
-   ACHIEVEMENT BADGES & FRIENDS SECTION
-========================================= */
 .profile-grid-two {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1112,112 +831,22 @@ html, body {
 }
 
 @media (max-width: 768px) {
-  .profile-grid-two {
-    grid-template-columns: 1fr;
-  }
+  .profile-grid-two { grid-template-columns: 1fr; }
 }
 
-.achievement-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+.achievement-list { display: flex; flex-direction: column; gap: 12px; }
+.badge-card { display: flex; align-items: center; gap: 14px; background: var(--input-bg); border: 1px solid var(--card-border); border-radius: var(--radius-lg); padding: 12px 16px; }
+.badge-card.unlocked { border-color: rgba(245, 158, 11, 0.5); background: rgba(245, 158, 11, 0.05); }
+.badge-card.locked { opacity: 0.6; filter: grayscale(0.8); }
+.badge-icon { font-size: 28px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: var(--card-bg); border-radius: 50%; border: 1px solid var(--card-border); }
+.badge-info { flex: 1; }
+.badge-info h4 { font-size: 14px; font-weight: 800; color: var(--text-main); margin-bottom: 2px; }
+.badge-info p { font-size: 11px; color: var(--text-sub); margin-bottom: 6px; }
+.badge-progress-track { width: 100%; height: 6px; background: var(--card-border); border-radius: 10px; overflow: hidden; margin-bottom: 4px; }
+.badge-progress-fill { height: 100%; background: linear-gradient(90deg, #f59e0b, #10b981); border-radius: 10px; }
+.badge-status-text { font-size: 10px; font-weight: 700; color: var(--text-sub); }
 
-.badge-card {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  background: var(--input-bg);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-lg);
-  padding: 12px 16px;
-  transition: transform 0.2s, border-color 0.2s;
-}
-
-.badge-card.unlocked {
-  border-color: rgba(245, 158, 11, 0.5);
-  background: rgba(245, 158, 11, 0.05);
-}
-
-.badge-card.locked {
-  opacity: 0.6;
-  filter: grayscale(0.8);
-}
-
-.badge-icon {
-  font-size: 28px;
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--card-bg);
-  border-radius: 50%;
-  border: 1px solid var(--card-border);
-}
-
-.badge-info {
-  flex: 1;
-}
-
-.badge-info h4 {
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--text-main);
-  margin-bottom: 2px;
-}
-
-.badge-info p {
-  font-size: 11px;
-  color: var(--text-sub);
-  margin-bottom: 6px;
-}
-
-.badge-progress-track {
-  width: 100%;
-  height: 6px;
-  background: var(--card-border);
-  border-radius: 10px;
-  overflow: hidden;
-  margin-bottom: 4px;
-}
-
-.badge-progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #f59e0b, #10b981);
-  border-radius: 10px;
-  transition: width 0.4s ease;
-}
-
-.badge-status-text {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--text-sub);
-}
-
-/* FRIENDS PLACEHOLDER */
-.friends-placeholder-box {
-  text-align: center;
-  padding: 30px 16px;
-  background: var(--input-bg);
-  border: 1px dashed var(--card-border);
-  border-radius: var(--radius-lg);
-}
-
-.friends-empty-icon {
-  font-size: 36px;
-  margin-bottom: 8px;
-}
-
-.friends-placeholder-box h4 {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-main);
-  margin-bottom: 6px;
-}
-
-.friends-placeholder-box p {
-  font-size: 12px;
-  color: var(--text-sub);
-  line-height: 1.5;
-}
+.friends-placeholder-box { text-align: center; padding: 30px 16px; background: var(--input-bg); border: 1px dashed var(--card-border); border-radius: var(--radius-lg); }
+.friends-empty-icon { font-size: 36px; margin-bottom: 8px; }
+.friends-placeholder-box h4 { font-size: 15px; font-weight: 700; color: var(--text-main); margin-bottom: 6px; }
+.friends-placeholder-box p { font-size: 12px; color: var(--text-sub); line-height: 1.5; }

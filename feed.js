@@ -6,22 +6,17 @@ let currentUserName = "Member";
 let currentUserRole = "user";
 let editingPostId = null;
 
-// VARIABEL PENAMPUNG CHANNEL REALTIME
 let postsChannel = null;
 let commentsChannel = null;
 let quotesChannel = null;
 
-// INIT QUILL EDITOR
 function initQuillEditor() {
   const editorEl = document.getElementById("quill-editor");
-  if (!editorEl) return;
-
-  // Mencegah re-inisialisasi ganda jika editor sudah ada
-  if (document.querySelector('.ql-toolbar')) return;
+  if (!editorEl || document.querySelector('.ql-toolbar')) return;
 
   quill = new Quill('#quill-editor', {
     theme: 'snow',
-    placeholder: 'Tulis isi pengumuman... Kamu bisa memasukkan foto via ikon gambar di toolbar.',
+    placeholder: 'Tulis isi pengumuman...',
     modules: {
       toolbar: [
         [{ 'header': [1, 2, false] }],
@@ -35,7 +30,6 @@ function initQuillEditor() {
   });
 }
 
-// INSIALISASI SISTEM FORUM FEED & REALTIME SUBSCRIPTION
 export async function initFeedSystem() {
   initQuillEditor();
 
@@ -44,7 +38,6 @@ export async function initFeedSystem() {
 
   currentUserId = session.user.id;
 
-  // 1. MEMBACA DATA EMPLOYEE & ROLE
   const { data: empData, error } = await supabase
     .from("employees")
     .select("name, role")
@@ -55,92 +48,54 @@ export async function initFeedSystem() {
     currentUserName = empData.name;
     currentUserRole = empData.role;
 
-    // KONTROL VISIBILITAS FORM UPLOAD
     const canUploadPost = (currentUserRole === "pengurus" || currentUserRole === "admin" || currentUserRole === "adm1n");
     const postEditorContainer = document.getElementById("post-editor-container");
+    if (postEditorContainer) postEditorContainer.style.display = canUploadPost ? "block" : "none";
 
-    if (postEditorContainer) {
-      postEditorContainer.style.display = canUploadPost ? "block" : "none";
-    }
-
-    // KONTROL EDIT PERENUNGAN HARI INI
     const canEditQuote = (currentUserRole === "admin" || currentUserRole === "adm1n");
     const editQuoteBtn = document.getElementById("btn-edit-quote-trigger");
-
-    if (editQuoteBtn) {
-      editQuoteBtn.style.display = canEditQuote ? "inline-block" : "none";
-    }
+    if (editQuoteBtn) editQuoteBtn.style.display = canEditQuote ? "inline-block" : "none";
   }
 
-  // 2. MUAT DAILY QUOTE & FEED POSTS
   await loadDailyQuote();
   await loadFeedPosts();
-
-  // 3. SETUP REALTIME SUBSCRIPTIONS SECARA AMAN (UNSUBSCRIBE DULU JIKA SUDAH ADA)
   setupRealtimeSubscriptions();
 }
 
 function setupRealtimeSubscriptions() {
-  // Hapus channel lama jika sudah ada agar tidak memicu error double subscribe
   if (postsChannel) supabase.removeChannel(postsChannel);
   if (commentsChannel) supabase.removeChannel(commentsChannel);
   if (quotesChannel) supabase.removeChannel(quotesChannel);
 
-  postsChannel = supabase
-    .channel('public:posts')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, () => {
-      loadFeedPosts();
-    })
-    .subscribe();
-
-  commentsChannel = supabase
-    .channel('public:comments')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, (payload) => {
-      if (payload.new && payload.new.post_id) {
-        loadCommentsForPost(payload.new.post_id);
-      } else {
-        loadFeedPosts();
-      }
-    })
-    .subscribe();
-
-  quotesChannel = supabase
-    .channel('public:daily_quotes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'daily_quotes' }, () => {
-      loadDailyQuote();
-    })
-    .subscribe();
+  postsChannel = supabase.channel('public:posts').on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, loadFeedPosts).subscribe();
+  commentsChannel = supabase.channel('public:comments').on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, (payload) => {
+    if (payload.new && payload.new.post_id) loadCommentsForPost(payload.new.post_id);
+    else loadFeedPosts();
+  }).subscribe();
+  quotesChannel = supabase.channel('public:daily_quotes').on('postgres_changes', { event: '*', schema: 'public', table: 'daily_quotes' }, loadDailyQuote).subscribe();
 }
 
-// DAFTARKAN FUNGSI AGAR BISA DIPANGGIL SECARA GLOBAL
 window.initFeedSystem = initFeedSystem;
 
-// MEMUAT & SINKRONISASI PERENUNGAN HARI INI
 async function loadDailyQuote() {
   const quoteTextEl = document.getElementById("display-quote-text");
   const quoteSourceEl = document.getElementById("display-quote-source");
   if (!quoteTextEl || !quoteSourceEl) return;
 
-  const { data } = await supabase
-    .from("daily_quotes")
-    .select("quote_text, quote_source")
-    .eq("id", 1)
-    .maybeSingle();
-
+  const { data } = await supabase.from("daily_quotes").select("quote_text, quote_source").eq("id", 1).maybeSingle();
   if (data) {
     quoteTextEl.textContent = `"${data.quote_text}"`;
     quoteSourceEl.textContent = `— ${data.quote_source}`;
   }
 }
 
-// FUNGSI RENDER POSTINGAN UNTUK HOME (RECENT) & FULL POSTS TAB
 async function loadFeedPosts() {
   const recentContainer = document.getElementById("recent-feed-container");
   const fullContainer = document.getElementById("full-feed-container");
 
   const { data: posts, error } = await supabase
     .from("posts")
-    .select("*")
+    .select("*, employees(avatar_url)")
     .order("created_at", { ascending: false });
 
   if (error || !posts || posts.length === 0) {
@@ -152,21 +107,15 @@ async function loadFeedPosts() {
 
   if (recentContainer) {
     recentContainer.innerHTML = "";
-    const recentPosts = posts.slice(0, 3); // Hanya 3 postingan terbaru untuk Home
-    recentPosts.forEach(post => {
-      recentContainer.appendChild(createPostCardElement(post));
-    });
+    posts.slice(0, 3).forEach(post => recentContainer.appendChild(createPostCardElement(post)));
   }
 
   if (fullContainer) {
     fullContainer.innerHTML = "";
-    posts.forEach(post => {
-      fullContainer.appendChild(createPostCardElement(post));
-    });
+    posts.forEach(post => fullContainer.appendChild(createPostCardElement(post)));
   }
 }
 
-// MEMBUAT ELEMEN KARTU POSTINGAN
 function createPostCardElement(post) {
   const postCard = document.createElement("div");
   postCard.className = "post-card";
@@ -177,14 +126,14 @@ function createPostCardElement(post) {
 
   const isManagement = (currentUserRole === "pengurus" || currentUserRole === "admin" || currentUserRole === "adm1n");
   const isAuthorOrAdmin = (currentUserId === post.author_id || isManagement);
-
-  // LOGIKA HUMAS MUDIVIVA
   const displayAuthorName = isManagement ? post.author_name : "Humas Mudiviva";
+
+  const authorAvatarUrl = (post.employees && post.employees.avatar_url) ? post.employees.avatar_url : `https://api.dicebear.com/7.x/bottts/svg?seed=${post.author_name}`;
 
   postCard.innerHTML = `
     <div class="post-header">
       <div class="post-author-box">
-        <div class="post-avatar">${displayAuthorName.charAt(0).toUpperCase()}</div>
+        <img src="${authorAvatarUrl}" alt="Avatar" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1px solid var(--ios-blue);">
         <div>
           <div class="post-author-name">${displayAuthorName}</div>
           <div class="post-date">${dateFormatted} WIB</div>
@@ -201,7 +150,6 @@ function createPostCardElement(post) {
     <div class="post-title">${post.title}</div>
     <div class="post-body-content">${post.content}</div>
 
-    <!-- SECTION KOMENTAR -->
     <div class="comments-wrapper">
       <div id="comments-list-${post.id}" class="comments-list">
         <p style="font-size: 11px; color: var(--text-sub);">Memuat komentar...</p>
@@ -214,7 +162,6 @@ function createPostCardElement(post) {
     </div>
   `;
 
-  // EVENT EDIT POST
   const editBtn = postCard.querySelector(".btn-edit-post");
   if (editBtn) {
     editBtn.addEventListener("click", () => {
@@ -222,16 +169,13 @@ function createPostCardElement(post) {
       document.getElementById("edit-post-id-val").value = post.id;
       document.getElementById("post-title-input").value = post.title;
       quill.root.innerHTML = post.content;
-
       document.getElementById("form-post-heading").textContent = "✏️ Edit Postingan Pengumuman";
       document.getElementById("btn-submit-post").textContent = "💾 Simpan Perubahan";
       document.getElementById("btn-cancel-edit-post").style.display = "inline-block";
-
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   }
 
-  // EVENT HAPUS POST
   const deleteBtn = postCard.querySelector(".btn-delete-post");
   if (deleteBtn) {
     deleteBtn.addEventListener("click", async () => {
@@ -242,7 +186,6 @@ function createPostCardElement(post) {
     });
   }
 
-  // EVENT KIRIM KOMENTAR
   const sendCommentBtn = postCard.querySelector(`.btn-send-comment`);
   if (sendCommentBtn) {
     sendCommentBtn.addEventListener("click", async () => {
@@ -266,14 +209,13 @@ function createPostCardElement(post) {
   return postCard;
 }
 
-// MEMUAT KOMENTAR PER POST
 async function loadCommentsForPost(postId, postAuthorId = null) {
   const commentListEls = document.querySelectorAll(`#comments-list-${postId}`);
   if (!commentListEls || commentListEls.length === 0) return;
 
   const { data: comments } = await supabase
     .from("comments")
-    .select("*")
+    .select("*, employees(avatar_url)")
     .eq("post_id", postId)
     .order("created_at", { ascending: true });
 
@@ -293,14 +235,19 @@ async function loadCommentsForPost(postId, postAuthorId = null) {
         currentUserRole === "adm1n"
       );
 
+      const cAvatar = (c.employees && c.employees.avatar_url) ? c.employees.avatar_url : `https://api.dicebear.com/7.x/bottts/svg?seed=${c.user_name}`;
+
       const cItem = document.createElement("div");
       cItem.className = "comment-item";
       cItem.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div class="comment-author">${c.user_name}</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <img src="${cAvatar}" style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover;">
+            <div class="comment-author">${c.user_name}</div>
+          </div>
           ${canDeleteComment ? `<button class="btn-delete-comment" data-cid="${c.id}">Hapus</button>` : ''}
         </div>
-        <div class="comment-text">${c.comment_text}</div>
+        <div class="comment-text" style="padding-left: 30px;">${c.comment_text}</div>
       `;
 
       const delBtn = cItem.querySelector(".btn-delete-comment");
@@ -318,7 +265,6 @@ async function loadCommentsForPost(postId, postAuthorId = null) {
   });
 }
 
-// EVENT UNGGAH / EDIT POSTINGAN
 const btnSubmitPost = document.getElementById("btn-submit-post");
 const btnCancelEditPost = document.getElementById("btn-cancel-edit-post");
 
@@ -371,16 +317,11 @@ function resetPostForm() {
   if (btnCancelEditPost) btnCancelEditPost.style.display = "none";
 }
 
-if (btnCancelEditPost) {
-  btnCancelEditPost.addEventListener("click", resetPostForm);
-}
+if (btnCancelEditPost) btnCancelEditPost.addEventListener("click", resetPostForm);
 
 const btnRefreshFeed = document.getElementById("btn-refresh-feed");
-if (btnRefreshFeed) {
-  btnRefreshFeed.addEventListener("click", loadFeedPosts);
-}
+if (btnRefreshFeed) btnRefreshFeed.addEventListener("click", loadFeedPosts);
 
-// LOGIKA MODAL EDIT PERENUNGAN HARI INI
 const btnEditQuoteTrigger = document.getElementById("btn-edit-quote-trigger");
 const editQuoteModal = document.getElementById("edit-quote-modal");
 const editQuoteTextInput = document.getElementById("edit-quote-text-input");
@@ -401,9 +342,7 @@ if (btnEditQuoteTrigger) {
   });
 }
 
-if (cancelEditQuote) {
-  cancelEditQuote.addEventListener("click", () => editQuoteModal.style.display = "none");
-}
+if (cancelEditQuote) cancelEditQuote.addEventListener("click", () => editQuoteModal.style.display = "none");
 
 if (saveEditQuote) {
   saveEditQuote.addEventListener("click", async () => {
@@ -433,5 +372,4 @@ if (saveEditQuote) {
   });
 }
 
-// JALANKAN SAAT DOM SIAP
 window.addEventListener("DOMContentLoaded", initFeedSystem);
