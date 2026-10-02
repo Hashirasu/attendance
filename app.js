@@ -1322,34 +1322,27 @@ function switchTab(tabName, pushToHistory = true) {
     admin: document.getElementById("tab-admin-view")
   };
 
-  // Sembunyikan semua tab view
   Object.keys(views).forEach(key => {
     if (views[key]) views[key].style.display = "none";
   });
 
-  // Reset kelas active di semua tombol navigasi
   document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.remove("active"));
 
-  // Tampilkan tab target
   if (views[tabName]) {
     views[tabName].style.display = "block";
   }
 
-  // Aktifkan indikator tombol yang sesuai
   document.querySelectorAll(`.nav-btn[data-tab="${tabName}"]`).forEach(btn => {
     btn.classList.add("active");
   });
 
-  // Otomatis tutup drawer setelah memilih menu
   closeDrawer();
 
-  // Simpan ke History Browser agar Back HP bekerja dengan benar
   if (pushToHistory) {
     history.pushState({ tab: tabName }, "", `#${tabName}`);
   }
 }
 
-// Delegasi Event Klik untuk seluruh tombol .nav-btn
 document.addEventListener("click", (e) => {
   const btn = e.target.closest(".nav-btn");
   if (btn) {
@@ -1360,7 +1353,6 @@ document.addEventListener("click", (e) => {
   }
 });
 
-// Event listener 'See More Posts'
 const btnSeeMore = document.getElementById("btn-see-more-posts");
 if (btnSeeMore) {
   btnSeeMore.addEventListener("click", () => {
@@ -1368,9 +1360,7 @@ if (btnSeeMore) {
   });
 }
 
-// Event Listener saat Tombol BACK di HP Dipencet
 window.addEventListener("popstate", (event) => {
-  // Jika drawer sedang terbuka, tombol BACK hanya menutup drawer dulu
   if (mobileNavOverlay && mobileNavOverlay.classList.contains("open")) {
     closeDrawer();
     return;
@@ -1386,7 +1376,6 @@ window.addEventListener("popstate", (event) => {
   }
 });
 
-// Setup Jam Realtime & History State
 document.addEventListener("DOMContentLoaded", () => {
   function updateClock() {
     const clockEl = document.getElementById("live-time");
@@ -1398,7 +1387,6 @@ document.addEventListener("DOMContentLoaded", () => {
   setInterval(updateClock, 1000);
   updateClock();
 
-  // Inisialisasi State History
   const initialTab = window.location.hash ? window.location.hash.replace("#", "") : "home";
   history.replaceState({ tab: initialTab }, "", `#${initialTab}`);
 });

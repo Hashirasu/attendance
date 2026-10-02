@@ -151,7 +151,7 @@
     <main class="glass-content-window">
       
       <header class="workspace-topbar">
-        <!-- BRAND BANNER / TITLE TETAP DI ATAS TENGAH -->
+        <!-- BRAND BANNER / LOGO + TULISAN PERSIS DI TENGAH HOMEPAGE -->
         <div class="topbar-brand-center">
           <div class="logo-box-mini">
             <img src="logo.png" alt="Logo">
@@ -159,19 +159,21 @@
           <span class="brand-title-center">MUDIVIVERSE</span>
         </div>
 
-        <div class="user-greeting">
-          <h3>Halo, <span id="user-name-display">Member</span> 👋</h3>
-          <span id="user-code" class="user-code-badge">Kode: -</span>
-        </div>
-
-        <div class="topbar-right">
-          <div class="live-clock-box">
-            <span id="live-time">00:00:00</span>
-            <span class="live-zone">WIB</span>
+        <div class="topbar-bottom-row">
+          <div class="user-greeting">
+            <h3>Halo, <span id="user-name-display">Member</span> 👋</h3>
+            <span id="user-code" class="user-code-badge">Kode: -</span>
           </div>
-          <button id="mobile-logout-button" class="logout-btn-mobile mobile-only" type="button">
-            🚪 Logout
-          </button>
+
+          <div class="topbar-right">
+            <div class="live-clock-box">
+              <span id="live-time">00:00:00</span>
+              <span class="live-zone">WIB</span>
+            </div>
+            <button id="mobile-logout-button" class="logout-btn-mobile mobile-only" type="button">
+              🚪 Logout
+            </button>
+          </div>
         </div>
       </header>
 
@@ -201,7 +203,7 @@
 
           <div class="input-field-box" style="margin-bottom: 12px;">
             <label>Isi Pengumuman & Foto</label>
-            <div id="quill-editor" style="height: 180px; background: var(--input-bg); color: var(--text-main); border-radius: 0 0 12px 12px;"></div>
+            <div id="quill-editor" style="height: 180px; border-radius: 0 0 12px 12px;"></div>
           </div>
 
           <div class="flex-gap-10">

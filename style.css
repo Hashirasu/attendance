@@ -73,7 +73,6 @@ html, body {
 /* =========================================
    FLOATING STATIS BUTTONS (POJOK KIRI & KANAN)
 ========================================= */
-/* Tombol Hamburger di Pojok Kiri Atas */
 .mobile-hamburger-btn {
   position: fixed;
   top: 16px;
@@ -96,7 +95,6 @@ html, body {
   transition: transform 0.2s ease;
 }
 
-/* Tombol Theme Toggle di Pojok Kanan Atas */
 .theme-toggle-btn {
   position: fixed;
   top: 16px;
@@ -147,7 +145,7 @@ html, body {
 .drawer-sidebar-card {
   position: fixed;
   top: 0; left: 0;
-  width: 280px; /* sekitar 20-25% layar laptop / ideal di HP */
+  width: 280px;
   max-width: 80vw;
   height: 100vh;
   background: var(--bg-color);
@@ -188,19 +186,39 @@ html, body {
   padding-top: 16px;
 }
 
-/* BRAND TITLE DI CENTER TOPBAR */
+/* WORKSPACE TOPBAR & LOGO CENTER FIX */
+.workspace-topbar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--card-border);
+  margin-bottom: 24px;
+  gap: 16px;
+}
+
 .topbar-brand-center {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  text-align: center;
 }
 
 .brand-title-center {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 900;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
   color: var(--text-main);
+}
+
+.topbar-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
 }
 
 /* MESH BACKGROUND ANIMATION */
@@ -366,7 +384,7 @@ html, body {
 }
 
 .logo-box-mini {
-  width: 36px; height: 36px; background: #fff; border-radius: 50%; padding: 2px;
+  width: 38px; height: 38px; background: #fff; border-radius: 50%; padding: 2px; display: inline-flex; align-items: center; justify-content: center;
 }
 
 .logo-box-mini img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
@@ -432,27 +450,17 @@ html, body {
   padding: 28px;
 }
 
-.workspace-topbar {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding-bottom: 18px;
-  border-bottom: 1px solid var(--card-border);
-  margin-bottom: 24px;
-  gap: 12px;
-}
-
-.user-greeting h3 { font-size: 20px; font-weight: 800; color: var(--text-main); }
+.user-greeting h3 { font-size: 18px; font-weight: 800; color: var(--text-main); }
 .user-code-badge { font-size: 12px; color: var(--text-sub); font-weight: 600; }
 
-.topbar-right { display: flex; align-items: center; gap: 12px; width: 100%; justify-content: space-between; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
 
 .live-clock-box {
   background: var(--card-bg);
   padding: 8px 14px;
   border-radius: 12px;
   border: 1px solid var(--card-border);
-  font-size: 16px; font-weight: 700; color: #60a5fa;
+  font-size: 15px; font-weight: 700; color: #60a5fa;
 }
 
 .live-zone { font-size: 10px; color: var(--text-sub); margin-left: 2px; }
@@ -652,6 +660,54 @@ html, body {
 .comment-input-box { display: flex; gap: 8px; margin-top: 10px; }
 .comment-input { flex: 1; padding: 8px 12px; font-size: 12px; border-radius: 10px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); }
 .btn-send-comment { padding: 8px 14px; background: var(--ios-blue); color: white; border: none; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer; }
+
+/* =========================================
+   QUILL EDITOR DARK MODE OVERRIDES (PERBAIKAN WARNA TEKS GELAP)
+========================================= */
+.ql-toolbar.ql-snow {
+  background: var(--input-bg) !important;
+  border-color: var(--input-border) !important;
+  border-top-left-radius: 12px !important;
+  border-top-right-radius: 12px !important;
+}
+
+/* Warna Icon & Teks Tool Quill Toolbar */
+.ql-toolbar.ql-snow .ql-stroke {
+  stroke: var(--text-main) !important;
+}
+
+.ql-toolbar.ql-snow .ql-fill {
+  fill: var(--text-main) !important;
+}
+
+.ql-toolbar.ql-snow .ql-picker {
+  color: var(--text-main) !important;
+}
+
+.ql-toolbar.ql-snow .ql-picker-options {
+  background-color: var(--bg-color) !important;
+  border-color: var(--input-border) !important;
+}
+
+/* Container Area Ketik Quill Editor */
+.ql-container.ql-snow {
+  background: var(--input-bg) !important;
+  border-color: var(--input-border) !important;
+  border-bottom-left-radius: 12px !important;
+  border-bottom-right-radius: 12px !important;
+  color: var(--text-main) !important;
+  font-size: 14px !important;
+}
+
+.ql-editor {
+  color: var(--text-main) !important;
+}
+
+/* Text Placeholder di Editor */
+.ql-editor.ql-blank::before {
+  color: var(--label-color) !important;
+  font-style: italic !important;
+}
 
 /* PROFILE PAGE */
 .profile-page-header {
