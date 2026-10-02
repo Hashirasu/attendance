@@ -13,20 +13,20 @@
 </head>
 <body>
 
-  <!-- FLOATING THEME TOGGLE BUTTON (Pojok Kanan Atas) -->
+  <!-- FLOATING HAMBURGER BUTTON (Pojok Kiri Atas - Fixed & Statis) -->
+  <button id="mobile-hamburger-btn" class="mobile-hamburger-btn" type="button" aria-label="Buka Navigasi">
+    <span class="hamburger-icon">☰</span>
+  </button>
+
+  <!-- FLOATING THEME TOGGLE BUTTON (Pojok Kanan Atas - Fixed & Statis) -->
   <button id="theme-toggle-btn" class="theme-toggle-btn" type="button" title="Ganti Mode">
     <span id="theme-icon">🌙</span>
   </button>
 
-  <!-- FLOATING HAMBURGER BUTTON KHUSUS HP (Pojok Kiri Atas) -->
-  <button id="mobile-hamburger-btn" class="mobile-hamburger-btn mobile-only" type="button" aria-label="Buka Navigasi">
-    <span class="hamburger-icon">☰</span>
-  </button>
-
-  <!-- MOBILE NAV OVERLAY / MODAL POPUP -->
-  <div id="mobile-nav-overlay" class="mobile-nav-overlay mobile-only">
-    <div class="mobile-nav-card">
-      <div class="mobile-nav-header">
+  <!-- SIDEBAR / DRAWER NAVIGASI SLIDE DARI KIRI (Filling ~20-25% Layar) -->
+  <div id="mobile-nav-overlay" class="mobile-nav-overlay">
+    <aside class="drawer-sidebar-card">
+      <div class="drawer-header">
         <div class="brand-header-sidebar">
           <div class="logo-box-mini">
             <img src="logo.png" alt="Logo">
@@ -36,7 +36,7 @@
         <button id="close-mobile-nav" class="close-mobile-nav" type="button">&times;</button>
       </div>
       
-      <div class="nav-menu">
+      <nav class="nav-menu">
         <button type="button" class="nav-btn active" data-tab="home">
           <span class="nav-icon">🏠</span>
           <span>Home</span>
@@ -57,12 +57,14 @@
           <span class="nav-icon">⚙️</span>
           <span>Admin</span>
         </button>
-      </div>
+      </nav>
 
-      <button id="mobile-overlay-logout" class="logout-btn" style="margin-top: 20px;" type="button">
-        🚪 Logout
-      </button>
-    </div>
+      <div class="drawer-footer">
+        <button id="logout-button" class="logout-btn" type="button">
+          <span>🚪 Logout</span>
+        </button>
+      </div>
+    </aside>
   </div>
 
   <div class="mesh-bg-container">
@@ -142,52 +144,21 @@
     </section>
   </main>
 
-  <!-- WORKSPACE DESKTOP / MOBILE -->
+  <!-- WORKSPACE DASHBOARD -->
   <div id="dashboard-workspace" class="app-workspace" style="display: none;">
-    
-    <!-- SIDEBAR NAVIGASI DESKTOP -->
-    <aside class="glass-sidebar desktop-only">
-      <div class="brand-header-sidebar">
-        <div class="logo-box-mini">
-          <img src="logo.png" alt="Logo">
-        </div>
-        <span class="brand-title-mini">MUDIVIVERSE</span>
-      </div>
-
-      <nav class="nav-menu">
-        <button type="button" id="nav-home-btn" class="nav-btn active" data-tab="home">
-          <span class="nav-icon">🏠</span>
-          <span>Home</span>
-        </button>
-        <button type="button" id="nav-posts-btn" class="nav-btn" data-tab="posts">
-          <span class="nav-icon">📰</span>
-          <span>Post</span>
-        </button>
-        <button type="button" id="nav-presensi-btn" class="nav-btn" data-tab="presensi">
-          <span class="nav-icon">📋</span>
-          <span>Presensi</span>
-        </button>
-        <button type="button" id="nav-profile-btn" class="nav-btn" data-tab="profile">
-          <span class="nav-icon">👤</span>
-          <span>Profile</span>
-        </button>
-        <button type="button" id="nav-admin-btn" class="nav-btn nav-admin-btn" data-tab="admin" style="display: none;">
-          <span class="nav-icon">⚙️</span>
-          <span>Admin</span>
-        </button>
-      </nav>
-
-      <div class="sidebar-footer">
-        <button id="logout-button" class="logout-btn" type="button">
-          <span>🚪 Logout</span>
-        </button>
-      </div>
-    </aside>
 
     <!-- MAIN CONTENT WINDOW -->
     <main class="glass-content-window">
       
       <header class="workspace-topbar">
+        <!-- BRAND BANNER / TITLE TETAP DI ATAS TENGAH -->
+        <div class="topbar-brand-center">
+          <div class="logo-box-mini">
+            <img src="logo.png" alt="Logo">
+          </div>
+          <span class="brand-title-center">MUDIVIVERSE</span>
+        </div>
+
         <div class="user-greeting">
           <h3>Halo, <span id="user-name-display">Member</span> 👋</h3>
           <span id="user-code" class="user-code-badge">Kode: -</span>
@@ -204,7 +175,7 @@
         </div>
       </header>
 
-      <!-- TAB 1: HOME (RECENT POSTS & QUOTES) -->
+      <!-- TAB 1: HOME -->
       <section id="tab-home-view" class="tab-content">
         <div class="hero-buddhist-card">
           <div class="flex-between-center">

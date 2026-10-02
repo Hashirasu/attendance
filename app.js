@@ -271,9 +271,7 @@ async function handleLogout() {
 }
 
 const mobileLogoutBtn = document.getElementById("mobile-logout-button");
-const mobileOverlayLogoutBtn = document.getElementById("mobile-overlay-logout");
 if (mobileLogoutBtn) mobileLogoutBtn.addEventListener("click", handleLogout);
-if (mobileOverlayLogoutBtn) mobileOverlayLogoutBtn.addEventListener("click", handleLogout);
 if (logoutBtn) logoutBtn.addEventListener("click", handleLogout);
 if (adminLogoutBtn) adminLogoutBtn.addEventListener("click", handleLogout);
 
@@ -1278,29 +1276,38 @@ function initThemeToggle() {
 }
 
 // =========================================
-// 10. HAMBURGER MENU & HISTORY API (BACK BUTTON FIX)
+// 10. DRAWER NAVIGATION & HISTORY API (BACK FIX)
 // =========================================
 
 const mobileHamburgerBtn = document.getElementById("mobile-hamburger-btn");
 const mobileNavOverlay = document.getElementById("mobile-nav-overlay");
 const closeMobileNavBtn = document.getElementById("close-mobile-nav");
 
-if (mobileHamburgerBtn && mobileNavOverlay) {
-  mobileHamburgerBtn.addEventListener("click", () => {
+function openDrawer() {
+  if (mobileNavOverlay) {
     mobileNavOverlay.classList.add("open");
-  });
+  }
 }
 
-if (closeMobileNavBtn && mobileNavOverlay) {
-  closeMobileNavBtn.addEventListener("click", () => {
+function closeDrawer() {
+  if (mobileNavOverlay) {
     mobileNavOverlay.classList.remove("open");
-  });
+  }
 }
 
+if (mobileHamburgerBtn) {
+  mobileHamburgerBtn.addEventListener("click", openDrawer);
+}
+
+if (closeMobileNavBtn) {
+  closeMobileNavBtn.addEventListener("click", closeDrawer);
+}
+
+// Klik di luar drawer untuk menutup navigasi
 if (mobileNavOverlay) {
   mobileNavOverlay.addEventListener("click", (e) => {
     if (e.target === mobileNavOverlay) {
-      mobileNavOverlay.classList.remove("open");
+      closeDrawer();
     }
   });
 }
@@ -1320,7 +1327,7 @@ function switchTab(tabName, pushToHistory = true) {
     if (views[key]) views[key].style.display = "none";
   });
 
-  // Reset kelas active di semua tombol navigasi (Desktop & Mobile)
+  // Reset kelas active di semua tombol navigasi
   document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.remove("active"));
 
   // Tampilkan tab target
@@ -1333,10 +1340,8 @@ function switchTab(tabName, pushToHistory = true) {
     btn.classList.add("active");
   });
 
-  // Tutup overlay mobile jika sedang terbuka
-  if (mobileNavOverlay) {
-    mobileNavOverlay.classList.remove("open");
-  }
+  // Otomatis tutup drawer setelah memilih menu
+  closeDrawer();
 
   // Simpan ke History Browser agar Back HP bekerja dengan benar
   if (pushToHistory) {
@@ -1365,6 +1370,12 @@ if (btnSeeMore) {
 
 // Event Listener saat Tombol BACK di HP Dipencet
 window.addEventListener("popstate", (event) => {
+  // Jika drawer sedang terbuka, tombol BACK hanya menutup drawer dulu
+  if (mobileNavOverlay && mobileNavOverlay.classList.contains("open")) {
+    closeDrawer();
+    return;
+  }
+
   if (event.state && event.state.tab) {
     switchTab(event.state.tab, false);
   } else if (window.location.hash) {
@@ -1375,7 +1386,7 @@ window.addEventListener("popstate", (event) => {
   }
 });
 
-// Setup Jam Realtime
+// Setup Jam Realtime & History State
 document.addEventListener("DOMContentLoaded", () => {
   function updateClock() {
     const clockEl = document.getElementById("live-time");
