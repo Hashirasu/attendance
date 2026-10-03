@@ -23,7 +23,7 @@
     <span id="theme-icon">🌙</span>
   </button>
 
-  <!-- SIDEBAR / DRAWER NAVIGASI SLIDE DARI KIRI -->
+  <!-- SIDEBAR / DRAWER NAVIGASI -->
   <div id="mobile-nav-overlay" class="mobile-nav-overlay">
     <aside class="drawer-sidebar-card">
       <div class="drawer-header">
@@ -151,7 +151,6 @@
   <!-- WORKSPACE DASHBOARD -->
   <div id="dashboard-workspace" class="app-workspace" style="display: none;">
 
-    <!-- MAIN CONTENT WINDOW -->
     <main class="glass-content-window">
       
       <header class="workspace-topbar">
@@ -245,14 +244,6 @@
             </p>
           </div>
         </div>
-
-        <div class="card-box" style="margin-top: 20px;">
-          <div class="flex-between-center" style="margin-bottom: 16px;">
-            <h3 class="section-heading">📿 Panduan Adinata & Mantra Zhen Fo Zong</h3>
-            <span class="card-badge">真佛宗</span>
-          </div>
-          <div id="adinata-container" class="adinata-list-container"></div>
-        </div>
       </section>
 
       <!-- TAB 2: POSTS FORUM -->
@@ -342,32 +333,41 @@
           </div>
         </div>
 
-        <!-- USER PUBLIC PROFILE DISPLAY MODAL / VIEW -->
+        <!-- PUBLIC PROFILE VIEW -->
         <div id="public-profile-card" class="card-box" style="display: none;">
           <div class="flex-between-center" style="margin-bottom: 12px;">
             <button id="btn-back-friends-list" class="secondary-button-sm">⬅️ Kembali</button>
             <span class="card-badge">Profil Anggota</span>
           </div>
-          <div class="profile-main-display" style="align-items: center; text-align: center;">
-            <div class="profile-avatar-circle" style="margin: 0 auto 12px auto;">
-              <img id="public-avatar-img" src="" alt="Avatar">
-            </div>
-            <h2 id="public-name-text" class="profile-display-name">Member</h2>
-            <p id="public-code-text" class="profile-display-code">MDV-0000</p>
-            <p id="public-bio-text" class="profile-display-bio" style="margin-bottom: 16px;">"Bio..."</p>
-
-            <div class="public-stats-row">
-              <div class="stat-col">
-                <strong id="public-friends-count">0</strong>
-                <span>Friends</span>
+          
+          <div id="public-profile-banner" class="profile-page-header-banner" style="background-image: url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1000&q=80');">
+            <div class="profile-main-display" style="align-items: center; text-align: center;">
+              <div class="profile-avatar-circle" style="margin: 0 auto 12px auto;">
+                <img id="public-avatar-img" src="" alt="Avatar">
               </div>
-              <div class="stat-col">
-                <strong id="public-following-count">0</strong>
-                <span>Following</span>
-              </div>
-            </div>
+              <h2 id="public-name-text" class="profile-display-name">Member</h2>
+              <p id="public-code-text" class="profile-display-code">MDV-0000</p>
+              <p id="public-bio-text" class="profile-display-bio" style="margin-bottom: 16px;">"Bio..."</p>
 
-            <div id="public-action-btn-box" style="margin-top: 16px; width: 100%; display: flex; justify-content: center; gap: 8px;"></div>
+              <div class="public-stats-row">
+                <div class="stat-col">
+                  <strong id="public-friends-count">0</strong>
+                  <span>Friends</span>
+                </div>
+                <div class="stat-col">
+                  <strong id="public-following-count">0</strong>
+                  <span>Following</span>
+                </div>
+              </div>
+
+              <div id="public-action-btn-box" style="margin-top: 16px; width: 100%; display: flex; justify-content: center; gap: 8px;"></div>
+            </div>
+          </div>
+
+          <!-- PUBLIC POKEMON DISPLAY -->
+          <div style="margin-top: 20px;">
+            <h4 class="section-heading" style="margin-bottom: 10px;">🐾 Pokémon Pajangan</h4>
+            <div id="public-pokemon-showcase" class="pokemon-showcase-grid"></div>
           </div>
 
           <div style="margin-top: 20px;">
@@ -379,13 +379,11 @@
 
       <!-- TAB 5: PROFILE SAYA -->
       <section id="tab-profile-view" class="tab-content" style="display: none;">
-        <div class="profile-page-header">
+        <div id="my-profile-banner" class="profile-page-header-banner" style="background-image: url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1000&q=80');">
           <div class="profile-main-display">
             <div class="profile-avatar-circle">
               <img id="profile-page-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=Mudivi" alt="Avatar">
-              <label for="upload-avatar-file" class="avatar-edit-overlay" title="Ganti Foto Profil dari Galeri">
-                📷
-              </label>
+              <label for="upload-avatar-file" class="avatar-edit-overlay" title="Ganti Foto Profil">📷</label>
               <input type="file" id="upload-avatar-file" accept="image/*" style="display: none;">
             </div>
 
@@ -397,22 +395,29 @@
                 🪙 <span id="profile-page-points">0</span> Poin Vihara
               </div>
               <button id="btn-open-edit-bio-modal" class="secondary-button-sm">✏️ Edit Bio</button>
-              <button id="btn-open-shop-modal" class="secondary-button-sm" style="background: var(--ios-blue); color: white; border: none;">🛒 Toko Vihara</button>
+              <button id="btn-open-shop-modal" class="secondary-button-sm" style="background: #f59e0b; color: white; border: none;">🛒 Toko Vihara</button>
             </div>
 
             <p id="profile-page-bio" class="profile-display-bio">
               "Halo, salam kenal ya!"
             </p>
           </div>
+        </div>
 
-          <div class="avatar-character-box">
-            <div class="avatar-stage">
-              <div class="avatar-shadow"></div>
-              <img id="avatar-chara-img" src="https://api.dicebear.com/7.x/bottts/svg?seed=AvatarChara" class="chara-sprite" alt="Avatar Character">
+        <!-- PAJANGAN 3 POKEMON UTAMA -->
+        <div class="card-box" style="margin-top: 20px;">
+          <div class="flex-between-center" style="margin-bottom: 14px;">
+            <div>
+              <h3 class="section-heading">🐾 Pokémon Pajangan Saya</h3>
+              <p style="font-size: 11px; color: var(--text-sub);">Pilih maksimal 3 Pokémon dari Pokedex untuk dipajang di profil kamu.</p>
             </div>
-            <button id="btn-custom-avatar" class="secondary-button-sm" style="margin-top: 10px; opacity: 0.7;" disabled>
-              👕 Edit Kostum Avatar
-            </button>
+            <button id="btn-open-pokedex-modal" class="secondary-button-sm" style="background: var(--ios-blue); color: white; border: none;">📖 Buka Pokedex</button>
+          </div>
+
+          <div id="my-pokemon-showcase" class="pokemon-showcase-grid">
+            <div class="pokemon-slot empty">Belum ada Pokémon dipajang</div>
+            <div class="pokemon-slot empty">Belum ada Pokémon dipajang</div>
+            <div class="pokemon-slot empty">Belum ada Pokémon dipajang</div>
           </div>
         </div>
 
@@ -564,7 +569,7 @@
     </main>
   </div>
 
-  <!-- FLOATING CHATBOX / FULLSCREEN CHAT FOR MOBILE -->
+  <!-- FLOATING CHATBOX -->
   <div id="floating-chat-window" class="floating-chat-window" style="display: none;">
     <div class="chat-header">
       <div class="chat-user-title">
@@ -582,17 +587,56 @@
     </div>
   </div>
 
-  <!-- MODAL TOKO FISIK (DITAMBAHKAN AGAR TOMBOL 'TOKO VIHARA' BISA BERFUNGSI) -->
+  <!-- MODAL TOKO VIHARA (3 TAB: BARANG FISIK, POKEMON, SCENERY) -->
   <div id="shop-modal" class="modal" style="display: none;">
-    <div class="modal-content" style="max-width: 520px; width: 92%;">
+    <div class="modal-content" style="max-width: 620px; width: 95%;">
       <div class="flex-between-center" style="margin-bottom: 12px;">
-        <h3 style="font-weight: 800; font-size: 18px; color: var(--text-main);">🎁 Tukar Barang Vihara</h3>
+        <h3 style="font-weight: 800; font-size: 18px; color: var(--text-main);">🛒 Toko Penukaran Vihara</h3>
         <button id="close-shop-modal" class="close-btn-sm" type="button" aria-label="Tutup">&times;</button>
       </div>
 
-      <div id="real-shop-item-list" class="shop-grid-container" style="max-height: 380px; overflow-y: auto;">
-        <p style="text-align: center; color: var(--text-sub); font-size: 12px; margin: auto;">Memuat barang fisik...</p>
+      <!-- SHOP TABS -->
+      <div class="shop-tabs-nav" style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid var(--card-border); padding-bottom: 8px;">
+        <button class="shop-tab-btn active" data-shop-tab="physical">🎁 Barang Fisik</button>
+        <button class="shop-tab-btn" data-shop-tab="pokemon">🐾 Adopsi Pokémon</button>
+        <button class="shop-tab-btn" data-shop-tab="scenery">🖼️ Scenery Background</button>
       </div>
+
+      <div id="shop-tab-physical" class="shop-tab-view">
+        <div id="real-shop-item-list" class="shop-grid-container" style="max-height: 420px; overflow-y: auto;"></div>
+      </div>
+
+      <div id="shop-tab-pokemon" class="shop-tab-view" style="display: none;">
+        <div id="pokemon-shop-item-list" class="shop-grid-container" style="max-height: 420px; overflow-y: auto;"></div>
+      </div>
+
+      <div id="shop-tab-scenery" class="shop-tab-view" style="display: none;">
+        <div id="scenery-shop-item-list" class="shop-grid-container" style="max-height: 420px; overflow-y: auto;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL POKEDEX & ATUR PAJANGAN -->
+  <div id="pokedex-modal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 620px; width: 95%;">
+      <div class="flex-between-center" style="margin-bottom: 12px;">
+        <h3 style="font-weight: 800; font-size: 18px; color: var(--text-main);">📖 Pokedex Saya</h3>
+        <button id="close-pokedex-modal" class="close-btn-sm" type="button" aria-label="Tutup">&times;</button>
+      </div>
+      <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 12px;">Pilih hingga 3 Pokémon untuk dipajang di profil kamu.</p>
+
+      <div id="pokedex-container" class="shop-grid-container" style="max-height: 400px; overflow-y: auto;"></div>
+    </div>
+  </div>
+
+  <!-- MODAL RIWAYAT PENUKARAN BARANG (ADMIN) -->
+  <div id="redemption-list-modal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 450px;">
+      <div class="flex-between-center" style="margin-bottom: 12px;">
+        <h3 style="font-weight: 700; font-size: 16px; color: var(--text-main);">📋 Daftar Penukar Barang</h3>
+        <button id="close-redemption-list-modal" class="close-btn-sm" type="button">&times;</button>
+      </div>
+      <div id="redemption-history-container" style="max-height: 320px; overflow-y: auto;"></div>
     </div>
   </div>
 
@@ -629,25 +673,6 @@
       <div class="flex-gap-10" style="margin-top: 24px;">
         <button id="cancel-manage-points" class="secondary-button" type="button" style="flex: 1;">Batal</button>
         <button id="save-manage-points" class="main-button" type="button" style="flex: 1; margin: 0; background: #f59e0b; color: white;">Proses Poin</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="edit-quote-modal" class="modal" style="display: none;">
-    <div class="modal-content">
-      <h3 style="font-weight: 700; font-size: 18px; margin-bottom: 18px; color: var(--text-main);">Edit Perenungan Hari Ini</h3>
-      <div class="input-field-box" style="margin-bottom: 12px;">
-        <label>Isi Kutipan / Perenungan</label>
-        <textarea id="edit-quote-text-input" class="custom-input" rows="4" style="resize: vertical;"></textarea>
-      </div>
-      <div class="input-field-box">
-        <label>Sumber Kutipan</label>
-        <input type="text" id="edit-quote-source-input" class="custom-input" placeholder="Contoh: Dhammapada, Yamakavagga">
-      </div>
-      <p id="edit-quote-modal-msg" style="font-size: 12px; color: #f87171; font-weight: 600; margin-top: 10px;"></p>
-      <div class="flex-gap-10" style="margin-top: 24px;">
-        <button id="cancel-edit-quote" class="secondary-button" type="button" style="flex: 1;">Batal</button>
-        <button id="save-edit-quote" class="main-button" type="button" style="flex: 1; margin: 0; background: #3b82f6; color: white;">Simpan</button>
       </div>
     </div>
   </div>
@@ -705,104 +730,11 @@
     </div>
   </div>
 
-  <!-- MODAL KUSTOMISASI AVATAR -->
-  <div id="avatar-custom-modal" class="modal" style="display: none;">
-    <div class="modal-content" style="max-width: 580px; width: 92%;">
-      <div class="flex-between-center" style="margin-bottom: 12px;">
-        <h3 style="font-weight: 800; font-size: 18px; color: var(--text-main);">🎨 Kustomisasi Avatar</h3>
-        <button id="close-avatar-custom-modal" class="close-btn-sm" type="button" aria-label="Tutup">&times;</button>
-      </div>
-
-      <div class="avatar-canvas-container">
-        <div id="avatar-base-body" class="avatar-base-body">
-          <span id="avatar-layer-headwear" class="layer-item layer-headwear"></span>
-          <span id="avatar-layer-face" class="layer-item layer-face">😃</span>
-          <span id="avatar-layer-outfit" class="layer-item layer-outfit">👕</span>
-          <span id="avatar-layer-pants" class="layer-item layer-pants">👖</span>
-          <span id="avatar-layer-accessory" class="layer-item layer-accessory"></span>
-        </div>
-      </div>
-
-      <div class="avatar-editor-tabs" style="max-height: 260px; overflow-y: auto;">
-        <div class="editor-group">
-          <label>Warna Kulit</label>
-          <div class="options-row">
-            <button class="avatar-option-btn color-dot" style="background:#fcd34d;" data-type="skin" data-val="#fcd34d"></button>
-            <button class="avatar-option-btn color-dot" style="background:#f97316;" data-type="skin" data-val="#f97316"></button>
-            <button class="avatar-option-btn color-dot" style="background:#8d5524;" data-type="skin" data-val="#8d5524"></button>
-            <button class="avatar-option-btn color-dot" style="background:#e0ac69;" data-type="skin" data-val="#e0ac69"></button>
-            <button class="avatar-option-btn color-dot" style="background:#60a5fa;" data-type="skin" data-val="#60a5fa"></button>
-          </div>
-        </div>
-
-        <div class="editor-group">
-          <label>Ekspresi Wajah</label>
-          <div class="options-row">
-            <button class="avatar-option-btn" data-type="face" data-val="😃">😃</button>
-            <button class="avatar-option-btn" data-type="face" data-val="😎">😎</button>
-            <button class="avatar-option-btn" data-type="face" data-val="😉">😉</button>
-            <button class="avatar-option-btn" data-type="face" data-val="🤓">🤓</button>
-          </div>
-        </div>
-
-        <div class="editor-group">
-          <label>Topi / Aksesoris Kepala</label>
-          <div class="options-row">
-            <button class="avatar-option-btn" data-type="headwear" data-val="">(Lepas)</button>
-            <button class="avatar-option-btn" data-type="headwear" data-val="🧢">🧢 Topi</button>
-            <button class="avatar-option-btn" data-type="headwear" data-val="👑">👑 Mahkota</button>
-            <button class="avatar-option-btn" data-type="headwear" data-val="🪖">🪖 Helm</button>
-          </div>
-        </div>
-
-        <div class="editor-group">
-          <label>Kostum Baju</label>
-          <div class="options-row">
-            <button class="avatar-option-btn" data-type="outfit" data-val="👕">👕 T-Shirt</button>
-            <button class="avatar-option-btn" data-type="outfit" data-val="👔">👔 Kemeja</button>
-            <button class="avatar-option-btn" data-type="outfit" data-val="🥋">🥋 Kimono</button>
-            <button class="avatar-option-btn" data-type="outfit" data-val="🥼">🥼 Jas</button>
-          </div>
-        </div>
-
-        <div class="editor-group">
-          <label>Celana</label>
-          <div class="options-row">
-            <button class="avatar-option-btn" data-type="pants" data-val="👖">👖 Jeans</button>
-            <button class="avatar-option-btn" data-type="pants" data-val="🩳">🩳 Pendek</button>
-          </div>
-        </div>
-      </div>
-
-      <div id="admin-add-accessory-box" class="admin-only-box" style="display: none; margin-top: 14px; border-top: 1px dashed var(--card-border); padding-top: 12px;">
-        <h4 style="font-size: 13px; color: #f59e0b; margin-bottom: 8px;">⚙️ Admin: Tambah Aksesoris Katalog</h4>
-        <div class="flex-gap-8" style="margin-bottom: 8px;">
-          <input type="text" id="acc-name" class="custom-input" placeholder="Nama Aksesoris" style="font-size:12px; flex:2;">
-          <select id="acc-category" class="custom-select" style="font-size:12px; flex:1;">
-            <option value="headwear">Topi</option>
-            <option value="outfit">Baju</option>
-            <option value="pants">Celana</option>
-            <option value="accessory">Aksesoris</option>
-          </select>
-        </div>
-        <div class="flex-gap-8">
-          <input type="text" id="acc-asset" class="custom-input" placeholder="Emoji / Asset URL" style="font-size:12px; flex:2;">
-          <input type="number" id="acc-price" class="custom-input" placeholder="Harga Poin" style="font-size:12px; flex:1;">
-          <button id="btn-submit-new-accessory" class="secondary-button" style="background:#f59e0b; color:white; border:none; font-size:12px;">+ Tambah</button>
-        </div>
-      </div>
-
-      <button id="btn-save-avatar-config" class="main-button" style="margin-top: 16px; background: var(--ios-blue); color: white;">
-        💾 Simpan Tampilan Avatar
-      </button>
-    </div>
-  </div>
-
   <!-- MODAL PUBLISH BARANG REAL (TOKO FISIK ADMIN) -->
   <div id="publish-shop-modal" class="modal" style="display: none;">
     <div class="modal-content">
       <div class="flex-between-center" style="margin-bottom: 14px;">
-        <h3 style="font-weight: 700; font-size: 18px; color: var(--text-main);">🎁 Terbitkan Barang Toko</h3>
+        <h3 style="font-weight: 700; font-size: 18px; color: var(--text-main);">🎁 Terbitkan / Edit Barang Toko</h3>
         <button id="close-publish-shop-modal" class="close-btn-sm" type="button" aria-label="Tutup">&times;</button>
       </div>
       
@@ -849,11 +781,9 @@
         <div class="footer-heading">CONTACT US</div>
         <div class="social-links-row">
           <a href="https://chat.whatsapp.com/HVakde4Hky27Yf1xQqSeYz" target="_blank" class="social-btn wa-btn" title="Grup WhatsApp">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
             Grup WhatsApp
           </a>
           <a href="https://instagram.com/mudiviva" target="_blank" class="social-btn ig-btn" title="Instagram @mudiviva">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
             @mudiviva
           </a>
         </div>

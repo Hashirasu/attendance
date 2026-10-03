@@ -940,3 +940,94 @@ body.light-mode .chat-input {
   color: #64748b;
   cursor: not-allowed;
 }
+
+
+
+/* =========================================
+   POKEMON SHOWCASE GRID & SCENERY BANNER
+========================================= */
+.profile-page-header-banner {
+  background-size: cover;
+  background-position: center;
+  border-radius: var(--radius-xl);
+  padding: 28px 20px;
+  border: 1px solid var(--card-border);
+  position: relative;
+  overflow: hidden;
+  transition: background-image 0.5s ease;
+}
+
+.profile-page-header-banner::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(2px);
+  z-index: 1;
+}
+
+.profile-page-header-banner > * {
+  position: relative;
+  z-index: 2;
+}
+
+.pokemon-showcase-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.pokemon-slot {
+  background: var(--input-bg);
+  border: 2px dashed var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 110px;
+}
+
+.pokemon-slot.filled {
+  border-style: solid;
+  border-color: rgba(59, 130, 246, 0.4);
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.pokemon-slot img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  margin-bottom: 4px;
+}
+
+.pokemon-slot span {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.pokemon-slot.empty span {
+  font-size: 10px;
+  color: var(--text-sub);
+}
+
+/* SHOP TABS NAV */
+.shop-tab-btn {
+  padding: 8px 14px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  color: var(--text-sub);
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.shop-tab-btn.active {
+  background: var(--ios-blue);
+  color: white;
+}

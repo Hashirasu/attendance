@@ -1,7 +1,8 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 import { 
+  ALL_SHOP_POKEMON, ALL_SHOP_SCENERY, ensureFreeStarterPokemon,
   publishRealItem, redeemRealItem, renderRealItems,
-  currentAvatarConfig, loadUserAvatarConfig, renderAvatarDisplay, saveUserAvatarConfig, addNewCatalogItem 
+  renderPokemonShop, buyPokemon, renderSceneryShop, buyScenery, loadItemRedemptions, deleteRealItem
 } from "./shop.js";
 
 const SUPABASE_URL = "https://njdrnrnnlsrxdyugmsww.supabase.co"; 
@@ -308,6 +309,9 @@ async function loadUserProfile() {
   if (userSection) userSection.style.display = "block";
   if (adminSection) adminSection.style.display = "none";
 
+  // Pastikan starter pokemon gratis
+  await ensureFreeStarterPokemon(currentUserId);
+
   const { data: empData, error } = await supabase
     .from("employees")
     .select("*")
@@ -326,6 +330,7 @@ async function loadUserProfile() {
     const profilePageCode = document.getElementById("profile-page-code");
     const profilePagePoints = document.getElementById("profile-page-points");
     const profilePageBio = document.getElementById("profile-page-bio");
+    const profileBanner = document.getElementById("my-profile-banner");
 
     const avatarUrl = empData.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${empData.name}`;
 
@@ -334,6 +339,9 @@ async function loadUserProfile() {
     if (profilePageCode) profilePageCode.textContent = `Kode Anggota: ${empData.employee_code}`;
     if (profilePagePoints) profilePagePoints.textContent = empData.points || 0;
     if (profilePageBio) profilePageBio.textContent = `"${empData.bio || 'Halo, salam kenal ya!'}"`;
+    if (profileBanner && empData.active_scenery_url) {
+      profileBanner.style.backgroundImage = `url('${empData.active_scenery_url}')`;
+    }
 
     const navAdminBtns = document.querySelectorAll(".nav-admin-btn");
     const btnAdminPublishShop = document.getElementById("btn-admin-publish-shop");
@@ -351,7 +359,7 @@ async function loadUserProfile() {
     }
   }
 
-  await loadUserAvatarConfig(currentUserId);
+  await renderMyPokemonShowcase(currentUserId);
 
   await Promise.all([
     loadTodayStatus(),
@@ -366,6 +374,33 @@ async function loadUserProfile() {
 
   if (window.initFeedSystem) {
     await window.initFeedSystem();
+  }
+}
+
+// RENDER PAJANGAN 3 POKEMON PROFIL SAYA
+async function renderMyPokemonShowcase(userId) {
+  const container = document.getElementById("my-pokemon-showcase");
+  if (!container) return;
+
+  const { data: showcase } = await supabase.from("user_pokemon_showcase").select("pokemon_id, slot_index").eq("user_id", userId);
+  
+  container.innerHTML = "";
+  for (let i = 0; i < 3; i++) {
+    const slot = (showcase || []).find(s => s.slot_index === i);
+    const pokeObj = slot ? ALL_SHOP_POKEMON.find(p => p.id === slot.pokemon_id) : null;
+
+    const div = document.createElement("div");
+    if (pokeObj) {
+      div.className = "pokemon-slot filled";
+      div.innerHTML = `
+        <img src="${pokeObj.img}" alt="${pokeObj.name}">
+        <span>${pokeObj.name}</span>
+      `;
+    } else {
+      div.className = "pokemon-slot empty";
+      div.innerHTML = `<span>+ Kosong (Slot ${i+1})</span>`;
+    }
+    container.appendChild(div);
   }
 }
 
@@ -429,7 +464,7 @@ function setupRealtimeListeners() {
 }
 
 // =========================================
-// 5. FRIENDS SYSTEM (ADD, ACCEPT, REJECT, UNFOLLOW)
+// 5. FRIENDS SYSTEM & PUBLIC PROFILE
 // =========================================
 async function loadFriendsSystem() {
   const container = document.getElementById("search-friends-results");
@@ -550,6 +585,11 @@ async function openPublicProfile(targetUserId) {
   document.getElementById("public-friends-count").textContent = stats.friendsCount;
   document.getElementById("public-following-count").textContent = stats.followingCount;
 
+  const banner = document.getElementById("public-profile-banner");
+  if (banner && u.active_scenery_url) {
+    banner.style.backgroundImage = `url('${u.active_scenery_url}')`;
+  }
+
   if (actionBtnBox) {
     actionBtnBox.innerHTML = "";
     let btnHTML = "";
@@ -576,26 +616,26 @@ async function openPublicProfile(targetUserId) {
     actionBtnBox.innerHTML = btnHTML;
   }
 
-  const achievementsBox = document.getElementById("public-achievements-container");
-  const { count: attCount } = await supabase.from("attendance").select("id", { count: "exact", head: true }).eq("employee_id", targetUserId);
-  const totalAbsen = attCount || 0;
+  // RENDER POKEMON PUBLIC
+  const pokeContainer = document.getElementById("public-pokemon-showcase");
+  if (pokeContainer) {
+    const { data: showcase } = await supabase.from("user_pokemon_showcase").select("pokemon_id, slot_index").eq("user_id", targetUserId);
+    pokeContainer.innerHTML = "";
+    for (let i = 0; i < 3; i++) {
+      const slot = (showcase || []).find(s => s.slot_index === i);
+      const pokeObj = slot ? ALL_SHOP_POKEMON.find(p => p.id === slot.pokemon_id) : null;
 
-  achievementsBox.innerHTML = `
-    <div class="badge-card ${totalAbsen >= 10 ? 'unlocked' : 'locked'}">
-      <div class="badge-icon">🌱</div>
-      <div class="badge-info">
-        <h4>Keep it up!</h4>
-        <p>${totalAbsen >= 10 ? '✅ Unlocked' : `${totalAbsen} / 10 Absen`}</p>
-      </div>
-    </div>
-    <div class="badge-card ${totalAbsen >= 30 ? 'unlocked' : 'locked'}">
-      <div class="badge-icon">⭐</div>
-      <div class="badge-info">
-        <h4>Well Done!</h4>
-        <p>${totalAbsen >= 30 ? '✅ Unlocked' : `${totalAbsen} / 30 Absen`}</p>
-      </div>
-    </div>
-  `;
+      const div = document.createElement("div");
+      if (pokeObj) {
+        div.className = "pokemon-slot filled";
+        div.innerHTML = `<img src="${pokeObj.img}" alt="${pokeObj.name}"><span>${pokeObj.name}</span>`;
+      } else {
+        div.className = "pokemon-slot empty";
+        div.innerHTML = `<span>+ Kosong</span>`;
+      }
+      pokeContainer.appendChild(div);
+    }
+  }
 
   if (searchContainer) searchContainer.style.display = "none";
   publicCard.style.display = "block";
@@ -657,7 +697,7 @@ async function loadMyFriendsList() {
   });
 }
 
-// HANDLER CLICK EVENT UNTUK AKSI PERTEMANAN
+// HANDLER CLICK EVENT PERTEMANAN
 document.addEventListener("click", async (e) => {
   const userInfoBox = e.target.closest(".friend-user-info");
   if (userInfoBox) {
@@ -668,7 +708,6 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  // 1. ADD FRIEND
   if (e.target.classList.contains("btn-friend-add")) {
     const btn = e.target;
     const friendId = btn.getAttribute("data-id");
@@ -692,75 +731,31 @@ document.addEventListener("click", async (e) => {
     }
 
     await loadFriendsSystem();
-
-    const publicCard = document.getElementById("public-profile-card");
-    if (publicCard && publicCard.style.display !== "none") {
-      await openPublicProfile(friendId);
-    }
   }
 
-  // 2. ACCEPT FRIEND
   if (e.target.classList.contains("btn-friend-accept")) {
     const relId = e.target.getAttribute("data-id");
-    const senderId = e.target.getAttribute("data-sender");
-
-    const { error } = await supabase.from("friendships").update({ status: "accepted" }).eq("id", relId);
-
-    if (!error) {
-      await Promise.all([loadFriendsSystem(), loadMyFriendsList()]);
-
-      const publicCard = document.getElementById("public-profile-card");
-      if (publicCard && publicCard.style.display !== "none") {
-        if (senderId) await openPublicProfile(senderId);
-      }
-    } else {
-      alert("Gagal menerima pertemanan: " + error.message);
-    }
+    await supabase.from("friendships").update({ status: "accepted" }).eq("id", relId);
+    await Promise.all([loadFriendsSystem(), loadMyFriendsList()]);
   }
 
-  // 3. REJECT FRIEND
   if (e.target.classList.contains("btn-friend-reject")) {
     const relId = e.target.getAttribute("data-id");
-    const senderId = e.target.getAttribute("data-sender");
-
-    const { error } = await supabase.from("friendships").delete().eq("id", relId);
-
-    if (!error) {
-      await loadFriendsSystem();
-
-      const publicCard = document.getElementById("public-profile-card");
-      if (publicCard && publicCard.style.display !== "none") {
-        if (senderId) await openPublicProfile(senderId);
-      }
-    } else {
-      alert("Gagal menolak pertemanan: " + error.message);
-    }
+    await supabase.from("friendships").delete().eq("id", relId);
+    await loadFriendsSystem();
   }
 
-  // 4. UNFOLLOW / UNFRIEND
   if (e.target.classList.contains("btn-friend-unfollow")) {
     const relId = e.target.getAttribute("data-rel-id");
     const name = e.target.getAttribute("data-name");
     const targetId = e.target.getAttribute("data-target-id");
 
-    const confirmUnfriend = confirm(`Apakah kamu yakin ingin berhenti berteman (Unfollow) dengan ${name}?`);
-    if (!confirmUnfriend) return;
-
-    const { error } = await supabase.from("friendships").delete().or(`id.eq.${relId},and(user_id.eq.${currentUserId},friend_id.eq.${targetId}),and(user_id.eq.${targetId},friend_id.eq.${currentUserId})`);
-
-    if (!error) {
+    if (confirm(`Unfollow ${name}?`)) {
+      await supabase.from("friendships").delete().or(`id.eq.${relId},and(user_id.eq.${currentUserId},friend_id.eq.${targetId}),and(user_id.eq.${targetId},friend_id.eq.${currentUserId})`);
       await Promise.all([loadFriendsSystem(), loadMyFriendsList()]);
-
-      const publicCard = document.getElementById("public-profile-card");
-      if (publicCard && publicCard.style.display !== "none" && targetId) {
-        await openPublicProfile(targetId);
-      }
-    } else {
-      alert("Gagal unfollow: " + error.message);
     }
   }
 
-  // 5. MESSAGE
   if (e.target.classList.contains("btn-friend-msg")) {
     const fId = e.target.getAttribute("data-id");
     const fName = e.target.getAttribute("data-name");
@@ -793,18 +788,11 @@ async function loadChatMessages() {
   const body = document.getElementById("chat-messages-body");
   if (!body || !activeChatFriendId || !currentUserId) return;
 
-  await supabase.from("direct_messages").update({ is_read: true }).eq("sender_id", activeChatFriendId).eq("receiver_id", currentUserId).eq("is_read", false);
-
-  const { data: msgs, error } = await supabase
+  const { data: msgs } = await supabase
     .from("direct_messages")
     .select("*")
     .or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${activeChatFriendId}),and(sender_id.eq.${activeChatFriendId},receiver_id.eq.${currentUserId})`)
     .order("created_at", { ascending: true });
-
-  if (error) {
-    body.innerHTML = `<p style="font-size: 11px; color: #ef4444; text-align: center; margin: auto;">Gagal memuat pesan: ${error.message}</p>`;
-    return;
-  }
 
   if (!msgs || msgs.length === 0) {
     body.innerHTML = `<p style="font-size: 11px; color: var(--text-sub); text-align: center; margin: auto;">Belum ada pesan.</p>`;
@@ -815,20 +803,10 @@ async function loadChatMessages() {
   msgs.forEach(m => {
     const isMine = m.sender_id === currentUserId;
     const timeStr = new Date(m.created_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
-    
-    const statusTick = m.is_read 
-      ? `<span class="chat-status-tick read" title="Dibaca">✓✓</span>` 
-      : `<span class="chat-status-tick" title="Terkirim">✓</span>`;
 
     const bubble = document.createElement("div");
     bubble.className = `chat-bubble ${isMine ? 'mine' : 'other'}`;
-    bubble.innerHTML = `
-      <span>${m.message}</span>
-      <div class="chat-meta">
-        <span>${timeStr}</span>
-        ${isMine ? statusTick : ''}
-      </div>
-    `;
+    bubble.innerHTML = `<span>${m.message}</span><div class="chat-meta"><span>${timeStr}</span></div>`;
     body.appendChild(bubble);
   });
   body.scrollTop = body.scrollHeight;
@@ -842,38 +820,11 @@ async function handleSendMessage() {
   if (!text || !activeChatFriendId) return;
 
   chatTextInput.value = "";
-  
-  const { error } = await supabase.from("direct_messages").insert({
-    sender_id: currentUserId,
-    receiver_id: activeChatFriendId,
-    message: text,
-    is_read: false
-  });
-
-  if (error) {
-    alert("Gagal mengirim pesan: " + error.message);
-  } else {
-    await loadChatMessages();
-  }
+  await supabase.from("direct_messages").insert({ sender_id: currentUserId, receiver_id: activeChatFriendId, message: text });
+  await loadChatMessages();
 }
 
 if (btnSendChat) btnSendChat.addEventListener("click", handleSendMessage);
-
-if (chatTextInput) {
-  chatTextInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  });
-
-  chatTextInput.addEventListener("focus", () => {
-    setTimeout(() => {
-      const body = document.getElementById("chat-messages-body");
-      if (body) body.scrollTop = body.scrollHeight;
-    }, 300);
-  });
-}
 
 // ==============================
 // 7. PROFILE EDITING & STATUS
@@ -885,42 +836,17 @@ if (uploadAvatarFileInput) {
     const file = e.target.files[0];
     if (!file || !currentUserId) return;
 
-    if (!file.type.startsWith("image/")) {
-      alert("Harap pilih file gambar (JPG, PNG, WebP)!");
-      return;
-    }
-
-    if (file.size > 10 * 1024 * 1024) { 
-      alert("Ukuran file gambar maksimal 10MB!");
-      return;
-    }
-
     const fileExt = file.name.split('.').pop();
     const filePath = `${currentUserId}/avatar_${Date.now()}.${fileExt}`;
 
     try {
-      const { error: uploadErr } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadErr) throw uploadErr;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-
-      const { error: updateErr } = await supabase
-        .from('employees')
-        .update({ avatar_url: publicUrl })
-        .eq('id', currentUserId);
-
-      if (updateErr) throw updateErr;
+      await supabase.storage.from('avatars').upload(filePath, file, { upsert: true });
+      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
+      await supabase.from('employees').update({ avatar_url: publicUrl }).eq('id', currentUserId);
 
       const profilePageAvatar = document.getElementById("profile-page-avatar");
       if (profilePageAvatar) profilePageAvatar.src = publicUrl;
-
       alert("✅ Foto profil berhasil diperbarui!");
-
     } catch (err) {
       alert("Gagal mengunggah foto profil: " + err.message);
     }
@@ -932,47 +858,27 @@ const editBioModal = document.getElementById("edit-bio-modal");
 const editBioInputText = document.getElementById("edit-bio-input-text");
 const cancelEditBioBtn = document.getElementById("cancel-edit-bio");
 const saveEditBioBtn = document.getElementById("save-edit-bio");
-const editBioMsg = document.getElementById("edit-bio-modal-msg");
 
 if (btnOpenEditBioModal) {
   btnOpenEditBioModal.addEventListener("click", () => {
-    if (currentEmployeeData) {
-      editBioInputText.value = currentEmployeeData.bio || "";
-    }
-    if (editBioMsg) editBioMsg.textContent = "";
+    if (currentEmployeeData) editBioInputText.value = currentEmployeeData.bio || "";
     if (editBioModal) editBioModal.style.display = "flex";
   });
 }
 
-if (cancelEditBioBtn) {
-  cancelEditBioBtn.addEventListener("click", () => {
-    if (editBioModal) editBioModal.style.display = "none";
-  });
-}
+if (cancelEditBioBtn) cancelEditBioBtn.addEventListener("click", () => editBioModal.style.display = "none");
 
 if (saveEditBioBtn) {
   saveEditBioBtn.addEventListener("click", async () => {
     const bioText = editBioInputText.value.trim();
-
-    saveEditBioBtn.textContent = "Menyimpan...";
-    const { error } = await supabase.from("employees").update({
-      bio: bioText
-    }).eq("id", currentUserId);
-
-    if (error) {
-      if (editBioMsg) editBioMsg.textContent = "Gagal menyimpan: " + error.message;
-    } else {
-      if (editBioModal) editBioModal.style.display = "none";
-      await loadUserProfile();
-    }
-    saveEditBioBtn.textContent = "Simpan";
+    await supabase.from("employees").update({ bio: bioText }).eq("id", currentUserId);
+    if (editBioModal) editBioModal.style.display = "none";
+    await loadUserProfile();
   });
 }
 
 async function loadTodayStatus() {
   if (!todayStatusEl) return;
-  todayStatusEl.innerHTML = "<p style='color: var(--text-sub);'>Memuat status...</p>";
-
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
   
@@ -996,8 +902,6 @@ async function loadTodayStatus() {
 
 async function loadAttendanceHistory() {
   if (!attendanceHistory) return;
-  attendanceHistory.innerHTML = "<p style='color: var(--text-sub);'>Memuat riwayat...</p>";
-
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
@@ -1016,8 +920,7 @@ async function loadAttendanceHistory() {
   data.forEach((row) => {
     const date = new Date(row.attendance_date + "T00:00:00").toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Jakarta" });
     const time = new Date(row.check_in).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" });
-    const isLate = row.status === "late";
-    const badge = isLate ? `<span class="badge-late">Terlambat</span>` : `<span class="badge-present">Tepat Waktu</span>`;
+    const badge = row.status === "late" ? `<span class="badge-late">Terlambat</span>` : `<span class="badge-present">Tepat Waktu</span>`;
 
     const item = document.createElement("div");
     item.className = "history-item";
@@ -1063,7 +966,330 @@ async function loadMonthlyStatistics() {
 }
 
 // ==============================
-// 8. QR SCANNER KAMERA
+// 8. POKEDEX & SHOWCASE PAJANGAN
+// ==============================
+const btnOpenPokedexModal = document.getElementById("btn-open-pokedex-modal");
+const pokedexModal = document.getElementById("pokedex-modal");
+const closePokedexModal = document.getElementById("close-pokedex-modal");
+
+if (btnOpenPokedexModal) {
+  btnOpenPokedexModal.addEventListener("click", async () => {
+    if (pokedexModal) pokedexModal.style.display = "flex";
+    await renderPokedexModal();
+  });
+}
+
+if (closePokedexModal) {
+  closePokedexModal.addEventListener("click", () => {
+    if (pokedexModal) pokedexModal.style.display = "none";
+  });
+}
+
+async function renderPokedexModal() {
+  const container = document.getElementById("pokedex-container");
+  if (!container || !currentUserId) return;
+
+  container.innerHTML = "<p style='font-size:12px; color:var(--text-sub); text-align:center;'>Memuat Pokedex...</p>";
+
+  const { data: userInventory } = await supabase.from("user_pokemon_inventory").select("pokemon_id").eq("user_id", currentUserId);
+  const ownedIds = (userInventory || []).map(i => i.pokemon_id);
+
+  const { data: showcase } = await supabase.from("user_pokemon_showcase").select("pokemon_id").eq("user_id", currentUserId);
+  const showcaseIds = (showcase || []).map(s => s.pokemon_id);
+
+  container.innerHTML = "";
+  ALL_SHOP_POKEMON.forEach(poke => {
+    const isOwned = ownedIds.includes(poke.id);
+    const isDisplayed = showcaseIds.includes(poke.id);
+
+    const card = document.createElement("div");
+    card.className = `shop-item-card ${isOwned ? 'owned' : 'locked'}`;
+    card.style.opacity = isOwned ? "1" : "0.5";
+    card.style.filter = isOwned ? "none" : "grayscale(0.9)";
+
+    card.innerHTML = `
+      <img src="${poke.img}" style="width:60px; height:60px; object-fit:contain; margin-bottom:4px;" alt="${poke.name}">
+      <h4 style="font-size:12px; font-weight:700; color:var(--text-main);">${poke.name}</h4>
+      <span style="font-size:10px; color:var(--text-sub);">Gen ${poke.gen}</span>
+
+      ${isOwned ? `
+        <button class="btn-toggle-showcase secondary-button-sm" data-id="${poke.id}" style="width:100\%; margin-top:6px; font-size:10px; ${isDisplayed ? 'background:#10b981; color:white;' : ''}">
+          ${isDisplayed ? '✨ Dipajang' : '📌 Pajang'}
+        </button>
+      ` : `
+        <span style="font-size:10px; color:var(--text-sub); margin-top:6px; display:block;">🔒 Belum Dimiliki</span>
+      `}
+    `;
+    container.appendChild(card);
+  });
+}
+
+document.addEventListener("click", async (e) => {
+  if (e.target.classList.contains("btn-toggle-showcase")) {
+    const pokeId = e.target.getAttribute("data-id");
+    const { data: showcase } = await supabase.from("user_pokemon_showcase").select("*").eq("user_id", currentUserId);
+
+    const existingIndex = (showcase || []).findIndex(s => s.pokemon_id === pokeId);
+
+    if (existingIndex !== -1) {
+      await supabase.from("user_pokemon_showcase").delete().eq("user_id", currentUserId).eq("pokemon_id", pokeId);
+    } else {
+      if ((showcase || []).length >= 3) {
+        alert("Kamu hanya bisa memajang maksimal 3 Pokémon! Lepas salah satu terlebih dahulu.");
+        return;
+      }
+
+      const availableSlots = [0, 1, 2].filter(slot => !(showcase || []).some(s => s.slot_index === slot));
+      const targetSlot = availableSlots[0];
+
+      await supabase.from("user_pokemon_showcase").insert({
+        user_id: currentUserId,
+        pokemon_id: pokeId,
+        slot_index: targetSlot
+      });
+    }
+
+    await renderPokedexModal();
+    await renderMyPokemonShowcase(currentUserId);
+  }
+});
+
+// ==============================
+// 9. TOKO VIHARA (3 TAB SYSTEM)
+// ==============================
+const btnOpenShopModal = document.getElementById("btn-open-shop-modal");
+const shopModal = document.getElementById("shop-modal");
+const closeShopModal = document.getElementById("close-shop-modal");
+
+if (btnOpenShopModal) {
+  btnOpenShopModal.addEventListener("click", async () => {
+    if (shopModal) shopModal.style.display = "flex";
+    const pts = currentEmployeeData ? (currentEmployeeData.points || 0) : 0;
+    await renderRealItems(currentUserRole);
+    await renderPokemonShop(currentUserId, pts);
+    await renderSceneryShop(currentUserId, pts, currentEmployeeData ? currentEmployeeData.active_scenery_url : null);
+  });
+}
+
+if (closeShopModal) {
+  closeShopModal.addEventListener("click", () => {
+    if (shopModal) shopModal.style.display = "none";
+  });
+}
+
+// TAB NAVIGATION DI TOKO
+document.addEventListener("click", (e) => {
+  if (e.target.classList.contains("shop-tab-btn")) {
+    const targetTab = e.target.getAttribute("data-shop-tab");
+
+    document.querySelectorAll(".shop-tab-btn").forEach(b => b.classList.remove("active"));
+    e.target.classList.add("active");
+
+    document.querySelectorAll(".shop-tab-view").forEach(v => v.style.display = "none");
+    const targetView = document.getElementById(`shop-tab-${targetTab}`);
+    if (targetView) targetView.style.display = "block";
+  }
+});
+
+// HANDLER AKSI TOKO (QTY +/-, REDEEM, ADOPSI, SCENERY)
+document.addEventListener("click", async (e) => {
+  // 1. Plus Qty
+  if (e.target.classList.contains("btn-qty-plus")) {
+    const id = e.target.getAttribute("data-id");
+    const price = parseInt(e.target.getAttribute("data-price"));
+    const stock = parseInt(e.target.getAttribute("data-stock"));
+    const qtyEl = document.getElementById(`qty-count-${id}`);
+    const totalEl = document.getElementById(`total-price-${id}`);
+
+    let currentQty = parseInt(qtyEl.textContent);
+    if (currentQty < stock) {
+      currentQty++;
+      qtyEl.textContent = currentQty;
+      totalEl.textContent = currentQty * price;
+    }
+  }
+
+  // 2. Minus Qty
+  if (e.target.classList.contains("btn-qty-minus")) {
+    const id = e.target.getAttribute("data-id");
+    const price = parseInt(e.target.getAttribute("data-price"));
+    const qtyEl = document.getElementById(`qty-count-${id}`);
+    const totalEl = document.getElementById(`total-price-${id}`);
+
+    let currentQty = parseInt(qtyEl.textContent);
+    if (currentQty > 1) {
+      currentQty--;
+      qtyEl.textContent = currentQty;
+      totalEl.textContent = currentQty * price;
+    }
+  }
+
+  // 3. Redeem Barang Fisik
+  if (e.target.classList.contains("btn-redeem-real")) {
+    const id = e.target.getAttribute("data-id");
+    const price = parseInt(e.target.getAttribute("data-price"));
+    const qty = parseInt(document.getElementById(`qty-count-${id}`).textContent);
+    const totalPoints = price * qty;
+    const currentPoints = currentEmployeeData ? (currentEmployeeData.points || 0) : 0;
+
+    if (confirm(`Tukarkan ${totalPoints} Poin untuk ${qty}x barang ini?`)) {
+      const ok = await redeemRealItem(currentUserId, id, qty, totalPoints, currentPoints);
+      if (ok) {
+        await loadUserProfile();
+        await renderRealItems(currentUserRole);
+      }
+    }
+  }
+
+  // 4. Adopsi Pokemon
+  if (e.target.classList.contains("btn-buy-pokemon")) {
+    const pokeId = e.target.getAttribute("data-id");
+    const price = parseInt(e.target.getAttribute("data-price"));
+    const name = e.target.getAttribute("data-name");
+    const currentPoints = currentEmployeeData ? (currentEmployeeData.points || 0) : 0;
+
+    if (confirm(`Adopsi ${name} seharga ${price} Poin?`)) {
+      const ok = await buyPokemon(currentUserId, pokeId, price, name, currentPoints);
+      if (ok) {
+        await loadUserProfile();
+        await renderPokemonShop(currentUserId, currentEmployeeData.points);
+      }
+    }
+  }
+
+  // 5. Beli & Pasang Scenery
+  if (e.target.classList.contains("btn-buy-scenery")) {
+    const scId = e.target.getAttribute("data-id");
+    const price = parseInt(e.target.getAttribute("data-price"));
+    const url = e.target.getAttribute("data-url");
+    const title = e.target.getAttribute("data-title");
+    const currentPoints = currentEmployeeData ? (currentEmployeeData.points || 0) : 0;
+
+    if (confirm(`Beli Background ${title} seharga ${price} Poin?`)) {
+      const ok = await buyScenery(currentUserId, scId, price, url, title, currentPoints);
+      if (ok) {
+        await loadUserProfile();
+        await renderSceneryShop(currentUserId, currentEmployeeData.points, url);
+      }
+    }
+  }
+
+  if (e.target.classList.contains("btn-equip-scenery")) {
+    const url = e.target.getAttribute("data-url");
+    await supabase.from("employees").update({ active_scenery_url: url }).eq("id", currentUserId);
+    await loadUserProfile();
+    await renderSceneryShop(currentUserId, currentEmployeeData.points, url);
+  }
+
+  // Admin Actions Toko
+  if (e.target.classList.contains("btn-edit-item")) {
+    const id = e.target.getAttribute("data-id");
+    document.getElementById("publish-title").value = e.target.getAttribute("data-title");
+    document.getElementById("publish-desc").value = e.target.getAttribute("data-desc");
+    document.getElementById("publish-points").value = e.target.getAttribute("data-price");
+    document.getElementById("publish-stock").value = e.target.getAttribute("data-stock");
+    window.editingShopItemId = id;
+    document.getElementById("publish-shop-modal").style.display = "flex";
+  }
+
+  if (e.target.classList.contains("btn-delete-item")) {
+    const id = e.target.getAttribute("data-id");
+    if (confirm("Yakin hapus barang ini?")) {
+      const ok = await deleteRealItem(id);
+      if (ok) await renderRealItems(currentUserRole);
+    }
+  }
+
+  if (e.target.classList.contains("btn-check-redemptions")) {
+    const id = e.target.getAttribute("data-id");
+    const modal = document.getElementById("redemption-list-modal");
+    const container = document.getElementById("redemption-history-container");
+    if (modal && container) {
+      modal.style.display = "flex";
+      container.innerHTML = "<p style='font-size:12px; color:var(--text-sub); text-align:center;'>Memuat data...</p>";
+      const logs = await loadItemRedemptions(id);
+      if (logs.length === 0) {
+        container.innerHTML = "<p style='font-size:12px; color:var(--text-sub); text-align:center;'>Belum ada yang menukarkan barang ini.</p>";
+      } else {
+        container.innerHTML = "";
+        logs.forEach(l => {
+          const emp = l.employees || {};
+          const time = new Date(l.created_at).toLocaleString("id-ID");
+          container.innerHTML += `
+            <div style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.1); font-size:12px;">
+              <strong>${emp.name || 'Member'}</strong> (${emp.employee_code || '-'})<br>
+              <span style="color:var(--text-sub);">Menukar: ${l.quantity}x (${l.total_points} Poin)</span><br>
+              <span style="font-size:10px; color:var(--text-sub);">${time}</span>
+            </div>
+          `;
+        });
+      }
+    }
+  }
+});
+
+const closeRedemptionModal = document.getElementById("close-redemption-list-modal");
+if (closeRedemptionModal) {
+  closeRedemptionModal.addEventListener("click", () => {
+    document.getElementById("redemption-list-modal").style.display = "none";
+  });
+}
+
+// PUBLISH BARANG ADMIN
+const btnAdminPublishShop = document.getElementById("btn-admin-publish-shop");
+const publishShopModal = document.getElementById("publish-shop-modal");
+const closePublishShopModal = document.getElementById("close-publish-shop-modal");
+const btnSubmitPublishShop = document.getElementById("btn-submit-publish-shop");
+
+if (btnAdminPublishShop) {
+  btnAdminPublishShop.addEventListener("click", () => {
+    window.editingShopItemId = null;
+    document.getElementById("publish-title").value = "";
+    document.getElementById("publish-desc").value = "";
+    document.getElementById("publish-points").value = "";
+    document.getElementById("publish-stock").value = "";
+    if (publishShopModal) publishShopModal.style.display = "flex";
+  });
+}
+
+if (closePublishShopModal) {
+  closePublishShopModal.addEventListener("click", () => {
+    if (publishShopModal) publishShopModal.style.display = "none";
+  });
+}
+
+if (btnSubmitPublishShop) {
+  btnSubmitPublishShop.addEventListener("click", async () => {
+    const title = document.getElementById("publish-title").value.trim();
+    const desc = document.getElementById("publish-desc").value.trim();
+    const points = parseInt(document.getElementById("publish-points").value);
+    const stock = parseInt(document.getElementById("publish-stock").value);
+    const fileInput = document.getElementById("publish-img-file");
+    const file = fileInput ? fileInput.files[0] : null;
+
+    if (!title || isNaN(points) || isNaN(stock)) {
+      alert("Harap lengkapi judul, poin, dan stok!");
+      return;
+    }
+
+    btnSubmitPublishShop.textContent = "Menerbitkan...";
+    btnSubmitPublishShop.disabled = true;
+
+    const editId = window.editingShopItemId;
+    const success = await publishRealItem(currentUserId, title, desc, points, stock, file, editId);
+    if (success) {
+      alert("✅ Barang berhasil dipublish/diupdate!");
+      if (publishShopModal) publishShopModal.style.display = "none";
+      await renderRealItems(currentUserRole);
+    }
+
+    btnSubmitPublishShop.textContent = "Publish Barang";
+    btnSubmitPublishShop.disabled = false;
+  });
+}
+
+// ==============================
+// 10. QR SCANNER KAMERA & ADMIN KIOSK
 // ==============================
 const openScannerBtnUser = document.getElementById("open-scanner-btn-user");
 const scannerModal = document.getElementById("scanner-modal");
@@ -1114,9 +1340,7 @@ async function stopQrScanner() {
         await html5QrCode.stop();
       }
       html5QrCode.clear();
-    } catch (e) {
-      console.log("Scanner cleanup:", e);
-    }
+    } catch (e) {}
   }
   if (scannerModal) scannerModal.style.display = "none";
 }
@@ -1124,83 +1348,7 @@ async function stopQrScanner() {
 if (openScannerBtnUser) openScannerBtnUser.addEventListener("click", startQrScanner);
 if (closeScannerBtn) closeScannerBtn.addEventListener("click", stopQrScanner);
 
-// ==============================
-// 9. MANAJEMEN POIN MEMBER
-// ==============================
-document.addEventListener("click", (e) => {
-  if (e.target.classList.contains("btn-add-points")) {
-    const empId = e.target.getAttribute("data-id");
-    const empName = e.target.getAttribute("data-name");
-
-    const targetIdEl = document.getElementById("target-member-id");
-    const targetNameEl = document.getElementById("target-member-name");
-    const amountEl = document.getElementById("input-points-amount");
-    const reasonEl = document.getElementById("input-points-reason");
-    const msgEl = document.getElementById("manage-points-modal-msg");
-    const pointsModal = document.getElementById("manage-points-modal");
-
-    if (targetIdEl) targetIdEl.value = empId;
-    if (targetNameEl) targetNameEl.textContent = `Anggota: ${empName}`;
-    if (amountEl) amountEl.value = "";
-    if (reasonEl) reasonEl.value = "";
-    if (msgEl) msgEl.textContent = "";
-
-    if (pointsModal) pointsModal.style.display = "flex";
-  }
-});
-
-const btnCancelPoints = document.getElementById("cancel-manage-points");
-if (btnCancelPoints) {
-  btnCancelPoints.addEventListener("click", () => {
-    const pointsModal = document.getElementById("manage-points-modal");
-    if (pointsModal) pointsModal.style.display = "none";
-  });
-}
-
-const btnSavePoints = document.getElementById("save-manage-points");
-if (btnSavePoints) {
-  btnSavePoints.addEventListener("click", async () => {
-    const empId = document.getElementById("target-member-id").value;
-    const amount = parseInt(document.getElementById("input-points-amount").value);
-    const reason = document.getElementById("input-points-reason").value.trim();
-    const msgEl = document.getElementById("manage-points-modal-msg");
-
-    if (isNaN(amount) || amount === 0 || !reason) {
-      if (msgEl) msgEl.textContent = "Masukkan jumlah poin valid dan alasannya!";
-      return;
-    }
-
-    btnSavePoints.textContent = "Memproses...";
-
-    const { data: emp } = await supabase.from("employees").select("points").eq("id", empId).single();
-    const currentPoints = emp ? (emp.points || 0) : 0;
-    const newTotal = currentPoints + amount;
-
-    const { error: updateErr } = await supabase.from("employees").update({ points: newTotal }).eq("id", empId);
-
-    if (updateErr) {
-      if (msgEl) msgEl.textContent = "Gagal mengupdate poin: " + updateErr.message;
-    } else {
-      await supabase.from("point_logs").insert({
-        employee_id: empId,
-        points_added: amount,
-        reason: reason
-      });
-
-      const pointsModal = document.getElementById("manage-points-modal");
-      if (pointsModal) pointsModal.style.display = "none";
-      alert(`Berhasil memperbarui poin! Total poin baru: ${newTotal}`);
-      await loadEmployeeManagement();
-      if (empId === currentUserId) await loadUserProfile();
-    }
-
-    btnSavePoints.textContent = "Proses Poin";
-  });
-}
-
-// ==============================
-// 10. ADMIN PANEL & KIOSK
-// ==============================
+// ADMIN PANELS
 if (switchToAdminBtn) {
   switchToAdminBtn.addEventListener("click", async () => {
     if (userSection) userSection.style.display = "none";
@@ -1252,7 +1400,6 @@ if (tabRekapBtn && tabKaryawanBtn && tabKioskBtn) {
     tabKioskBtn.classList.add("active");
     tabRekapBtn.classList.remove("active");
     tabKaryawanBtn.classList.remove("active");
-    
     startAdminKioskQr();
   });
 }
@@ -1264,15 +1411,11 @@ function startAdminKioskQr() {
 
   if (!qrBox) return;
   qrBox.innerHTML = "";
-
   if (kioskTimerInterval) clearInterval(kioskTimerInterval);
 
   kioskQrObject = new QRCode(qrBox, {
-    text: "INIT",
-    width: 220,
-    height: 220,
-    colorDark: "#000000",
-    colorLight: "#ffffff",
+    text: "INIT", width: 220, height: 220,
+    colorDark: "#000000", colorLight: "#ffffff",
     correctLevel: QRCode.CorrectLevel.H
   });
 
@@ -1288,347 +1431,17 @@ function startAdminKioskQr() {
     kioskQrObject.makeCode(kioskUrl);
 
     if (timerText) timerText.textContent = `Memperbarui dalam ${secondsRemaining}s`;
-    if (fillBar) {
-      const percentage = (secondsRemaining / 15) * 100;
-      fillBar.style.width = `${percentage}%`;
-    }
+    if (fillBar) fillBar.style.width = `${(secondsRemaining / 15) * 100}%`;
   }
 
   updateKioskFrame();
   kioskTimerInterval = setInterval(updateKioskFrame, 1000);
 }
 
-if (adminFilterDate) adminFilterDate.addEventListener("change", loadAdminAttendance);
-if (adminFilterStatus) adminFilterStatus.addEventListener("change", loadAdminAttendance);
-if (adminChartFilter) adminChartFilter.addEventListener("change", loadAdminChart);
-
-async function loadAdminAttendance() {
-  if (!adminAttendanceList) return;
-  adminAttendanceList.innerHTML = "<p style='color: var(--text-sub);'>Memuat rekap...</p>";
-
-  let query = supabase.from("attendance").select("attendance_date, check_in, status, employees(name, employee_code)").order("check_in", { ascending: false });
-  if (adminFilterDate && adminFilterDate.value) query = query.eq("attendance_date", adminFilterDate.value);
-  if (adminFilterStatus && adminFilterStatus.value !== "ALL") query = query.eq("status", adminFilterStatus.value);
-
-  const { data } = await query;
-  if (!data || data.length === 0) {
-    adminAttendanceList.innerHTML = "<p style='font-size: 13px; color: var(--text-sub);'>Tidak ada data.</p>";
-    return;
-  }
-
-  adminAttendanceList.innerHTML = "";
-  data.forEach(row => {
-    const time = new Date(row.check_in).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" });
-    const name = row.employees ? row.employees.name : "Dihapus";
-    const badge = row.status === "late" ? `<span class="badge-late">Terlambat</span>` : `<span class="badge-present">Hadir</span>`;
-
-    const item = document.createElement("div");
-    item.className = "history-item";
-    item.innerHTML = `<div><strong style="color: var(--text-main);">${name}</strong><div style="font-size: 11px; color: var(--text-sub);">${row.attendance_date} &bull; ${time} WIB</div></div><div>${badge}</div>`;
-    adminAttendanceList.appendChild(item);
-  });
-}
-
-async function loadAdminChart() {
-  if (!adminChartContainer) return;
-  adminChartContainer.innerHTML = "<p style='font-size: 12px; color: var(--text-sub); margin: auto;'>Memuat grafik...</p>";
-
-  const filterType = adminChartFilter ? adminChartFilter.value : "month";
-  const { data } = await supabase.from("attendance").select("attendance_date, status");
-  if (!data) return;
-
-  const grouped = {};
-  data.forEach(row => {
-    let key = row.attendance_date;
-    if (filterType === "month") key = row.attendance_date.substring(0, 7);
-    else if (filterType === "year") key = row.attendance_date.substring(0, 4);
-
-    if (!grouped[key]) grouped[key] = { total: 0 };
-    grouped[key].total++;
-  });
-
-  const keys = Object.keys(grouped).sort().slice(-7);
-  if (keys.length === 0) {
-    adminChartContainer.innerHTML = "<p style='font-size: 12px; color: var(--text-sub); margin: auto;'>Belum ada data.</p>";
-    return;
-  }
-
-  const max = Math.max(...keys.map(k => grouped[k].total), 5);
-  adminChartContainer.innerHTML = "";
-
-  keys.forEach(k => {
-    const total = grouped[k].total;
-    const heightPercentage = Math.round((total / max) * 100);
-    const wrapper = document.createElement("div");
-    wrapper.style.cssText = "display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; min-width: 32px;";
-    wrapper.innerHTML = `
-      <div style="font-size: 11px; font-weight: 700; color: #60a5fa; margin-bottom: 4px;">${total}</div>
-      <div style="width: 100%; max-width: 24px; height: ${Math.max(heightPercentage, 12)}%; background: linear-gradient(180deg, #3b82f6, #1d4ed8); border-radius: 6px 6px 0 0;"></div>
-      <div style="font-size: 10px; color: var(--text-sub); margin-top: 6px; white-space: nowrap; font-weight: 600;">${k}</div>
-    `;
-    adminChartContainer.appendChild(wrapper);
-  });
-}
-
-async function loadEmployeeManagement() {
-  if (!adminEmployeeList) return;
-  adminEmployeeList.innerHTML = "<p style='color: var(--text-sub);'>Memuat anggota...</p>";
-
-  const { data } = await supabase.from("employees").select("id, name, employee_code, role, is_active, phone, points").order("name");
-  if (!data) return;
-
-  adminEmployeeList.innerHTML = "";
-  data.forEach(emp => {
-    let roleBadgeBg = "rgba(0, 92, 191, 0.2)";
-    let roleBadgeColor = "#60a5fa";
-    let roleText = "MEMBER";
-
-    if (emp.role === "adm1n") {
-      roleBadgeBg = "rgba(255, 59, 48, 0.25)";
-      roleBadgeColor = "#f87171";
-      roleText = "ADM1N";
-    } else if (emp.role === "admin") {
-      roleBadgeBg = "rgba(245, 158, 11, 0.25)";
-      roleBadgeColor = "#fbbf24";
-      roleText = "ADMIN";
-    } else if (emp.role === "pengurus") {
-      roleBadgeBg = "rgba(16, 185, 129, 0.25)";
-      roleBadgeColor = "#34d399";
-      roleText = "PENGURUS";
-    }
-
-    const card = document.createElement("div");
-    card.className = "emp-card-item";
-    card.style.marginBottom = "10px";
-    card.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-        <div>
-          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px;">
-            <strong style="font-size: 14px; color: var(--text-main);">${emp.name}</strong>
-            <span style="font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: ${roleBadgeBg}; color: ${roleBadgeColor};">${roleText}</span>
-          </div>
-          <div style="font-size: 11px; color: var(--text-sub);">Kode: ${emp.employee_code} | WA: ${emp.phone || '-'}</div>
-          <div style="margin-top: 4px;">
-            <span style="font-size: 11px; font-weight: 800; color: #f59e0b; background: rgba(245, 158, 11, 0.15); padding: 2px 8px; border-radius: 8px;">
-              🪙 ${emp.points || 0} Poin
-            </span>
-          </div>
-        </div>
-        <div style="display: flex; gap: 6px;">
-          <button class="btn-add-points" data-id="${emp.id}" data-name="${emp.name}" style="padding: 4px 10px; font-size: 11px; border-radius: 8px; font-weight: 700; background: #f59e0b; color: white; border: none; cursor: pointer;">🪙 Poin</button>
-          <button class="btn-edit-member secondary-button" style="padding: 4px 10px; font-size: 11px;">Edit</button>
-        </div>
-      </div>
-    `;
-    
-    card.querySelector(".btn-edit-member").addEventListener("click", () => {
-      editEmpId.value = emp.id;
-      editEmpName.value = emp.name;
-      editEmpPhone.value = emp.phone || "";
-      editEmpCode.value = emp.employee_code;
-      editEmpRole.value = emp.role;
-      editEmpActive.value = String(emp.is_active);
-      editModalMsg.textContent = "";
-      editEmpModal.style.display = "flex";
-    });
-    adminEmployeeList.appendChild(card);
-  });
-}
-
-if (cancelEditEmp) cancelEditEmp.addEventListener("click", () => editEmpModal.style.display = "none");
-
-if (saveEditEmp) {
-  saveEditEmp.addEventListener("click", async () => {
-    const id = editEmpId.value;
-    const name = editEmpName.value.trim();
-    const phone = editEmpPhone.value.trim();
-    const code = editEmpCode.value.trim();
-    const role = editEmpRole.value;
-    const isActive = editEmpActive.value === "true";
-
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data: me } = await supabase.from("employees").select("role").eq("id", user.id).single();
-
-    if (me.role !== "adm1n") {
-      const { data: target } = await supabase.from("employees").select("role").eq("id", id).single();
-      if (target.role !== role) {
-        editModalMsg.textContent = "Akses ditolak: Hanya Super Admin (adm1n) yang dapat mengubah role!";
-        return;
-      }
-    }
-
-    editModalMsg.textContent = "Menyimpan...";
-    const { error } = await supabase.from("employees").update({ name, phone, employee_code: code, role, is_active: isActive }).eq("id", id);
-    
-    if (error) {
-      editModalMsg.textContent = "Gagal: " + error.message;
-    } else {
-      editModalMsg.textContent = "Berhasil!";
-      setTimeout(() => {
-        editEmpModal.style.display = "none";
-        loadEmployeeManagement();
-      }, 700);
-    }
-  });
-}
-
-// ==============================
-// 11. ADVANCED EXCEL EXPORT
-// ==============================
-if (exportCsvBtn) {
-  exportCsvBtn.addEventListener("click", async () => {
-    const { data: attData, error } = await supabase
-      .from("attendance")
-      .select(`
-        attendance_date, check_in, status, employee_id, 
-        employees (name, phone, employee_code, role, birth_place, birth_date)
-      `)
-      .order("attendance_date", { ascending: false });
-
-    if (error || !attData) {
-      alert("Gagal mengambil data ekspor.");
-      return;
-    }
-
-    const pengurusRows = [];
-    const memberRows = [];
-
-    attData.forEach(row => {
-      const emp = row.employees || {};
-      const name = emp.name || "N/A";
-      const phone = emp.phone || "-";
-      const code = emp.employee_code || "N/A";
-      const role = (emp.role || "user").toLowerCase().trim();
-      const birthPlace = emp.birth_place || "-";
-      const birthDate = emp.birth_date ? new Date(emp.birth_date).toLocaleDateString("id-ID") : "-";
-      const date = row.attendance_date;
-      const time = new Date(row.check_in).toLocaleTimeString("id-ID", { timeZone: "Asia/Jakarta" });
-      const statusText = row.status === "late" ? "Terlambat" : "Tepat Waktu";
-
-      const isPengurus = (role === "pengurus" || role === "admin" || role === "adm1n");
-
-      const itemExcel = {
-        "Tanggal": date, "Kode Anggota": code, "Nama Lengkap": name, "No WhatsApp": phone,
-        "Tempat Lahir": birthPlace, "Tanggal Lahir": birthDate, "Jam Absen": time, "Status": statusText
-      };
-
-      if (isPengurus) pengurusRows.push(itemExcel);
-      else memberRows.push(itemExcel);
-    });
-
-    const workbook = XLSX.utils.book_new();
-    const wsPengurus = XLSX.utils.json_to_sheet(pengurusRows);
-    const wsMember = XLSX.utils.json_to_sheet(memberRows);
-
-    XLSX.utils.book_append_sheet(workbook, wsPengurus, "Data Pengurus");
-    XLSX.utils.book_append_sheet(workbook, wsMember, "Data Anggota");
-
-    XLSX.writeFile(workbook, `Rekap_Absensi_Mudiviverse_${new Date().toISOString().split("T")[0]}.xlsx`);
-  });
-}
-
-// ==============================
-// 12. SINKRONISASI GOOGLE SHEETS
-// ==============================
-const syncSheetsBtn = document.getElementById("sync-sheets-btn");
-
-if (syncSheetsBtn) {
-  syncSheetsBtn.addEventListener("click", async () => {
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxssFU-ZNmAL8rJ5iQqLhgxLqi_tCntFvVzJq8StAIKOGlIXJFXsGXFHJHHQU5sUl0rug/exec";
-
-    if (!WEB_APP_URL || WEB_APP_URL.includes("MASUKKAN_URL")) {
-      alert("URL Web App Google Sheets belum diatur!");
-      return;
-    }
-
-    syncSheetsBtn.textContent = "Menyinkronkan...";
-    syncSheetsBtn.disabled = true;
-
-    try {
-      const { data: empData, error: empError } = await supabase
-        .from("employees")
-        .select("id, name, phone, employee_code, role, birth_place, birth_date")
-        .order("name");
-
-      if (empError || !empData) throw new Error("Gagal mengambil data anggota: " + (empError ? empError.message : "Data kosong"));
-
-      const { data: attData, error: attError } = await supabase
-        .from("attendance")
-        .select("attendance_date, check_in, status, employee_id")
-        .order("attendance_date", { ascending: false });
-
-      if (attError || !attData) throw new Error("Gagal mengambil data riwayat absensi.");
-
-      const attMap = {};
-      (attData || []).forEach(att => {
-        if (!attMap[att.employee_id]) attMap[att.employee_id] = [];
-        attMap[att.employee_id].push(att);
-      });
-
-      const pengurusRows = [];
-      const memberRows = [];
-
-      empData.forEach(emp => {
-        const name = emp.name || "N/A";
-        const phone = emp.phone || "-";
-        const code = emp.employee_code || "N/A";
-        const roleStr = String(emp.role || "user").toLowerCase().trim();
-        const birthPlace = emp.birth_place || "-";
-        
-        let birthDate = "-";
-        if (emp.birth_date) {
-          try {
-            const bd = new Date(emp.birth_date);
-            if (!isNaN(bd.getTime())) birthDate = bd.toLocaleDateString("id-ID");
-          } catch (e) { birthDate = "-"; }
-        }
-
-        const isPengurus = (roleStr === "pengurus" || roleStr === "admin" || roleStr === "adm1n");
-        const userAttList = attMap[emp.id] || [];
-
-        if (userAttList.length > 0) {
-          userAttList.forEach(att => {
-            let time = "-";
-            if (att.check_in) {
-              try { time = new Date(att.check_in).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" }); } catch (e) { time = "-"; }
-            }
-            const statusText = att.status === "late" ? "Terlambat" : "Tepat Waktu";
-            const itemData = { "Kode Anggota": code, "Nama Lengkap": name, "No WhatsApp": phone, "Tempat Lahir": birthPlace, "Tanggal Lahir": birthDate, "Tanggal": att.attendance_date || "", "Jam Absen": time, "Status": statusText };
-            if (isPengurus) pengurusRows.push(itemData);
-            else memberRows.push(itemData);
-          });
-        } else {
-          const itemData = { "Kode Anggota": code, "Nama Lengkap": name, "No WhatsApp": phone, "Tempat Lahir": birthPlace, "Tanggal Lahir": birthDate, "Tanggal": "", "Jam Absen": "", "Status": "" };
-          if (isPengurus) pengurusRows.push(itemData);
-          else memberRows.push(itemData);
-        }
-      });
-
-      const payload = { pengurus: pengurusRows, anggota: memberRows };
-
-      await fetch(WEB_APP_URL, {
-        method: "POST", mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      alert("Berhasil! Seluruh data Pengurus dan Anggota telah disinkronkan.");
-    } catch (err) {
-      alert("Gagal sinkronisasi: " + err.message);
-    } finally {
-      syncSheetsBtn.textContent = "🔄 Sinkron";
-      syncSheetsBtn.disabled = false;
-    }
-  });
-}
-
-// ==============================
-// 13. LIGHT & DARK MODE LOGIC
-// ==============================
+// LIGHT & DARK MODE
 function initThemeToggle() {
   const themeToggleBtn = document.getElementById("theme-toggle-btn");
   const themeIcon = document.getElementById("theme-icon");
-
   const savedTheme = localStorage.getItem("app_theme") || "dark";
   
   if (savedTheme === "light") {
@@ -1643,40 +1456,15 @@ function initThemeToggle() {
     themeToggleBtn.addEventListener("click", () => {
       document.body.classList.toggle("light-mode");
       const isLight = document.body.classList.contains("light-mode");
-
-      if (isLight) {
-        if (themeIcon) themeIcon.textContent = "☀️️";
-        localStorage.setItem("app_theme", "light");
-      } else {
-        if (themeIcon) themeIcon.textContent = "🌙";
-        localStorage.setItem("app_theme", "dark");
-      }
+      if (themeIcon) themeIcon.textContent = isLight ? "☀️" : "🌙";
+      localStorage.setItem("app_theme", isLight ? "light" : "dark");
     });
   }
 }
 
-// =========================================
-// 14. DRAWER NAVIGATION & HISTORY API
-// =========================================
-const mobileHamburgerBtn = document.getElementById("mobile-hamburger-btn");
-const mobileNavOverlay = document.getElementById("mobile-nav-overlay");
-const closeMobileNavBtn = document.getElementById("close-mobile-nav");
-
-function openDrawer() { if (mobileNavOverlay) mobileNavOverlay.classList.add("open"); }
-function closeDrawer() { if (mobileNavOverlay) mobileNavOverlay.classList.remove("open"); }
-
-if (mobileHamburgerBtn) mobileHamburgerBtn.addEventListener("click", openDrawer);
-if (closeMobileNavBtn) closeMobileNavBtn.addEventListener("click", closeDrawer);
-
-if (mobileNavOverlay) {
-  mobileNavOverlay.addEventListener("click", (e) => {
-    if (e.target === mobileNavOverlay) closeDrawer();
-  });
-}
-
+// NAVIGATION
 function switchTab(tabName, pushToHistory = true) {
   closePublicProfile();
-
   const views = {
     home: document.getElementById("tab-home-view"),
     posts: document.getElementById("tab-posts-view"),
@@ -1686,19 +1474,11 @@ function switchTab(tabName, pushToHistory = true) {
     admin: document.getElementById("tab-admin-view")
   };
 
-  Object.keys(views).forEach(key => {
-    if (views[key]) views[key].style.display = "none";
-  });
-
+  Object.keys(views).forEach(key => { if (views[key]) views[key].style.display = "none"; });
   document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.remove("active"));
 
   if (views[tabName]) views[tabName].style.display = "block";
-
-  document.querySelectorAll(`.nav-btn[data-tab="${tabName}"]`).forEach(btn => {
-    btn.classList.add("active");
-  });
-
-  closeDrawer();
+  document.querySelectorAll(`.nav-btn[data-tab="${tabName}"]`).forEach(btn => btn.classList.add("active"));
 
   if (pushToHistory) history.pushState({ tab: tabName }, "", `#${tabName}`);
 }
@@ -1711,32 +1491,11 @@ document.addEventListener("click", (e) => {
   }
 });
 
-const btnSeeMore = document.getElementById("btn-see-more-posts");
-if (btnSeeMore) btnSeeMore.addEventListener("click", () => switchTab("posts", true));
-
-window.addEventListener("popstate", (event) => {
-  if (mobileNavOverlay && mobileNavOverlay.classList.contains("open")) {
-    closeDrawer();
-    return;
-  }
-
-  const publicCard = document.getElementById("public-profile-card");
-  if (publicCard && publicCard.style.display !== "none") {
-    closePublicProfile();
-    return;
-  }
-
-  if (event.state && event.state.tab) switchTab(event.state.tab, false);
-  else if (window.location.hash) switchTab(window.location.hash.replace("#", ""), false);
-  else switchTab("home", false);
-});
-
 document.addEventListener("DOMContentLoaded", () => {
   function updateClock() {
     const clockEl = document.getElementById("live-time");
     if (clockEl) {
-      const now = new Date();
-      clockEl.textContent = now.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Asia/Jakarta' });
+      clockEl.textContent = new Date().toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Asia/Jakarta' });
     }
   }
   setInterval(updateClock, 1000);
@@ -1747,166 +1506,3 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 initThemeToggle();
-
-// =========================================
-// 15. INTEGRASI FITUR TOKO FISIK & KUSTOMISASI AVATAR (TAMBAHAN UTUH)
-// =========================================
-const btnCustomAvatar = document.getElementById("btn-custom-avatar");
-const avatarCustomModal = document.getElementById("avatar-custom-modal");
-const closeAvatarCustomModal = document.getElementById("close-avatar-custom-modal");
-const btnSaveAvatarConfig = document.getElementById("btn-save-avatar-config");
-
-if (btnCustomAvatar) {
-  btnCustomAvatar.removeAttribute("disabled");
-  btnCustomAvatar.style.opacity = "1";
-  btnCustomAvatar.addEventListener("click", async () => {
-    if (avatarCustomModal) avatarCustomModal.style.display = "flex";
-    if (currentUserId) await loadUserAvatarConfig(currentUserId);
-
-    const adminAddBox = document.getElementById("admin-add-accessory-box");
-    if (adminAddBox) {
-      if (currentUserRole === "admin" || currentUserRole === "adm1n") {
-        adminAddBox.style.display = "block";
-      } else {
-        adminAddBox.style.display = "none";
-      }
-    }
-  });
-}
-
-if (closeAvatarCustomModal) {
-  closeAvatarCustomModal.addEventListener("click", () => {
-    if (avatarCustomModal) avatarCustomModal.style.display = "none";
-  });
-}
-
-if (btnSaveAvatarConfig) {
-  btnSaveAvatarConfig.addEventListener("click", async () => {
-    if (currentUserId) await saveUserAvatarConfig(currentUserId);
-  });
-}
-
-document.addEventListener("click", (e) => {
-  const opt = e.target.closest(".avatar-option-btn");
-  if (opt) {
-    const type = opt.getAttribute("data-type");
-    const val = opt.getAttribute("data-val");
-
-    if (type && val !== null) {
-      currentAvatarConfig[type] = val;
-      renderAvatarDisplay();
-    }
-  }
-});
-
-const btnSubmitNewAccessory = document.getElementById("btn-submit-new-accessory");
-if (btnSubmitNewAccessory) {
-  btnSubmitNewAccessory.addEventListener("click", async () => {
-    const name = document.getElementById("acc-name").value.trim();
-    const cat = document.getElementById("acc-category").value;
-    const price = parseInt(document.getElementById("acc-price").value) || 0;
-    const asset = document.getElementById("acc-asset").value.trim();
-
-    if (!name || !asset) {
-      alert("Lengkapi nama dan ikon/asset item!");
-      return;
-    }
-
-    const ok = await addNewCatalogItem(name, cat, price, asset);
-    if (ok) {
-      document.getElementById("acc-name").value = "";
-      document.getElementById("acc-asset").value = "";
-    }
-  });
-}
-
-const btnOpenShopModal = document.getElementById("btn-open-shop-modal");
-const shopModal = document.getElementById("shop-modal");
-const closeShopModal = document.getElementById("close-shop-modal");
-
-if (btnOpenShopModal) {
-  btnOpenShopModal.addEventListener("click", async () => {
-    if (shopModal) shopModal.style.display = "flex";
-    await renderRealItems();
-  });
-}
-
-if (closeShopModal) {
-  closeShopModal.addEventListener("click", () => {
-    if (shopModal) shopModal.style.display = "none";
-  });
-}
-
-const btnAdminPublishShop = document.getElementById("btn-admin-publish-shop");
-const publishShopModal = document.getElementById("publish-shop-modal");
-const closePublishShopModal = document.getElementById("close-publish-shop-modal");
-const btnSubmitPublishShop = document.getElementById("btn-submit-publish-shop");
-
-if (btnAdminPublishShop) {
-  btnAdminPublishShop.addEventListener("click", () => {
-    if (publishShopModal) publishShopModal.style.display = "flex";
-  });
-}
-
-if (closePublishShopModal) {
-  closePublishShopModal.addEventListener("click", () => {
-    if (publishShopModal) publishShopModal.style.display = "none";
-  });
-}
-
-if (btnSubmitPublishShop) {
-  btnSubmitPublishShop.addEventListener("click", async () => {
-    const title = document.getElementById("publish-title").value.trim();
-    const desc = document.getElementById("publish-desc").value.trim();
-    const points = parseInt(document.getElementById("publish-points").value);
-    const stock = parseInt(document.getElementById("publish-stock").value);
-    const fileInput = document.getElementById("publish-img-file");
-    const file = fileInput ? fileInput.files[0] : null;
-
-    if (!title || isNaN(points) || isNaN(stock)) {
-      alert("Harap lengkapi judul, poin, dan stok!");
-      return;
-    }
-
-    btnSubmitPublishShop.textContent = "Menerbitkan...";
-    btnSubmitPublishShop.disabled = true;
-
-    const success = await publishRealItem(currentUserId, title, desc, points, stock, file);
-    if (success) {
-      alert("✅ Barang berhasil dipublish ke toko!");
-      document.getElementById("publish-title").value = "";
-      document.getElementById("publish-desc").value = "";
-      document.getElementById("publish-points").value = "";
-      document.getElementById("publish-stock").value = "";
-      if (fileInput) fileInput.value = "";
-      if (publishShopModal) publishShopModal.style.display = "none";
-      await renderRealItems();
-    }
-
-    btnSubmitPublishShop.textContent = "Publish Barang";
-    btnSubmitPublishShop.disabled = false;
-  });
-}
-
-document.addEventListener("click", async (e) => {
-  if (e.target.classList.contains("btn-redeem-real")) {
-    const itemId = e.target.getAttribute("data-id");
-    const price = parseInt(e.target.getAttribute("data-price"));
-    const stock = parseInt(e.target.getAttribute("data-stock"));
-    const currentPoints = currentEmployeeData ? (currentEmployeeData.points || 0) : 0;
-
-    if (stock <= 0) {
-      alert("Maaf, stok barang ini sudah habis!");
-      return;
-    }
-
-    const confirmRedeem = confirm(`Tukarkan ${price} Poin Vihara untuk barang ini?`);
-    if (!confirmRedeem) return;
-
-    const success = await redeemRealItem(currentUserId, itemId, price, currentPoints);
-    if (success) {
-      await loadUserProfile();
-      await renderRealItems();
-    }
-  }
-});
