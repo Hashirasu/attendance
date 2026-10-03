@@ -427,7 +427,7 @@ async function loadUserAchievements() {
 }
 
 // =========================================
-// 4. SISTEM FRIENDS, PROFIL & CHATBOX
+// 4. SISTEM FRIENDS, PROFIL & COUNTER LOGIC
 // =========================================
 async function loadFriendsSystem() {
   const container = document.getElementById("search-friends-results");
@@ -468,8 +468,8 @@ async function loadFriendsSystem() {
           btnHTML = `<button class="btn-friend-action btn-friend-pending" disabled>Pending</button>`;
         } else {
           btnHTML = `
-            <button class="btn-friend-action btn-friend-accept" data-id="${rel.id}">Accept</button>
-            <button class="btn-friend-action btn-friend-reject" data-id="${rel.id}">Reject</button>
+            <button class="btn-friend-action btn-friend-accept" data-id="${rel.id}" data-sender="${rel.user_id}">Accept</button>
+            <button class="btn-friend-action btn-friend-reject" data-id="${rel.id}" data-sender="${rel.user_id}">Reject</button>
           `;
         }
       } else if (rel.status === "accepted") {
@@ -502,29 +502,80 @@ async function loadFriendsSystem() {
   }
 }
 
-// VIEW PUBLIC PROFILE ANGOTA LAIN
+// HITUNG FRIENDS & FOLLOWING USER SECARA REAL-TIME
+async function getUserSocialStats(targetUserId) {
+  // Friends = total pertemanan yang berstatus 'accepted'
+  const { data: acceptedRel } = await supabase
+    .from("friendships")
+    .select("id")
+    .or(`user_id.eq.${targetUserId},friend_id.eq.${targetUserId}`)
+    .eq("status", "accepted");
+
+  // Following = total pertemanan yang kita kirimkan add request (pending) + pertemanan accepted
+  const { data: followingRel } = await supabase
+    .from("friendships")
+    .select("id")
+    .or(`user_id.eq.${targetUserId},and(friend_id.eq.${targetUserId},status.eq.accepted)`);
+
+  return {
+    friendsCount: acceptedRel ? acceptedRel.length : 0,
+    followingCount: followingRel ? followingRel.length : 0
+  };
+}
+
+// BUKA PROFIL PUBLIK ANGGOTA LAIN & TAMPILKAN TOMBOL ADD DI PROFIL
 async function openPublicProfile(targetUserId) {
   const publicCard = document.getElementById("public-profile-card");
-  const searchResults = document.getElementById("search-friends-results");
-  const searchInput = document.getElementById("search-friend-input");
+  const searchContainer = document.getElementById("friends-search-container");
+  const actionBtnBox = document.getElementById("public-action-btn-box");
 
   if (!publicCard) return;
 
   const { data: u } = await supabase.from("employees").select("*").eq("id", targetUserId).single();
   if (!u) return;
 
-  const { data: friendsList } = await supabase.from("friendships").select("id").or(`user_id.eq.${targetUserId},friend_id.eq.${targetUserId}`).eq("status", "accepted");
-  const { data: attCount } = await supabase.from("attendance").select("id", { count: "exact", head: true }).eq("employee_id", targetUserId);
+  // Cek relasi kita dengan target user ini
+  const { data: rel } = await supabase
+    .from("friendships")
+    .select("*")
+    .or(`and(user_id.eq.${currentUserId},friend_id.eq.${targetUserId}),and(user_id.eq.${targetUserId},friend_id.eq.${currentUserId})`)
+    .maybeSingle();
+
+  const stats = await getUserSocialStats(targetUserId);
 
   document.getElementById("public-avatar-img").src = u.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${u.name}`;
   document.getElementById("public-name-text").textContent = u.name;
   document.getElementById("public-code-text").textContent = `Kode: ${u.employee_code}`;
   document.getElementById("public-bio-text").textContent = `"${u.bio || 'Halo, salam kenal!'}"`;
-  document.getElementById("public-friends-count").textContent = friendsList ? friendsList.length : 0;
-  document.getElementById("public-following-count").textContent = friendsList ? friendsList.length : 0;
+  document.getElementById("public-friends-count").textContent = stats.friendsCount;
+  document.getElementById("public-following-count").textContent = stats.followingCount;
+
+  // Render tombol aksi di dalam profil publik
+  if (actionBtnBox) {
+    actionBtnBox.innerHTML = "";
+    let btnHTML = "";
+
+    if (!rel) {
+      btnHTML = `<button class="btn-friend-action btn-friend-add" style="padding: 10px 24px; font-size: 13px;" data-id="${u.id}">+ Add</button>`;
+    } else if (rel.status === "pending") {
+      if (rel.user_id === currentUserId) {
+        btnHTML = `<button class="btn-friend-action btn-friend-pending" style="padding: 10px 24px; font-size: 13px;" disabled>Pending</button>`;
+      } else {
+        btnHTML = `
+          <button class="btn-friend-action btn-friend-accept" style="padding: 10px 20px; font-size: 13px;" data-id="${rel.id}" data-sender="${rel.user_id}">Accept</button>
+          <button class="btn-friend-action btn-friend-reject" style="padding: 10px 20px; font-size: 13px;" data-id="${rel.id}" data-sender="${rel.user_id}">Reject</button>
+        `;
+      }
+    } else if (rel.status === "accepted") {
+      btnHTML = `<button class="btn-friend-action btn-friend-msg" style="padding: 10px 24px; font-size: 13px;" data-id="${u.id}" data-name="${u.name}" data-avatar="${u.avatar_url || ''}">Message</button>`;
+    }
+    actionBtnBox.innerHTML = btnHTML;
+  }
 
   const achievementsBox = document.getElementById("public-achievements-container");
+  const { count: attCount } = await supabase.from("attendance").select("id", { count: "exact", head: true }).eq("employee_id", targetUserId);
   const totalAbsen = attCount || 0;
+
   achievementsBox.innerHTML = `
     <div class="badge-card ${totalAbsen >= 10 ? 'unlocked' : 'locked'}">
       <div class="badge-icon">🌱</div>
@@ -542,17 +593,24 @@ async function openPublicProfile(targetUserId) {
     </div>
   `;
 
-  if (searchResults) searchResults.style.display = "none";
-  if (searchInput) searchInput.style.display = "none";
+  if (searchContainer) searchContainer.style.display = "none";
   publicCard.style.display = "block";
+
+  // Push state ke browser history khusus untuk profil publik agar tombol HP 'Back' dapat menutup profil ini
+  history.pushState({ view: "public_profile", targetUserId }, "", `#profile-${targetUserId}`);
+}
+
+function closePublicProfile() {
+  const publicCard = document.getElementById("public-profile-card");
+  const searchContainer = document.getElementById("friends-search-container");
+  if (publicCard) publicCard.style.display = "none";
+  if (searchContainer) searchContainer.style.display = "block";
 }
 
 const btnBackFriends = document.getElementById("btn-back-friends-list");
 if (btnBackFriends) {
   btnBackFriends.addEventListener("click", () => {
-    document.getElementById("public-profile-card").style.display = "none";
-    document.getElementById("search-friends-results").style.display = "flex";
-    document.getElementById("search-friend-input").style.display = "block";
+    history.back(); // Otomatis trigger event popstate untuk kembali ke list friends
   });
 }
 
@@ -598,11 +656,12 @@ document.addEventListener("click", async (e) => {
   if (userInfoBox) {
     const uId = userInfoBox.getAttribute("data-user-id");
     if (uId) {
-      switchTab("friends", true);
+      switchTab("friends", false);
       await openPublicProfile(uId);
     }
   }
 
+  // 1. TAMBAH TEMAN (+ ADD)
   if (e.target.classList.contains("btn-friend-add")) {
     const btn = e.target;
     const friendId = btn.getAttribute("data-id");
@@ -610,7 +669,10 @@ document.addEventListener("click", async (e) => {
     btn.className = "btn-friend-action btn-friend-pending";
     btn.textContent = "Pending";
 
+    // Simpan ke database
     await supabase.from("friendships").insert({ user_id: currentUserId, friend_id: friendId, status: "pending" });
+    
+    // Kirim notifikasi ke user penerima
     await supabase.from("notifications").insert({
       user_id: friendId,
       sender_id: currentUserId,
@@ -618,20 +680,51 @@ document.addEventListener("click", async (e) => {
       title: "Permintaan Pertemanan Baru",
       body: "Mengirimkan permintaan pertemanan."
     });
+
+    await Promise.all([loadFriendsSystem(), loadNotificationsSystem()]);
+    
+    // Jika sedang di dalam profil publik target, update status UI profilnya
+    const publicCard = document.getElementById("public-profile-card");
+    if (publicCard && publicCard.style.display !== "none") {
+      await openPublicProfile(friendId);
+    }
   }
 
+  // 2. ACCEPT PERMINTAAN TEMAN
   if (e.target.classList.contains("btn-friend-accept")) {
     const relId = e.target.getAttribute("data-id");
     await supabase.from("friendships").update({ status: "accepted" }).eq("id", relId);
+
+    // Hapus/update notifikasi terkait
+    await supabase.from("notifications").delete().eq("user_id", currentUserId).eq("type", "friend_request");
+
     await Promise.all([loadFriendsSystem(), loadMyFriendsList(), loadNotificationsSystem()]);
+
+    const publicCard = document.getElementById("public-profile-card");
+    if (publicCard && publicCard.style.display !== "none") {
+      const senderId = e.target.getAttribute("data-sender");
+      if (senderId) await openPublicProfile(senderId);
+    }
   }
 
+  // 3. REJECT PERMINTAAN TEMAN
   if (e.target.classList.contains("btn-friend-reject")) {
     const relId = e.target.getAttribute("data-id");
     await supabase.from("friendships").delete().eq("id", relId);
+
+    // Hapus notifikasi
+    await supabase.from("notifications").delete().eq("user_id", currentUserId).eq("type", "friend_request");
+
     await Promise.all([loadFriendsSystem(), loadNotificationsSystem()]);
+
+    const publicCard = document.getElementById("public-profile-card");
+    if (publicCard && publicCard.style.display !== "none") {
+      const senderId = e.target.getAttribute("data-sender");
+      if (senderId) await openPublicProfile(senderId);
+    }
   }
 
+  // 4. BUKA CHATBOX (MESSAGE)
   if (e.target.classList.contains("btn-friend-msg")) {
     const fId = e.target.getAttribute("data-id");
     const fName = e.target.getAttribute("data-name");
@@ -748,8 +841,8 @@ async function loadNotificationsSystem() {
     if (n.type === "friend_request") {
       actionsHTML = `
         <div class="notif-actions">
-          <button class="btn-friend-action btn-friend-accept" data-id="${n.id}">Accept</button>
-          <button class="btn-friend-action btn-friend-reject" data-id="${n.id}">Reject</button>
+          <button class="btn-friend-action btn-friend-accept" data-id="${n.id}" data-sender="${n.sender_id}">Accept</button>
+          <button class="btn-friend-action btn-friend-reject" data-id="${n.id}" data-sender="${n.sender_id}">Reject</button>
         </div>
       `;
     }
@@ -759,6 +852,16 @@ async function loadNotificationsSystem() {
       <div class="notif-item-body">${n.body}</div>
       ${actionsHTML}
     `;
+    
+    // Redirect ke profil saat notifikasi diklik
+    item.querySelector(".notif-item-title").addEventListener("click", async () => {
+      if (n.sender_id) {
+        notifDropdown.style.display = "none";
+        switchTab("friends", false);
+        await openPublicProfile(n.sender_id);
+      }
+    });
+
     container.appendChild(item);
   });
 }
@@ -1560,6 +1663,8 @@ if (mobileNavOverlay) {
 }
 
 function switchTab(tabName, pushToHistory = true) {
+  closePublicProfile(); // Selalu tutup profil publik jika berpindah tab
+
   const views = {
     home: document.getElementById("tab-home-view"),
     posts: document.getElementById("tab-posts-view"),
@@ -1597,9 +1702,18 @@ document.addEventListener("click", (e) => {
 const btnSeeMore = document.getElementById("btn-see-more-posts");
 if (btnSeeMore) btnSeeMore.addEventListener("click", () => switchTab("posts", true));
 
+// NATIVE BACK BUTTON LOGIC PADA TELEPON / BROWSER
 window.addEventListener("popstate", (event) => {
   if (mobileNavOverlay && mobileNavOverlay.classList.contains("open")) {
     closeDrawer();
+    return;
+  }
+
+  const publicCard = document.getElementById("public-profile-card");
+  
+  // Jika profil publik sedang terbuka dan user pencet Back di HP
+  if (publicCard && publicCard.style.display !== "none") {
+    closePublicProfile();
     return;
   }
 
