@@ -377,31 +377,39 @@ async function loadUserProfile() {
   }
 }
 
-// RENDER PAJANGAN 3 POKEMON PROFIL SAYA
+// RENDER KANDANG & HABITAT ANIMASI 3 POKEMON PROFIL SAYA
 async function renderMyPokemonShowcase(userId) {
-  const container = document.getElementById("my-pokemon-showcase");
-  if (!container) return;
+  const stage = document.getElementById("pokemon-habitat-stage");
+  const container = document.getElementById("habitat-pokemon-container");
+  if (!container || !stage) return;
 
-  const { data: showcase } = await supabase.from("user_pokemon_showcase").select("pokemon_id, slot_index").eq("user_id", userId);
+  // Set background kandang sesuai active_scenery_url
+  if (currentEmployeeData && currentEmployeeData.active_scenery_url) {
+    stage.style.backgroundImage = `url('${currentEmployeeData.active_scenery_url}')`;
+  }
+
+  const { data: showcase } = await supabase
+    .from("user_pokemon_showcase")
+    .select("pokemon_id, slot_index")
+    .eq("user_id", userId);
   
   container.innerHTML = "";
-  for (let i = 0; i < 3; i++) {
-    const slot = (showcase || []).find(s => s.slot_index === i);
-    const pokeObj = slot ? ALL_SHOP_POKEMON.find(p => p.id === slot.pokemon_id) : null;
 
-    const div = document.createElement("div");
-    if (pokeObj) {
-      div.className = "pokemon-slot filled";
-      div.innerHTML = `
-        <img src="${pokeObj.img}" alt="${pokeObj.name}">
-        <span>${pokeObj.name}</span>
-      `;
-    } else {
-      div.className = "pokemon-slot empty";
-      div.innerHTML = `<span>+ Kosong (Slot ${i+1})</span>`;
-    }
-    container.appendChild(div);
+  if (!showcase || showcase.length === 0) {
+    container.innerHTML = `<div style="display:flex; height:100%; align-items:center; justify-content:center; color:white; text-shadow:0 2px 4px rgba(0,0,0,0.8); font-size:12px; font-weight:700;">🐾 Kandang masih kosong. Buka Pokédex untuk melepas Pokémon di sini!</div>`;
+    return;
   }
+
+  showcase.forEach((slot) => {
+    const pokeObj = ALL_SHOP_POKEMON.find(p => p.id === slot.pokemon_id);
+    if (pokeObj) {
+      const img = document.createElement("img");
+      img.src = pokeObj.img;
+      img.className = "animated-habitat-poke";
+      img.title = `Pokémon #${pokeObj.pokedexNum}`;
+      container.appendChild(img);
+    }
+  });
 }
 
 async function loadUserAchievements() {
@@ -1177,40 +1185,6 @@ if (closePokedexModal) {
   });
 }
 
-// RENDER KANDANG & HABITAT ANIMASI 3 POKEMON PROFIL SAYA
-async function renderMyPokemonShowcase(userId) {
-  const stage = document.getElementById("pokemon-habitat-stage");
-  const container = document.getElementById("habitat-pokemon-container");
-  if (!container || !stage) return;
-
-  // Set background kandang sesuai active_scenery_url
-  if (currentEmployeeData && currentEmployeeData.active_scenery_url) {
-    stage.style.backgroundImage = `url('${currentEmployeeData.active_scenery_url}')`;
-  }
-
-  const { data: showcase } = await supabase
-    .from("user_pokemon_showcase")
-    .select("pokemon_id, slot_index")
-    .eq("user_id", userId);
-  
-  container.innerHTML = "";
-
-  if (!showcase || showcase.length === 0) {
-    container.innerHTML = `<div style="display:flex; height:100%; align-items:center; justify-content:center; color:white; text-shadow:0 2px 4px rgba(0,0,0,0.8); font-size:12px; font-weight:700;">🐾 Kandang masih kosong. Buka Pokédex untuk melepas Pokémon di sini!</div>`;
-    return;
-  }
-
-  showcase.forEach((slot) => {
-    const pokeObj = ALL_SHOP_POKEMON.find(p => p.id === slot.pokemon_id);
-    if (pokeObj) {
-      const img = document.createElement("img");
-      img.src = pokeObj.img;
-      img.className = "animated-habitat-poke";
-      img.title = `Pokémon #${pokeObj.pokedexNum}`;
-      container.appendChild(img);
-    }
-  });
-}
 
 document.addEventListener("click", async (e) => {
   if (e.target.classList.contains("btn-toggle-showcase")) {
