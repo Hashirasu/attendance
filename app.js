@@ -2,7 +2,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 import { 
   ALL_SHOP_POKEMON, ensureFreeStarterPokemon,
   publishRealItem, redeemRealItem, renderRealItems,
-  renderPokemonShop, buyPokemon, loadItemRedemptions, deleteRealItem
+  renderPokemonShop, buyPokemon, loadItemRedemptions, deleteRealItem, approveRedemption
 } from "./shop.js";
 
 const SUPABASE_URL = "https://njdrnrnnlsrxdyugmsww.supabase.co"; 
@@ -292,7 +292,7 @@ function showLoginSection() {
 }
 
 // ==============================
-// 3. LOAD USER PROFILE
+// 3. LOAD USER PROFILE & REALTIME POIN
 // ==============================
 async function loadUserProfile() {
   const { data: { user } } = await supabase.auth.getUser();
@@ -446,7 +446,7 @@ async function loadUserAchievements() {
 }
 
 // ==========================================================
-// 4. REALTIME PERTEMANAN, CHAT & POKEMON PLAYGROUND
+// 4. REALTIME PERTEMANAN, CHAT, POIN & POKEMON PLAYGROUND
 // ==========================================================
 function setupRealtimeListeners() {
   if (!currentUserId) return;
@@ -462,9 +462,20 @@ function setupRealtimeListeners() {
       }
     })
     .on("postgres_changes", { event: "*", schema: "public", table: "direct_messages" }, async (payload) => {
-      const newMsg = payload.new;
-      if (activeChatFriendId && (newMsg.sender_id === activeChatFriendId || newMsg.receiver_id === activeChatFriendId)) {
+      const msg = payload.new || payload.old;
+      if (!msg) return;
+
+      // Update realtime chat jika pesan ditujukan atau dikirim oleh kawan aktif
+      if (activeChatFriendId && (msg.sender_id === activeChatFriendId || msg.receiver_id === activeChatFriendId)) {
         await loadChatMessages();
+      }
+    })
+    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "employees", filter: `id=eq.${currentUserId}` }, (payload) => {
+      // Realtime POIN update
+      if (payload.new && payload.new.points !== undefined) {
+        if (currentEmployeeData) currentEmployeeData.points = payload.new.points;
+        const profilePagePoints = document.getElementById("profile-page-points");
+        if (profilePagePoints) profilePagePoints.textContent = payload.new.points;
       }
     })
     .on("postgres_changes", { event: "*", schema: "public", table: "user_pokemon_showcase" }, async (payload) => {
@@ -838,7 +849,7 @@ document.addEventListener("click", async (e) => {
 });
 
 // =========================================
-// 6. CHAT WINDOW & MESSAGES
+// 6. CHAT WINDOW & MESSAGES (REALTIME & READ TICK)
 // =========================================
 async function openChatWindow(friendId, friendName, friendAvatar) {
   activeChatFriendId = friendId;
@@ -847,6 +858,7 @@ async function openChatWindow(friendId, friendName, friendAvatar) {
   document.getElementById("chat-target-avatar").src = (friendAvatar && friendAvatar.trim() !== "") ? friendAvatar : DEFAULT_AVATAR;
   chatWin.style.display = "flex";
 
+  // Mark Read Segera saat window dibuka
   await supabase.from("direct_messages").update({ is_read: true }).eq("sender_id", friendId).eq("receiver_id", currentUserId).eq("is_read", false);
   await loadChatMessages();
 }
@@ -861,6 +873,7 @@ async function loadChatMessages() {
   const body = document.getElementById("chat-messages-body");
   if (!body || !activeChatFriendId || !currentUserId) return;
 
+  // Mark sebagai Read saat membaca chat
   await supabase.from("direct_messages").update({ is_read: true }).eq("sender_id", activeChatFriendId).eq("receiver_id", currentUserId).eq("is_read", false);
 
   const { data: msgs, error } = await supabase
@@ -1353,10 +1366,14 @@ document.addEventListener("click", async (e) => {
     }
   }
 
+  // POKEMON ADOPTION FIX (Realtime Instan Tanpa Refresh)
   if (e.target.classList.contains("btn-buy-pokemon")) {
-    const pokeId = e.target.getAttribute("data-id");
-    const price = parseInt(e.target.getAttribute("data-price"));
-    const name = e.target.getAttribute("data-name");
+    const btn = e.target;
+    if (btn.disabled) return;
+
+    const pokeId = btn.getAttribute("data-id");
+    const price = parseInt(btn.getAttribute("data-price"));
+    const name = btn.getAttribute("data-name");
     const currentPoints = currentEmployeeData ? (currentEmployeeData.points || 0) : 0;
 
     if (currentPoints < price) {
@@ -1365,11 +1382,21 @@ document.addEventListener("click", async (e) => {
     }
 
     if (confirm(`Adopsi ${name} seharga ${price} Poin?`)) {
+      btn.disabled = true;
+      btn.textContent = "⏳ Memproses...";
+
       const ok = await buyPokemon(currentUserId, pokeId, price, name, currentPoints);
       if (ok) {
+        // Langsung ubah UI Tombol secara realtime
+        btn.textContent = "Adopted (Max 1)";
+        btn.style.background = "#10b981";
+        btn.style.color = "white";
+        btn.style.cursor = "not-allowed";
+
         await loadUserProfile();
-        const searchVal = searchPokeInput ? searchPokeInput.value.trim() : "";
-        await renderPokemonShop(currentUserId, currentEmployeeData.points, searchVal);
+      } else {
+        btn.disabled = false;
+        btn.textContent = "🐾 Adopsi";
       }
     }
   }
@@ -1407,14 +1434,34 @@ document.addEventListener("click", async (e) => {
         logs.forEach(l => {
           const emp = l.employees || {};
           const time = new Date(l.created_at).toLocaleString("id-ID");
+          const isPending = l.status === "pending";
+
           container.innerHTML += `
-            <div style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.1); font-size:12px;">
-              <strong>${emp.name || 'Member'}</strong> (${emp.employee_code || '-'})<br>
-              <span style="color:var(--text-sub);">Menukar: ${l.quantity}x (${l.total_points} Poin)</span><br>
-              <span style="font-size:10px; color:var(--text-sub);">${time}</span>
+            <div style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.1); font-size:12px; display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <strong>${emp.name || 'Member'}</strong> (${emp.employee_code || '-'})<br>
+                <span style="color:var(--text-sub);">Menukar: ${l.quantity}x (${l.total_points} Poin)</span><br>
+                <span style="font-size:10px; color:var(--text-sub);">${time}</span>
+              </div>
+              <div>
+                ${isPending ? `<button class="btn-approve-redemption secondary-button-sm" data-red-id="${l.id}" data-item-id="${id}" style="background:#10b981; color:white; border:none; padding:4px 8px;">Acc Pengambilan</button>` : `<span style="color:#34d399; font-weight:700; font-size:10px;">Selesai</span>`}
+              </div>
             </div>
           `;
         });
+      }
+    }
+  }
+
+  if (e.target.classList.contains("btn-approve-redemption")) {
+    const redId = e.target.getAttribute("data-red-id");
+    const itemId = e.target.getAttribute("data-item-id");
+    if (confirm("Acc pengambilan barang ini? Status pending member akan hilang.")) {
+      const ok = await approveRedemption(redId);
+      if (ok) {
+        alert("✅ Berhasil disetujui!");
+        const logs = await loadItemRedemptions(itemId);
+        document.querySelector(`.btn-check-redemptions[data-id="${itemId}"]`)?.click();
       }
     }
   }
@@ -2065,7 +2112,7 @@ function initThemeToggle() {
       const isLight = document.body.classList.contains("light-mode");
 
       if (isLight) {
-        if (themeIcon) themeIcon.textContent = "☀️️";
+        if (themeIcon) themeIcon.textContent = "☀️";
         localStorage.setItem("app_theme", "light");
       } else {
         if (themeIcon) themeIcon.textContent = "🌙";
