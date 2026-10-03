@@ -334,47 +334,76 @@
         </div>
 
         <!-- PUBLIC PROFILE VIEW -->
-        <div id="public-profile-card" class="card-box" style="display: none;">
-          <div class="flex-between-center" style="margin-bottom: 12px;">
-            <button id="btn-back-friends-list" class="secondary-button-sm">⬅️ Kembali</button>
-            <span class="card-badge">Profil Anggota</span>
-          </div>
-          
-          <div id="public-profile-banner" class="profile-page-header-banner" style="background-image: url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1000&q=80');">
-            <div class="profile-main-display" style="align-items: center; text-align: center;">
-              <div class="profile-avatar-circle" style="margin: 0 auto 12px auto;">
-                <img id="public-avatar-img" src="" alt="Avatar">
-              </div>
-              <h2 id="public-name-text" class="profile-display-name">Member</h2>
-              <p id="public-code-text" class="profile-display-code">MDV-0000</p>
-              <p id="public-bio-text" class="profile-display-bio" style="margin-bottom: 16px;">"Bio..."</p>
+<div id="public-profile-card" class="card-box" style="display: none;">
+  <div class="flex-between-center" style="margin-bottom: 12px;">
+    <button id="btn-back-friends-list" class="secondary-button-sm">⬅️ Kembali</button>
+    <span class="card-badge">Profil Anggota</span>
+  </div>
+  
+  <!-- Banner tanpa background image -->
+  <div id="public-profile-banner" class="profile-page-header-banner">
+    <div class="profile-main-display" style="align-items: center; text-align: center;">
+      <div class="profile-avatar-circle" style="margin: 0 auto 12px auto;">
+        <img id="public-avatar-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23cccccc'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/></svg>" alt="Avatar">
+      </div>
+      <h2 id="public-name-text" class="profile-display-name">Member</h2>
+      <p id="public-code-text" class="profile-display-code">MDV-0000</p>
+      <p id="public-bio-text" class="profile-display-bio" style="margin-bottom: 16px;">"Bio..."</p>
 
-              <div class="public-stats-row">
-                <div class="stat-col">
-                  <strong id="public-friends-count">0</strong>
-                  <span>Friends</span>
-                </div>
-                <div class="stat-col">
-                  <strong id="public-following-count">0</strong>
-                  <span>Following</span>
-                </div>
-              </div>
-
-              <div id="public-action-btn-box" style="margin-top: 16px; width: 100%; display: flex; justify-content: center; gap: 8px;"></div>
-            </div>
-          </div>
-
-          <!-- PUBLIC POKEMON DISPLAY -->
-          <div style="margin-top: 20px;">
-            <h4 class="section-heading" style="margin-bottom: 10px;">🐾 Pokémon Pajangan</h4>
-            <div id="public-pokemon-showcase" class="pokemon-showcase-grid"></div>
-          </div>
-
-          <div style="margin-top: 20px;">
-            <h4 class="section-heading" style="margin-bottom: 10px;">🏆 Achievements</h4>
-            <div id="public-achievements-container" class="achievement-list"></div>
-          </div>
+      <div class="public-stats-row">
+        <div class="stat-col">
+          <strong id="public-friends-count">0</strong>
+          <span>Friends</span>
         </div>
+        <div class="stat-col">
+          <strong id="public-following-count">0</strong>
+          <span>Following</span>
+        </div>
+      </div>
+
+      <div id="public-action-btn-box" style="margin-top: 16px; width: 100%; display: flex; justify-content: center; gap: 8px;"></div>
+    </div>
+  </div>
+
+  <!-- PUBLIC POKEMON DISPLAY -->
+  <div style="margin-top: 20px;">
+    <h4 class="section-heading" style="margin-bottom: 10px;">🐾 Pokémon Pajangan</h4>
+    <div id="public-pokemon-showcase" class="pokemon-showcase-grid"></div>
+  </div>
+
+  <div style="margin-top: 20px;">
+    <h4 class="section-heading" style="margin-bottom: 10px;">🏆 Achievements</h4>
+    <div id="public-achievements-container" class="achievement-list"></div>
+  </div>
+</div>
+
+<!-- TAB 5: PROFILE SAYA -->
+<section id="tab-profile-view" class="tab-content" style="display: none;">
+  <!-- Banner tanpa background image -->
+  <div id="my-profile-banner" class="profile-page-header-banner">
+    <div class="profile-main-display">
+      <div class="profile-avatar-circle">
+        <img id="profile-page-avatar" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23cccccc'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/></svg>" alt="Avatar">
+        <label for="upload-avatar-file" class="avatar-edit-overlay" title="Ganti Foto Profil">📷</label>
+        <input type="file" id="upload-avatar-file" accept="image/*" style="display: none;">
+      </div>
+
+      <h2 id="profile-page-name" class="profile-display-name">Member</h2>
+      <p id="profile-page-code" class="profile-display-code">MDV-0000</p>
+
+      <div class="profile-badge-row">
+        <div class="points-pill">
+          🪙 <span id="profile-page-points">0</span> Poin Vihara
+        </div>
+        <button id="btn-open-edit-bio-modal" class="secondary-button-sm">✏️ Edit Bio</button>
+        <button id="btn-open-shop-modal" class="secondary-button-sm" style="background: #f59e0b; color: white; border: none;">🛒 Toko Vihara</button>
+      </div>
+
+      <p id="profile-page-bio" class="profile-display-bio">
+        "Halo, salam kenal ya!"
+      </p>
+    </div>
+  </div>
       </section>
 
       <!-- TAB 5: PROFILE SAYA -->
