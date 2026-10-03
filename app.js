@@ -1827,3 +1827,14 @@ document.addEventListener("click", async (e) => {
     await toggleEquipItem(currentUserId, itemId, type, false);
   }
 });
+
+
+// Listener untuk tombol Buka Toko dari profil
+const btnOpenShopModal = document.getElementById("btn-open-shop-modal");
+if (btnOpenShopModal) {
+  btnOpenShopModal.addEventListener("click", async () => {
+    if (!currentUserId) return;
+    if (shopModal) shopModal.style.display = "flex";
+    await loadUserShopData(currentUserId);
+  });
+}
