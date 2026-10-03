@@ -211,7 +211,7 @@ export async function redeemRealItem(userId, itemId, quantity, totalPoints, curr
     user_id: userId, item_id: itemId, quantity: quantity, total_points: totalPoints, status: "pending"
   });
 
-  alert(`🎁 Berhasil menukarkan ${quantity}x ${item.title}! Status penukaran sekarang 'Pending' menunggu pengambilan.`);
+  alert(`🎁 Berhasil menukarkan ${quantity}x ${item.title}! Status penukaran kamu sekarang 'Pending' sampai barang diambil.`);
   return true;
 }
 
@@ -261,11 +261,11 @@ export async function renderPokemonShop(userId, currentPoints, searchFilter = ""
 
 export async function buyPokemon(userId, pokemonId, price, name, currentPoints) {
   if (currentPoints < price) {
-    alert(`Poin kamu tidak cukup untuk mengadopsi ${name}!`);
+    alert(`Poin kamu tidak cukup untuk mengadopsi ${name}! Harga: ${price} Poin, Poin kamu: ${currentPoints} Poin.`);
     return false;
   }
 
-  // Double Check Inventory
+  // Cek jika sudah pernah di-adopsi
   const { data: existing } = await supabase.from("user_pokemon_inventory").select("id").eq("user_id", userId).eq("pokemon_id", pokemonId).maybeSingle();
   if (existing) {
     alert(`Kamu sudah mengadopsi ${name}! (Batas maksimal 1 per Pokémon)`);

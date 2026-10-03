@@ -292,7 +292,7 @@ function showLoginSection() {
 }
 
 // ==============================
-// 3. LOAD USER PROFILE & REALTIME POIN
+// 3. LOAD USER PROFILE & REALTIME
 // ==============================
 async function loadUserProfile() {
   const { data: { user } } = await supabase.auth.getUser();
@@ -446,13 +446,14 @@ async function loadUserAchievements() {
 }
 
 // ==========================================================
-// 4. REALTIME PERTEMANAN, CHAT, POIN & POKEMON PLAYGROUND
+// 4. FULL REALTIME SYSTEM (FRIENDS, CHAT, POINTS, REDEMPTION)
 // ==========================================================
 function setupRealtimeListeners() {
   if (!currentUserId) return;
 
   supabase
     .channel("global-app-realtime")
+    // Realtime Friendship (Add, Accept, Reject, Unfollow)
     .on("postgres_changes", { event: "*", schema: "public", table: "friendships" }, async () => {
       await Promise.all([loadFriendsSystem(), loadMyFriendsList()]);
       const publicCard = document.getElementById("public-profile-card");
@@ -461,23 +462,31 @@ function setupRealtimeListeners() {
         if (activeProfileId) await openPublicProfile(activeProfileId);
       }
     })
+    // Realtime Chat & Read Status (Centang Dua Instan)
     .on("postgres_changes", { event: "*", schema: "public", table: "direct_messages" }, async (payload) => {
       const msg = payload.new || payload.old;
       if (!msg) return;
 
-      // Update realtime chat jika pesan ditujukan atau dikirim oleh kawan aktif
       if (activeChatFriendId && (msg.sender_id === activeChatFriendId || msg.receiver_id === activeChatFriendId)) {
         await loadChatMessages();
       }
     })
+    // Realtime Point Change
     .on("postgres_changes", { event: "UPDATE", schema: "public", table: "employees", filter: `id=eq.${currentUserId}` }, (payload) => {
-      // Realtime POIN update
       if (payload.new && payload.new.points !== undefined) {
         if (currentEmployeeData) currentEmployeeData.points = payload.new.points;
         const profilePagePoints = document.getElementById("profile-page-points");
         if (profilePagePoints) profilePagePoints.textContent = payload.new.points;
       }
     })
+    // Realtime Pending status pada toko fisik ketika disetujui Admin
+    .on("postgres_changes", { event: "*", schema: "public", table: "real_shop_redemptions" }, async (payload) => {
+      const shopModal = document.getElementById("shop-modal");
+      if (shopModal && shopModal.style.display !== "none") {
+        await renderRealItems(currentUserRole, currentUserId);
+      }
+    })
+    // Realtime Pokémon Showcase
     .on("postgres_changes", { event: "*", schema: "public", table: "user_pokemon_showcase" }, async (payload) => {
       if (payload.new && payload.new.user_id === currentUserId) {
         await renderMyPokemonShowcase(currentUserId);
@@ -858,7 +867,7 @@ async function openChatWindow(friendId, friendName, friendAvatar) {
   document.getElementById("chat-target-avatar").src = (friendAvatar && friendAvatar.trim() !== "") ? friendAvatar : DEFAULT_AVATAR;
   chatWin.style.display = "flex";
 
-  // Mark Read Segera saat window dibuka
+  // Tandai pesan sebagai terbaca segera saat obrolan dibuka
   await supabase.from("direct_messages").update({ is_read: true }).eq("sender_id", friendId).eq("receiver_id", currentUserId).eq("is_read", false);
   await loadChatMessages();
 }
@@ -873,7 +882,7 @@ async function loadChatMessages() {
   const body = document.getElementById("chat-messages-body");
   if (!body || !activeChatFriendId || !currentUserId) return;
 
-  // Mark sebagai Read saat membaca chat
+  // Update status terbaca secara instan
   await supabase.from("direct_messages").update({ is_read: true }).eq("sender_id", activeChatFriendId).eq("receiver_id", currentUserId).eq("is_read", false);
 
   const { data: msgs, error } = await supabase
@@ -1271,7 +1280,7 @@ async function renderMyPokemonShowcase(userId) {
 }
 
 // ==============================
-// 9. TOKO VIHARA (2 TAB SYSTEM)
+// 9. TOKO VEHARA (2 TAB SYSTEM)
 // ==============================
 const btnOpenShopModal = document.getElementById("btn-open-shop-modal");
 const shopModal = document.getElementById("shop-modal");
@@ -1366,7 +1375,7 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  // POKEMON ADOPTION FIX (Realtime Instan Tanpa Refresh)
+  // POKEMON ADOPTION FIX (Realtime & Langsung Ter-update)
   if (e.target.classList.contains("btn-buy-pokemon")) {
     const btn = e.target;
     if (btn.disabled) return;
@@ -1387,7 +1396,6 @@ document.addEventListener("click", async (e) => {
 
       const ok = await buyPokemon(currentUserId, pokeId, price, name, currentPoints);
       if (ok) {
-        // Langsung ubah UI Tombol secara realtime
         btn.textContent = "Adopted (Max 1)";
         btn.style.background = "#10b981";
         btn.style.color = "white";
