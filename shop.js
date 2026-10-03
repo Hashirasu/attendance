@@ -75,8 +75,6 @@ export async function renderRealItems(currentUserRole, currentUserId = null) {
   const container = document.getElementById("real-shop-item-list");
   if (!container) return;
 
-  container.innerHTML = "<p style='text-align:center; color:var(--text-sub); font-size:12px; grid-column:1/-1;'>Memuat barang...</p>";
-
   const items = await getRealItems();
   if (!items || items.length === 0) {
     container.innerHTML = "<p style='text-align:center; color:var(--text-sub); font-size:12px; grid-column:1/-1;'>Belum ada barang fisik untuk ditukarkan.</p>";
@@ -265,7 +263,7 @@ export async function buyPokemon(userId, pokemonId, price, name, currentPoints) 
     return false;
   }
 
-  // Cek jika sudah pernah di-adopsi
+  // Double Check Inventory
   const { data: existing } = await supabase.from("user_pokemon_inventory").select("id").eq("user_id", userId).eq("pokemon_id", pokemonId).maybeSingle();
   if (existing) {
     alert(`Kamu sudah mengadopsi ${name}! (Batas maksimal 1 per Pokémon)`);
