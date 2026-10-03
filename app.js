@@ -1576,8 +1576,9 @@ async function startQrScanner() {
           } else {
             alert("QR Code tidak valid.");
           }
-        } catch {
-          alert("Format QR tidak dikenali.");
+        } catch (err) {
+          // Hanya cetak log di konsole agar tidak memunculkan alert ganda membingungkan
+          console.warn("QR Scanner bypass / format non-URL:", err);
         }
       },
       () => {}
