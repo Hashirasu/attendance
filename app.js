@@ -2,7 +2,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 import { 
   ALL_SHOP_POKEMON, ensureFreeStarterPokemon,
   publishRealItem, redeemRealItem, renderRealItems,
-  renderPokemonShop, buyPokemon, renderSceneryShop, buyScenery, loadItemRedemptions, deleteRealItem
+  renderPokemonShop, buyPokemon, loadItemRedemptions, deleteRealItem
 } from "./shop.js";
 
 const SUPABASE_URL = "https://njdrnrnnlsrxdyugmsww.supabase.co"; 
