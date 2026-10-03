@@ -429,7 +429,7 @@ async function loadUserAchievements() {
 }
 
 // ==========================================================
-// 4. REALTIME LISTENERS (FRIENDSHIPS, NOTIFICATIONS, MESSAGES)
+// 4. SUPABASE REALTIME LISTENERS (PERTEMANAN, NOTIFIKASI, CHAT)
 // ==========================================================
 function setupRealtimeListeners() {
   if (!currentUserId) return;
@@ -457,7 +457,7 @@ function setupRealtimeListeners() {
 }
 
 // =========================================
-// 5. FRIENDS SYSTEM & PROFILE LOGIC
+// 5. FRIENDS SYSTEM, PROFIL & UNFOLLOW LOGIC
 // =========================================
 async function loadFriendsSystem() {
   const container = document.getElementById("search-friends-results");
@@ -503,7 +503,12 @@ async function loadFriendsSystem() {
           `;
         }
       } else if (rel.status === "accepted") {
-        btnHTML = `<button class="btn-friend-action btn-friend-msg" data-id="${u.id}" data-name="${u.name}" data-avatar="${u.avatar_url || ''}">Message</button>`;
+        btnHTML = `
+          <div style="display: flex; gap: 6px;">
+            <button class="btn-friend-action btn-friend-msg" data-id="${u.id}" data-name="${u.name}" data-avatar="${u.avatar_url || ''}">Message</button>
+            <button class="btn-friend-unfollow" data-rel-id="${rel.id}" data-name="${u.name}" data-target-id="${u.id}">Unfollow</button>
+          </div>
+        `;
       }
 
       const avatar = u.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${u.name}`;
@@ -589,7 +594,12 @@ async function openPublicProfile(targetUserId) {
         `;
       }
     } else if (rel.status === "accepted") {
-      btnHTML = `<button class="btn-friend-action btn-friend-msg" style="padding: 10px 24px; font-size: 13px;" data-id="${u.id}" data-name="${u.name}" data-avatar="${u.avatar_url || ''}">Message</button>`;
+      btnHTML = `
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-friend-action btn-friend-msg" style="padding: 10px 20px; font-size: 13px;" data-id="${u.id}" data-name="${u.name}" data-avatar="${u.avatar_url || ''}">Message</button>
+          <button class="btn-friend-unfollow" style="padding: 10px 20px; font-size: 13px;" data-rel-id="${rel.id}" data-name="${u.name}" data-target-id="${u.id}">Unfollow</button>
+        </div>
+      `;
     }
     actionBtnBox.innerHTML = btnHTML;
   }
@@ -665,13 +675,16 @@ async function loadMyFriendsList() {
           <div class="friend-code">Kode: ${u.employee_code}</div>
         </div>
       </div>
-      <button class="btn-friend-action btn-friend-msg" data-id="${u.id}" data-name="${u.name}" data-avatar="${avatar}">Message</button>
+      <div style="display: flex; gap: 6px;">
+        <button class="btn-friend-action btn-friend-msg" data-id="${u.id}" data-name="${u.name}" data-avatar="${avatar}">Message</button>
+        <button class="btn-friend-unfollow" data-rel-id="${f.id}" data-name="${u.name}" data-target-id="${u.id}">Unfollow</button>
+      </div>
     `;
     container.appendChild(card);
   });
 }
 
-// HANDLER EVENT KLIK UNTUK ADD / ACCEPT / REJECT / MESSAGE
+// GLOBAL EVENT HANDLER UNTUK ADD / ACCEPT / REJECT / UNFOLLOW / MESSAGE
 document.addEventListener("click", async (e) => {
   const userInfoBox = e.target.closest(".friend-user-info");
   if (userInfoBox) {
@@ -682,7 +695,7 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  // 1. TAMBAH TEMAN
+  // 1. TAMBAH TEMAN (+ ADD)
   if (e.target.classList.contains("btn-friend-add")) {
     const btn = e.target;
     const friendId = btn.getAttribute("data-id");
@@ -705,16 +718,6 @@ document.addEventListener("click", async (e) => {
       return;
     }
 
-    const { error: notifErr } = await supabase.from("notifications").insert({
-      user_id: friendId,
-      sender_id: currentUserId,
-      type: "friend_request",
-      title: "Permintaan Pertemanan",
-      body: `${currentEmployeeData ? currentEmployeeData.name : 'Seseorang'} ingin berteman dengan kamu.`
-    });
-
-    if (notifErr) console.error("Gagal kirim notifikasi:", notifErr);
-
     await Promise.all([loadFriendsSystem(), loadNotificationsSystem()]);
 
     const publicCard = document.getElementById("public-profile-card");
@@ -723,7 +726,7 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  // 2. ACCEPT PERMINTAAN
+  // 2. ACCEPT PERMINTAAN TEMAN
   if (e.target.classList.contains("btn-friend-accept")) {
     const relId = e.target.getAttribute("data-id");
     const senderId = e.target.getAttribute("data-sender");
@@ -744,7 +747,7 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  // 3. REJECT PERMINTAAN
+  // 3. REJECT PERMINTAAN TEMAN
   if (e.target.classList.contains("btn-friend-reject")) {
     const relId = e.target.getAttribute("data-id");
     const senderId = e.target.getAttribute("data-sender");
@@ -765,7 +768,30 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  // 4. BUKA CHATBOX
+  // 4. UNFOLLOW / UNFRIEND DENGAN KONFIRMASI KEAMANAN
+  if (e.target.classList.contains("btn-friend-unfollow")) {
+    const relId = e.target.getAttribute("data-rel-id");
+    const name = e.target.getAttribute("data-name");
+    const targetId = e.target.getAttribute("data-target-id");
+
+    const confirmUnfriend = confirm(`Apakah kamu yakin ingin berhenti berteman (Unfollow) dengan ${name}?`);
+    if (!confirmUnfriend) return;
+
+    const { error } = await supabase.from("friendships").delete().or(`id.eq.${relId},and(user_id.eq.${currentUserId},friend_id.eq.${targetId}),and(user_id.eq.${targetId},friend_id.eq.${currentUserId})`);
+
+    if (!error) {
+      await Promise.all([loadFriendsSystem(), loadMyFriendsList()]);
+
+      const publicCard = document.getElementById("public-profile-card");
+      if (publicCard && publicCard.style.display !== "none" && targetId) {
+        await openPublicProfile(targetId);
+      }
+    } else {
+      alert("Gagal unfollow: " + error.message);
+    }
+  }
+
+  // 5. BUKA CHATBOX
   if (e.target.classList.contains("btn-friend-msg")) {
     const fId = e.target.getAttribute("data-id");
     const fName = e.target.getAttribute("data-name");
@@ -775,7 +801,7 @@ document.addEventListener("click", async (e) => {
 });
 
 // =========================================
-// 6. DIRECT MESSAGES REALTIME & READ TICK
+// 6. REALTIME CHATBOX & INDIKATOR READ
 // =========================================
 async function openChatWindow(friendId, friendName, friendAvatar) {
   activeChatFriendId = friendId;
@@ -784,14 +810,13 @@ async function openChatWindow(friendId, friendName, friendAvatar) {
   document.getElementById("chat-target-avatar").src = friendAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${friendName}`;
   chatWin.style.display = "flex";
 
-  await supabase
-    .from("direct_messages")
-    .update({ is_read: true })
-    .eq("sender_id", friendId)
-    .eq("receiver_id", currentUserId)
-    .eq("is_read", false);
+  // Tandai pesan sebagai READ & hapus notifikasi chat dari user ini
+  await Promise.all([
+    supabase.from("direct_messages").update({ is_read: true }).eq("sender_id", friendId).eq("receiver_id", currentUserId).eq("is_read", false),
+    supabase.from("notifications").delete().eq("user_id", currentUserId).eq("sender_id", friendId).eq("type", "chat")
+  ]);
 
-  await loadChatMessages();
+  await Promise.all([loadChatMessages(), loadNotificationsSystem()]);
 }
 
 const closeChatBtn = document.getElementById("close-chat-btn");
@@ -804,12 +829,7 @@ async function loadChatMessages() {
   const body = document.getElementById("chat-messages-body");
   if (!body || !activeChatFriendId || !currentUserId) return;
 
-  await supabase
-    .from("direct_messages")
-    .update({ is_read: true })
-    .eq("sender_id", activeChatFriendId)
-    .eq("receiver_id", currentUserId)
-    .eq("is_read", false);
+  await supabase.from("direct_messages").update({ is_read: true }).eq("sender_id", activeChatFriendId).eq("receiver_id", currentUserId).eq("is_read", false);
 
   const { data: msgs, error } = await supabase
     .from("direct_messages")
@@ -892,7 +912,7 @@ if (chatTextInput) {
 }
 
 // =========================================
-// 7. NOTIFIKASI & BADGE COUNT MERAH
+// 7. NOTIFIKASI SYSTEM & BADGE MERAH
 // =========================================
 const notifToggleBtn = document.getElementById("notif-toggle-btn");
 const notifDropdown = document.getElementById("notif-dropdown-panel");
@@ -927,8 +947,10 @@ async function loadNotificationsSystem() {
     return;
   }
 
+  // Tampilkan Angka Total Notifikasi di Badge Merah
+  const totalCount = notifs.reduce((acc, curr) => acc + (curr.unread_count || 1), 0);
   if (countBadge) {
-    countBadge.textContent = notifs.length;
+    countBadge.textContent = totalCount;
     countBadge.style.display = "flex";
   }
 
@@ -949,13 +971,16 @@ async function loadNotificationsSystem() {
     }
 
     item.innerHTML = `
-      <div class="notif-item-title" data-sender-id="${n.sender_id}" style="cursor: pointer;">${sender.name || 'Sistem'}: ${n.title}</div>
+      <div class="notif-item-title" data-type="${n.type}" data-sender-id="${n.sender_id}" style="cursor: pointer;">${sender.name || 'Sistem'}: ${n.title}</div>
       <div class="notif-item-body">${n.body}</div>
       ${actionsHTML}
     `;
     
     item.querySelector(".notif-item-title").addEventListener("click", async () => {
-      if (n.sender_id) {
+      if (n.type === "chat" && n.sender_id) {
+        notifDropdown.style.display = "none";
+        openChatWindow(n.sender_id, sender.name || 'Anggota', sender.avatar_url || '');
+      } else if (n.sender_id) {
         notifDropdown.style.display = "none";
         switchTab("friends", false);
         await openPublicProfile(n.sender_id);
@@ -1733,7 +1758,7 @@ function initThemeToggle() {
       const isLight = document.body.classList.contains("light-mode");
 
       if (isLight) {
-        if (themeIcon) themeIcon.textContent = "☀️️";
+        if (themeIcon) themeIcon.textContent = "☀️";
         localStorage.setItem("app_theme", "light");
       } else {
         if (themeIcon) themeIcon.textContent = "🌙";
