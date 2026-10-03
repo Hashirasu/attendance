@@ -1100,19 +1100,17 @@ body.light-mode .chat-input {
 }
 
 
-/* =========================================
-   PLAYGROUND / KANDANG ANIMASI POKEMON
-========================================= */
+/* BACKGROUND KANDANG RUMPUT TAMAN (MUTED & CALM) */
 .pokemon-habitat-stage {
   width: 100%;
-  height: 230px;
+  height: 220px;
   border-radius: 16px;
-  background-size: cover;
-  background-position: center;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   position: relative;
   overflow: hidden;
-  box-shadow: inset 0 0 30px rgba(0,0,0,0.6);
+  box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.5);
+  /* Latar rumput halus bertema taman (tidak ngejreng) */
+  background: linear-gradient(180deg, #1e293b 0%, #111827 45%, #1b382b 75%, #142e22 100%);
   margin-top: 12px;
 }
 
@@ -1124,7 +1122,7 @@ body.light-mode .chat-input {
   left: 0;
 }
 
-/* SPRITE POKEMON BERGERAK DI KANDANG */
+/* CONTAINER ITEM POKEMON */
 .animated-habitat-poke-wrapper {
   position: absolute;
   bottom: 20px;
@@ -1132,59 +1130,60 @@ body.light-mode .chat-input {
   flex-direction: column;
   align-items: center;
   cursor: pointer;
-  transition: transform 0.2s ease;
-  animation: pokeWander 14s infinite ease-in-out;
+  animation: pokeWander 12s infinite ease-in-out;
 }
 
-.animated-habitat-poke-wrapper:hover {
-  transform: scale(1.3) !important;
-  z-index: 10;
-}
-
+/* NAMA TAG SELALU TEGAK LURUS (TIDAK TERBALIK) */
 .poke-name-tag {
-  background: rgba(0, 0, 0, 0.65);
-  color: #ffffff;
+  background: rgba(15, 23, 42, 0.85);
+  color: #f8fafc;
   font-size: 10px;
   font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 8px;
+  padding: 2px 7px;
+  border-radius: 10px;
   margin-bottom: 2px;
   white-space: nowrap;
-  backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
 }
 
+/* GAMBAR SPRITE POKEMON YANG DIBALIK SAAT BERJALAN */
 .animated-habitat-poke-img {
-  width: 64px;
-  height: 64px;
+  width: 58px;
+  height: 58px;
   object-fit: contain;
   image-rendering: pixelated;
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.6));
-  animation: pokeBounce 0.65s infinite alternate ease-in-out;
+  animation: pokeBounce 0.6s infinite alternate ease-in-out, pokeFlip 12s infinite ease-in-out;
 }
 
-/* Animasi Membal (Walk/Hop) */
+/* Membal saat melangkah */
 @keyframes pokeBounce {
   0% { transform: translateY(0); }
-  100% { transform: translateY(-10px); }
+  100% { transform: translateY(-7px); }
 }
 
-/* Animasi Berkeliaran Kiri-Kanan + Flip otomatis */
+/* Hanya membalik (flip) gambar sprite, BUKAN nama tag */
+@keyframes pokeFlip {
+  0% { transform: scaleX(1); }
+  48% { transform: scaleX(1); }
+  50% { transform: scaleX(-1); }
+  98% { transform: scaleX(-1); }
+  100% { transform: scaleX(1); }
+}
+
+/* Jalur gerak berkeliaran */
 @keyframes pokeWander {
-  0% { left: 5%; transform: scaleX(1); }
-  48% { left: 80%; transform: scaleX(1); }
-  50% { left: 80%; transform: scaleX(-1); }
-  98% { left: 5%; transform: scaleX(-1); }
-  100% { left: 5%; transform: scaleX(1); }
+  0% { left: 8%; }
+  50% { left: 78%; }
+  100% { left: 8%; }
 }
 
-/* Delay Animasi Agar 3 Pokemon Bergerak Tidak Bersamaan */
 .animated-habitat-poke-wrapper:nth-child(2) {
-  animation-delay: -4.5s, -0.2s;
+  animation-delay: -4s;
   bottom: 45px;
 }
 
 .animated-habitat-poke-wrapper:nth-child(3) {
-  animation-delay: -9s, -0.4s;
+  animation-delay: -8s;
   bottom: 15px;
 }

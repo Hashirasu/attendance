@@ -1,6 +1,8 @@
 import { supabase } from "./app.js";
 
+// =========================================
 // 1. STARTER GRATIS 1 PER GEN (LOW TIER)
+// =========================================
 export const STARTER_POKEMON_IDS = ["p-1", "p-152", "p-252", "p-387", "p-495", "p-650"];
 
 const LEGENDARY_IDS = [
@@ -25,13 +27,11 @@ function getPrice(id) {
   return 40 + (getGen(id) * 10);
 }
 
-// Default Starter Names
 const DEFAULT_NAMES = {
   1: "Bulbasaur", 152: "Chikorita", 252: "Treecko",
   387: "Turtwig", 495: "Snivy", 650: "Chespin"
 };
 
-// Generate Master 721 Pokémon
 export const ALL_SHOP_POKEMON = Array.from({ length: 721 }, (_, index) => {
   const pId = index + 1;
   return {
@@ -47,7 +47,7 @@ export const ALL_SHOP_POKEMON = Array.from({ length: 721 }, (_, index) => {
 
 export const FREE_STARTER_POKEMON = ALL_SHOP_POKEMON.filter(p => STARTER_POKEMON_IDS.includes(p.id));
 
-// Auto Fetch Nama Asli 721 Pokémon
+// Fetch Nama Asli 721 Pokemon
 (async function loadPokeNames() {
   try {
     const res = await fetch("https://pokeapi.co/api/v2/pokemon?limit=721");
@@ -62,17 +62,9 @@ export const FREE_STARTER_POKEMON = ALL_SHOP_POKEMON.filter(p => STARTER_POKEMON
   } catch (e) { console.log("PokeAPI offline"); }
 })();
 
-// HABITAT SCENERY (BACKGROUND KANDANG)
-export const ALL_SHOP_SCENERY = [
-  { id: "sc-default", title: "Padang Rumput Hijau", price: 0, url: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1000&q=80" },
-  { id: "sc-vihara-zen", title: "Taman Zen Vihara", price: 80, url: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1000&q=80" },
-  { id: "sc-sakura-park", title: "Hutan Bunga Sakura", price: 100, url: "https://images.unsplash.com/photo-1522383225653-ed111181a951?auto=format&fit=crop&w=1000&q=80" },
-  { id: "sc-night-shrine", title: "Kuil Malam Hari", price: 150, url: "https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1000&q=80" },
-  { id: "sc-mountain-mist", title: "Puncak Gunung Berawan", price: 120, url: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1000&q=80" },
-  { id: "sc-beach-sunset", title: "Pantai Senja", price: 140, url: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1000&q=80" }
-];
-
-// TOKO BARANG FISIK & ADMIN
+// =========================================
+// 2. TOKO BARANG FISIK & ADMIN PUBLISH
+// =========================================
 export async function getRealItems() {
   const { data, error } = await supabase.from("real_shop_items").select("*").order("created_at", { ascending: false });
   if (error) return [];
@@ -208,6 +200,9 @@ export async function loadItemRedemptions(itemId) {
   return data || [];
 }
 
+// =========================================
+// 3. ADOPSI POKEMON TOKO
+// =========================================
 export async function renderPokemonShop(userId, currentPoints, searchFilter = "") {
   const container = document.getElementById("pokemon-shop-item-list");
   if (!container) return;
@@ -250,52 +245,6 @@ export async function buyPokemon(userId, pokemonId, price, name, currentPoints) 
   await supabase.from("user_pokemon_inventory").insert({ user_id: userId, pokemon_id: pokemonId });
 
   alert(`🎉 Berhasil mengadopsi ${name}!`);
-  return true;
-}
-
-export async function renderSceneryShop(userId, currentPoints, currentActiveScenery) {
-  const container = document.getElementById("scenery-shop-item-list");
-  if (!container) return;
-
-  const { data: userScenery } = await supabase.from("user_scenery_inventory").select("scenery_id").eq("user_id", userId);
-  const ownedIds = (userScenery || []).map(s => s.scenery_id);
-  ownedIds.push("sc-default");
-
-  container.innerHTML = "";
-  ALL_SHOP_SCENERY.forEach(sc => {
-    const isOwned = ownedIds.includes(sc.id);
-    const isActive = currentActiveScenery === sc.url;
-
-    const card = document.createElement("div");
-    card.className = "shop-item-card";
-    card.innerHTML = `
-      <div style="width:100%; height:65px; border-radius:8px; background-image:url('${sc.url}'); background-size:cover; background-position:center; margin-bottom:4px;"></div>
-      <h4 style="font-size:11px; font-weight:700; color:var(--text-main);">${sc.title}</h4>
-      <p style="font-size:10px; color:#f59e0b; font-weight:800; margin-top:2px;">${sc.price === 0 ? 'GRATIS' : `🪙 ${sc.price} Pn`}</p>
-      ${!isOwned ? `
-        <button class="btn-buy-scenery btn-redeem-real" data-id="${sc.id}" data-price="${sc.price}" data-url="${sc.url}" data-title="${sc.title}" style="font-size:10px;">🛍️ Beli Kandang</button>
-      ` : `
-        <button class="btn-equip-scenery secondary-button-sm" data-url="${sc.url}" style="width:100\%; margin-top:4px; font-size:10px; ${isActive ? 'background:#10b981; color:white;' : ''}">
-          ${isActive ? '✨ Kandang Aktif' : '🏞️ Pasang Kandang'}
-        </button>
-      `}
-    `;
-    container.appendChild(card);
-  });
-}
-
-export async function buyScenery(userId, sceneryId, price, url, title, currentPoints) {
-  if (currentPoints < price) {
-    alert("Poin tidak cukup!");
-    return false;
-  }
-
-  const newPoints = currentPoints - price;
-  await supabase.from("employees").update({ points: newPoints }).eq("id", userId);
-  await supabase.from("user_scenery_inventory").insert({ user_id: userId, scenery_id: sceneryId });
-  await supabase.from("employees").update({ active_scenery_url: url }).eq("id", userId);
-
-  alert(`🎉 Berhasil membeli kandang ${title}!`);
   return true;
 }
 

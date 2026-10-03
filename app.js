@@ -1140,7 +1140,7 @@ if (closePokedexModal) {
   });
 }
 
-// RENDER POKEDEX DENGAN NAMA LENGKAP
+// RENDER POKEDEX (POKEMON TERMILIKI DISUSUN DI PALING ATAS)
 async function renderPokedexModal() {
   const container = document.getElementById("pokedex-container");
   if (!container || !currentUserId) return;
@@ -1151,8 +1151,15 @@ async function renderPokedexModal() {
   const { data: showcase } = await supabase.from("user_pokemon_showcase").select("pokemon_id").eq("user_id", currentUserId);
   const showcaseIds = (showcase || []).map(s => s.pokemon_id);
 
+  // Pisahkan: Milik Saya vs Belum Memiliki
+  const ownedList = ALL_SHOP_POKEMON.filter(p => ownedIds.includes(p.id)).sort((a, b) => a.pokedexNum - b.pokedexNum);
+  const unownedList = ALL_SHOP_POKEMON.filter(p => !ownedIds.includes(p.id)).sort((a, b) => a.pokedexNum - b.pokedexNum);
+
+  // Gabungkan (Milik Saya di paling atas)
+  const sortedPokemonList = [...ownedList, ...unownedList];
+
   container.innerHTML = "";
-  ALL_SHOP_POKEMON.forEach(poke => {
+  sortedPokemonList.forEach(poke => {
     const isOwned = ownedIds.includes(poke.id);
     const isDisplayed = showcaseIds.includes(poke.id);
 
@@ -1170,12 +1177,44 @@ async function renderPokedexModal() {
           ${isDisplayed ? '✨ Di Kandang' : '📌 Lepas ke Kandang'}
         </button>
       ` : `
-        <span style="font-size:9px; color:var(--text-sub); margin-top:4px; display:block;">🔒 Belum Punya</span>
+        <span style="font-size:9px; color:var(--text-sub); margin-top:4px; display:block;">🔒 Belum Dimiliki</span>
       `}
     `;
     container.appendChild(card);
   });
 }
+
+// TOGGLE PAJANGAN KANDANG (INSTANT AUTO-REFRESH KANDANG)
+document.addEventListener("click", async (e) => {
+  if (e.target.classList.contains("btn-toggle-showcase")) {
+    const pokeId = e.target.getAttribute("data-id");
+    const { data: showcase } = await supabase.from("user_pokemon_showcase").select("*").eq("user_id", currentUserId);
+
+    const existingIndex = (showcase || []).findIndex(s => s.pokemon_id === pokeId);
+
+    if (existingIndex !== -1) {
+      await supabase.from("user_pokemon_showcase").delete().eq("user_id", currentUserId).eq("pokemon_id", pokeId);
+    } else {
+      if ((showcase || []).length >= 3) {
+        alert("Kamu hanya bisa melepas maksimal 3 Pokémon di Kandang! Masukkan salah satu kembali terlebih dahulu.");
+        return;
+      }
+
+      const availableSlots = [0, 1, 2].filter(slot => !(showcase || []).some(s => s.slot_index === slot));
+      const targetSlot = availableSlots[0];
+
+      await supabase.from("user_pokemon_showcase").insert({
+        user_id: currentUserId,
+        pokemon_id: pokeId,
+        slot_index: targetSlot
+      });
+    }
+
+    // Refresh otomatis Pokédex modal DAN Kandang Panggung di halaman profil secara langsung!
+    await renderPokedexModal();
+    await renderMyPokemonShowcase(currentUserId);
+  }
+});
 
 // RENDER KANDANG PANGGUNG POKEMON BERGERAK
 async function renderMyPokemonShowcase(userId) {
