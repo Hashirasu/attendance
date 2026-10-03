@@ -1,6 +1,6 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 import { 
-  ALL_SHOP_POKEMON, ALL_SHOP_SCENERY, ensureFreeStarterPokemon,
+  ALL_SHOP_POKEMON, ensureFreeStarterPokemon,
   publishRealItem, redeemRealItem, renderRealItems,
   renderPokemonShop, buyPokemon, renderSceneryShop, buyScenery, loadItemRedemptions, deleteRealItem
 } from "./shop.js";
@@ -1291,7 +1291,6 @@ if (btnOpenShopModal) {
     const pts = currentEmployeeData ? (currentEmployeeData.points || 0) : 0;
     await renderRealItems(currentUserRole);
     await renderPokemonShop(currentUserId, pts);
-    await renderSceneryShop(currentUserId, pts, currentEmployeeData ? currentEmployeeData.active_scenery_url : null);
   });
 }
 
