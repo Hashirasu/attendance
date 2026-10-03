@@ -1771,3 +1771,59 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 initThemeToggle();
+
+
+
+// =========================================
+// INTEGRASI MODAL TOKO & KOSTUM AVATAR
+// =========================================
+import { loadUserShopData, buyShopItem, toggleEquipItem, SHOP_ITEMS } from "./shop.js";
+
+const btnCustomAvatar = document.getElementById("btn-custom-avatar");
+const shopModal = document.getElementById("shop-modal");
+const closeShopModal = document.getElementById("close-shop-modal");
+
+// Mengaktifkan tombol Edit Kostum
+if (btnCustomAvatar) {
+  btnCustomAvatar.removeAttribute("disabled");
+  btnCustomAvatar.style.opacity = "1";
+  
+  btnCustomAvatar.addEventListener("click", async () => {
+    if (!currentUserId) return;
+    if (shopModal) shopModal.style.display = "flex";
+    await loadUserShopData(currentUserId);
+  });
+}
+
+if (closeShopModal) {
+  closeShopModal.addEventListener("click", () => {
+    if (shopModal) shopModal.style.display = "none";
+  });
+}
+
+// Handler Klik Beli / Pakai / Lepas di Toko
+document.addEventListener("click", async (e) => {
+  if (e.target.classList.contains("btn-buy-item")) {
+    const itemId = e.target.getAttribute("data-id");
+    const price = parseInt(e.target.getAttribute("data-price"));
+    const currentPoints = currentEmployeeData ? (currentEmployeeData.points || 0) : 0;
+
+    const success = await buyShopItem(currentUserId, itemId, price, currentPoints);
+    if (success) {
+      await loadUserProfile(); // Update poin di UI
+      await loadUserShopData(currentUserId);
+    }
+  }
+
+  if (e.target.classList.contains("btn-equip-item")) {
+    const itemId = e.target.getAttribute("data-id");
+    const type = e.target.getAttribute("data-type");
+    await toggleEquipItem(currentUserId, itemId, type, true);
+  }
+
+  if (e.target.classList.contains("btn-unequip-item")) {
+    const itemId = e.target.getAttribute("data-id");
+    const type = e.target.getAttribute("data-type");
+    await toggleEquipItem(currentUserId, itemId, type, false);
+  }
+});

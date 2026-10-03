@@ -719,6 +719,30 @@
     </div>
   </footer>
 
+  <!-- MODAL TOKO AVATAR -->
+  <div id="shop-modal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 520px; width: 92%;">
+      <div class="flex-between-center" style="margin-bottom: 14px;">
+        <h3 style="font-weight: 800; font-size: 18px; color: var(--text-main);">🛍️ Toko & Kostum Avatar</h3>
+        <button id="close-shop-modal" class="close-btn-sm" type="button">&times;</button>
+      </div>
+
+      <!-- Preview Stage Avatar -->
+      <div class="avatar-character-box" style="margin-bottom: 16px;">
+        <div id="avatar-chara-stage" class="avatar-stage">
+          <div class="avatar-shadow"></div>
+          <img id="avatar-chara-img-preview" src="https://api.dicebear.com/7.x/bottts/svg?seed=AvatarChara" class="chara-sprite" alt="Avatar Preview">
+          <div id="avatar-equipped-overlay" class="avatar-equipped-overlay"></div>
+        </div>
+      </div>
+
+      <!-- Container Daftar Item Toko -->
+      <div id="shop-item-list" class="shop-grid-container" style="max-height: 320px; overflow-y: auto;">
+        <p style="text-align: center; color: var(--text-sub); font-size: 12px; margin: auto;">Memuat item toko...</p>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="app.js"></script>
   <script type="module" src="feed.js"></script>
 </body>
