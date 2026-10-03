@@ -432,6 +432,40 @@ async function loadUserAchievements() {
     }
   }
 
+  const item30 = document.getElementById("badge-item-30");
+  const bar30 = document.getElementById("badge-bar-30");
+  const status30 = document.getElementById("badge-status-30");
+  if (item30 && bar30 && status30) {
+    const pct30 = Math.min(100, Math.round((totalAbsen / 30) * 100));
+    bar30.style.width = `${pct30}%`;
+    if (totalAbsen >= 30) {
+      item30.classList.remove("locked");
+      item30.classList.add("unlocked");
+      status30.textContent = "✅ Terbuka (30 / 30 Absen)";
+      status30.style.color = "#10b981";
+      unlockedCount++;
+    } else {
+      status30.textContent = `${totalAbsen} / 30 Absen`;
+    }
+  }
+
+  const item90 = document.getElementById("badge-item-90");
+  const bar90 = document.getElementById("badge-bar-90");
+  const status90 = document.getElementById("badge-status-90");
+  if (item90 && bar90 && status90) {
+    const pct90 = Math.min(100, Math.round((totalAbsen / 90) * 100));
+    bar90.style.width = `${pct90}%`;
+    if (totalAbsen >= 90) {
+      item90.classList.remove("locked");
+      item90.classList.add("unlocked");
+      status90.textContent = "✅ Terbuka (90 / 90 Absen)";
+      status90.style.color = "#10b981";
+      unlockedCount++;
+    } else {
+      status90.textContent = `${totalAbsen} / 90 Absen`;
+    }
+  }
+
   const badgeCountText = document.getElementById("badge-count-text");
   if (badgeCountText) {
     badgeCountText.textContent = `${unlockedCount} / 3 Unlocked`;
@@ -464,7 +498,7 @@ function setupRealtimeListeners() {
 }
 
 // =========================================
-// 5. FRIENDS SYSTEM & PUBLIC PROFILE
+// 5. FRIENDS SYSTEM (ADD, ACCEPT, REJECT, UNFOLLOW)
 // =========================================
 async function loadFriendsSystem() {
   const container = document.getElementById("search-friends-results");
@@ -637,6 +671,27 @@ async function openPublicProfile(targetUserId) {
     }
   }
 
+  const achievementsBox = document.getElementById("public-achievements-container");
+  const { count: attCount } = await supabase.from("attendance").select("id", { count: "exact", head: true }).eq("employee_id", targetUserId);
+  const totalAbsen = attCount || 0;
+
+  achievementsBox.innerHTML = `
+    <div class="badge-card ${totalAbsen >= 10 ? 'unlocked' : 'locked'}">
+      <div class="badge-icon">🌱</div>
+      <div class="badge-info">
+        <h4>Keep it up!</h4>
+        <p>${totalAbsen >= 10 ? '✅ Unlocked' : `${totalAbsen} / 10 Absen`}</p>
+      </div>
+    </div>
+    <div class="badge-card ${totalAbsen >= 30 ? 'unlocked' : 'locked'}">
+      <div class="badge-icon">⭐</div>
+      <div class="badge-info">
+        <h4>Well Done!</h4>
+        <p>${totalAbsen >= 30 ? '✅ Unlocked' : `${totalAbsen} / 30 Absen`}</p>
+      </div>
+    </div>
+  `;
+
   if (searchContainer) searchContainer.style.display = "none";
   publicCard.style.display = "block";
 
@@ -697,7 +752,7 @@ async function loadMyFriendsList() {
   });
 }
 
-// HANDLER CLICK EVENT PERTEMANAN
+// HANDLER CLICK EVENT UNTUK AKSI PERTEMANAN
 document.addEventListener("click", async (e) => {
   const userInfoBox = e.target.closest(".friend-user-info");
   if (userInfoBox) {
@@ -708,6 +763,7 @@ document.addEventListener("click", async (e) => {
     }
   }
 
+  // 1. ADD FRIEND
   if (e.target.classList.contains("btn-friend-add")) {
     const btn = e.target;
     const friendId = btn.getAttribute("data-id");
@@ -731,31 +787,75 @@ document.addEventListener("click", async (e) => {
     }
 
     await loadFriendsSystem();
+
+    const publicCard = document.getElementById("public-profile-card");
+    if (publicCard && publicCard.style.display !== "none") {
+      await openPublicProfile(friendId);
+    }
   }
 
+  // 2. ACCEPT FRIEND
   if (e.target.classList.contains("btn-friend-accept")) {
     const relId = e.target.getAttribute("data-id");
-    await supabase.from("friendships").update({ status: "accepted" }).eq("id", relId);
-    await Promise.all([loadFriendsSystem(), loadMyFriendsList()]);
+    const senderId = e.target.getAttribute("data-sender");
+
+    const { error } = await supabase.from("friendships").update({ status: "accepted" }).eq("id", relId);
+
+    if (!error) {
+      await Promise.all([loadFriendsSystem(), loadMyFriendsList()]);
+
+      const publicCard = document.getElementById("public-profile-card");
+      if (publicCard && publicCard.style.display !== "none") {
+        if (senderId) await openPublicProfile(senderId);
+      }
+    } else {
+      alert("Gagal menerima pertemanan: " + error.message);
+    }
   }
 
+  // 3. REJECT FRIEND
   if (e.target.classList.contains("btn-friend-reject")) {
     const relId = e.target.getAttribute("data-id");
-    await supabase.from("friendships").delete().eq("id", relId);
-    await loadFriendsSystem();
+    const senderId = e.target.getAttribute("data-sender");
+
+    const { error } = await supabase.from("friendships").delete().eq("id", relId);
+
+    if (!error) {
+      await loadFriendsSystem();
+
+      const publicCard = document.getElementById("public-profile-card");
+      if (publicCard && publicCard.style.display !== "none") {
+        if (senderId) await openPublicProfile(senderId);
+      }
+    } else {
+      alert("Gagal menolak pertemanan: " + error.message);
+    }
   }
 
+  // 4. UNFOLLOW / UNFRIEND
   if (e.target.classList.contains("btn-friend-unfollow")) {
     const relId = e.target.getAttribute("data-rel-id");
     const name = e.target.getAttribute("data-name");
     const targetId = e.target.getAttribute("data-target-id");
 
-    if (confirm(`Unfollow ${name}?`)) {
-      await supabase.from("friendships").delete().or(`id.eq.${relId},and(user_id.eq.${currentUserId},friend_id.eq.${targetId}),and(user_id.eq.${targetId},friend_id.eq.${currentUserId})`);
+    const confirmUnfriend = confirm(`Apakah kamu yakin ingin berhenti berteman (Unfollow) dengan ${name}?`);
+    if (!confirmUnfriend) return;
+
+    const { error } = await supabase.from("friendships").delete().or(`id.eq.${relId},and(user_id.eq.${currentUserId},friend_id.eq.${targetId}),and(user_id.eq.${targetId},friend_id.eq.${currentUserId})`);
+
+    if (!error) {
       await Promise.all([loadFriendsSystem(), loadMyFriendsList()]);
+
+      const publicCard = document.getElementById("public-profile-card");
+      if (publicCard && publicCard.style.display !== "none" && targetId) {
+        await openPublicProfile(targetId);
+      }
+    } else {
+      alert("Gagal unfollow: " + error.message);
     }
   }
 
+  // 5. MESSAGE
   if (e.target.classList.contains("btn-friend-msg")) {
     const fId = e.target.getAttribute("data-id");
     const fName = e.target.getAttribute("data-name");
@@ -788,11 +888,18 @@ async function loadChatMessages() {
   const body = document.getElementById("chat-messages-body");
   if (!body || !activeChatFriendId || !currentUserId) return;
 
-  const { data: msgs } = await supabase
+  await supabase.from("direct_messages").update({ is_read: true }).eq("sender_id", activeChatFriendId).eq("receiver_id", currentUserId).eq("is_read", false);
+
+  const { data: msgs, error } = await supabase
     .from("direct_messages")
     .select("*")
     .or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${activeChatFriendId}),and(sender_id.eq.${activeChatFriendId},receiver_id.eq.${currentUserId})`)
     .order("created_at", { ascending: true });
+
+  if (error) {
+    body.innerHTML = `<p style="font-size: 11px; color: #ef4444; text-align: center; margin: auto;">Gagal memuat pesan: ${error.message}</p>`;
+    return;
+  }
 
   if (!msgs || msgs.length === 0) {
     body.innerHTML = `<p style="font-size: 11px; color: var(--text-sub); text-align: center; margin: auto;">Belum ada pesan.</p>`;
@@ -803,10 +910,20 @@ async function loadChatMessages() {
   msgs.forEach(m => {
     const isMine = m.sender_id === currentUserId;
     const timeStr = new Date(m.created_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+    
+    const statusTick = m.is_read 
+      ? `<span class="chat-status-tick read" title="Dibaca">✓✓</span>` 
+      : `<span class="chat-status-tick" title="Terkirim">✓</span>`;
 
     const bubble = document.createElement("div");
     bubble.className = `chat-bubble ${isMine ? 'mine' : 'other'}`;
-    bubble.innerHTML = `<span>${m.message}</span><div class="chat-meta"><span>${timeStr}</span></div>`;
+    bubble.innerHTML = `
+      <span>${m.message}</span>
+      <div class="chat-meta">
+        <span>${timeStr}</span>
+        ${isMine ? statusTick : ''}
+      </div>
+    `;
     body.appendChild(bubble);
   });
   body.scrollTop = body.scrollHeight;
@@ -820,11 +937,38 @@ async function handleSendMessage() {
   if (!text || !activeChatFriendId) return;
 
   chatTextInput.value = "";
-  await supabase.from("direct_messages").insert({ sender_id: currentUserId, receiver_id: activeChatFriendId, message: text });
-  await loadChatMessages();
+  
+  const { error } = await supabase.from("direct_messages").insert({
+    sender_id: currentUserId,
+    receiver_id: activeChatFriendId,
+    message: text,
+    is_read: false
+  });
+
+  if (error) {
+    alert("Gagal mengirim pesan: " + error.message);
+  } else {
+    await loadChatMessages();
+  }
 }
 
 if (btnSendChat) btnSendChat.addEventListener("click", handleSendMessage);
+
+if (chatTextInput) {
+  chatTextInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  });
+
+  chatTextInput.addEventListener("focus", () => {
+    setTimeout(() => {
+      const body = document.getElementById("chat-messages-body");
+      if (body) body.scrollTop = body.scrollHeight;
+    }, 300);
+  });
+}
 
 // ==============================
 // 7. PROFILE EDITING & STATUS
@@ -836,17 +980,42 @@ if (uploadAvatarFileInput) {
     const file = e.target.files[0];
     if (!file || !currentUserId) return;
 
+    if (!file.type.startsWith("image/")) {
+      alert("Harap pilih file gambar (JPG, PNG, WebP)!");
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) { 
+      alert("Ukuran file gambar maksimal 10MB!");
+      return;
+    }
+
     const fileExt = file.name.split('.').pop();
     const filePath = `${currentUserId}/avatar_${Date.now()}.${fileExt}`;
 
     try {
-      await supabase.storage.from('avatars').upload(filePath, file, { upsert: true });
-      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
-      await supabase.from('employees').update({ avatar_url: publicUrl }).eq('id', currentUserId);
+      const { error: uploadErr } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadErr) throw uploadErr;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      const { error: updateErr } = await supabase
+        .from('employees')
+        .update({ avatar_url: publicUrl })
+        .eq('id', currentUserId);
+
+      if (updateErr) throw updateErr;
 
       const profilePageAvatar = document.getElementById("profile-page-avatar");
       if (profilePageAvatar) profilePageAvatar.src = publicUrl;
+
       alert("✅ Foto profil berhasil diperbarui!");
+
     } catch (err) {
       alert("Gagal mengunggah foto profil: " + err.message);
     }
@@ -858,27 +1027,47 @@ const editBioModal = document.getElementById("edit-bio-modal");
 const editBioInputText = document.getElementById("edit-bio-input-text");
 const cancelEditBioBtn = document.getElementById("cancel-edit-bio");
 const saveEditBioBtn = document.getElementById("save-edit-bio");
+const editBioMsg = document.getElementById("edit-bio-modal-msg");
 
 if (btnOpenEditBioModal) {
   btnOpenEditBioModal.addEventListener("click", () => {
-    if (currentEmployeeData) editBioInputText.value = currentEmployeeData.bio || "";
+    if (currentEmployeeData) {
+      editBioInputText.value = currentEmployeeData.bio || "";
+    }
+    if (editBioMsg) editBioMsg.textContent = "";
     if (editBioModal) editBioModal.style.display = "flex";
   });
 }
 
-if (cancelEditBioBtn) cancelEditBioBtn.addEventListener("click", () => editBioModal.style.display = "none");
+if (cancelEditBioBtn) {
+  cancelEditBioBtn.addEventListener("click", () => {
+    if (editBioModal) editBioModal.style.display = "none";
+  });
+}
 
 if (saveEditBioBtn) {
   saveEditBioBtn.addEventListener("click", async () => {
     const bioText = editBioInputText.value.trim();
-    await supabase.from("employees").update({ bio: bioText }).eq("id", currentUserId);
-    if (editBioModal) editBioModal.style.display = "none";
-    await loadUserProfile();
+
+    saveEditBioBtn.textContent = "Menyimpan...";
+    const { error } = await supabase.from("employees").update({
+      bio: bioText
+    }).eq("id", currentUserId);
+
+    if (error) {
+      if (editBioMsg) editBioMsg.textContent = "Gagal menyimpan: " + error.message;
+    } else {
+      if (editBioModal) editBioModal.style.display = "none";
+      await loadUserProfile();
+    }
+    saveEditBioBtn.textContent = "Simpan";
   });
 }
 
 async function loadTodayStatus() {
   if (!todayStatusEl) return;
+  todayStatusEl.innerHTML = "<p style='color: var(--text-sub);'>Memuat status...</p>";
+
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
   
@@ -902,6 +1091,8 @@ async function loadTodayStatus() {
 
 async function loadAttendanceHistory() {
   if (!attendanceHistory) return;
+  attendanceHistory.innerHTML = "<p style='color: var(--text-sub);'>Memuat riwayat...</p>";
+
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
@@ -920,7 +1111,8 @@ async function loadAttendanceHistory() {
   data.forEach((row) => {
     const date = new Date(row.attendance_date + "T00:00:00").toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Jakarta" });
     const time = new Date(row.check_in).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" });
-    const badge = row.status === "late" ? `<span class="badge-late">Terlambat</span>` : `<span class="badge-present">Tepat Waktu</span>`;
+    const isLate = row.status === "late";
+    const badge = isLate ? `<span class="badge-late">Terlambat</span>` : `<span class="badge-present">Tepat Waktu</span>`;
 
     const item = document.createElement("div");
     item.className = "history-item";
@@ -1013,7 +1205,7 @@ async function renderPokedexModal() {
       <span style="font-size:10px; color:var(--text-sub);">Gen ${poke.gen}</span>
 
       ${isOwned ? `
-        <button class="btn-toggle-showcase secondary-button-sm" data-id="${poke.id}" style="width:100\%; margin-top:6px; font-size:10px; ${isDisplayed ? 'background:#10b981; color:white;' : ''}">
+        <button class="btn-toggle-showcase secondary-button-sm" data-id="${poke.id}" style="width:100%; margin-top:6px; font-size:10px; ${isDisplayed ? 'background:#10b981; color:white;' : ''}">
           ${isDisplayed ? '✨ Dipajang' : '📌 Pajang'}
         </button>
       ` : `
@@ -1093,7 +1285,6 @@ document.addEventListener("click", (e) => {
 
 // HANDLER AKSI TOKO (QTY +/-, REDEEM, ADOPSI, SCENERY)
 document.addEventListener("click", async (e) => {
-  // 1. Plus Qty
   if (e.target.classList.contains("btn-qty-plus")) {
     const id = e.target.getAttribute("data-id");
     const price = parseInt(e.target.getAttribute("data-price"));
@@ -1109,7 +1300,6 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  // 2. Minus Qty
   if (e.target.classList.contains("btn-qty-minus")) {
     const id = e.target.getAttribute("data-id");
     const price = parseInt(e.target.getAttribute("data-price"));
@@ -1124,7 +1314,6 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  // 3. Redeem Barang Fisik
   if (e.target.classList.contains("btn-redeem-real")) {
     const id = e.target.getAttribute("data-id");
     const price = parseInt(e.target.getAttribute("data-price"));
@@ -1141,7 +1330,6 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  // 4. Adopsi Pokemon
   if (e.target.classList.contains("btn-buy-pokemon")) {
     const pokeId = e.target.getAttribute("data-id");
     const price = parseInt(e.target.getAttribute("data-price"));
@@ -1157,7 +1345,6 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  // 5. Beli & Pasang Scenery
   if (e.target.classList.contains("btn-buy-scenery")) {
     const scId = e.target.getAttribute("data-id");
     const price = parseInt(e.target.getAttribute("data-price"));
@@ -1181,7 +1368,6 @@ document.addEventListener("click", async (e) => {
     await renderSceneryShop(currentUserId, currentEmployeeData.points, url);
   }
 
-  // Admin Actions Toko
   if (e.target.classList.contains("btn-edit-item")) {
     const id = e.target.getAttribute("data-id");
     document.getElementById("publish-title").value = e.target.getAttribute("data-title");
@@ -1289,7 +1475,7 @@ if (btnSubmitPublishShop) {
 }
 
 // ==============================
-// 10. QR SCANNER KAMERA & ADMIN KIOSK
+// 10. QR SCANNER KAMERA
 // ==============================
 const openScannerBtnUser = document.getElementById("open-scanner-btn-user");
 const scannerModal = document.getElementById("scanner-modal");
@@ -1340,7 +1526,9 @@ async function stopQrScanner() {
         await html5QrCode.stop();
       }
       html5QrCode.clear();
-    } catch (e) {}
+    } catch (e) {
+      console.log("Scanner cleanup:", e);
+    }
   }
   if (scannerModal) scannerModal.style.display = "none";
 }
@@ -1348,7 +1536,83 @@ async function stopQrScanner() {
 if (openScannerBtnUser) openScannerBtnUser.addEventListener("click", startQrScanner);
 if (closeScannerBtn) closeScannerBtn.addEventListener("click", stopQrScanner);
 
-// ADMIN PANELS
+// ==============================
+// 11. MANAJEMEN POIN MEMBER
+// ==============================
+document.addEventListener("click", (e) => {
+  if (e.target.classList.contains("btn-add-points")) {
+    const empId = e.target.getAttribute("data-id");
+    const empName = e.target.getAttribute("data-name");
+
+    const targetIdEl = document.getElementById("target-member-id");
+    const targetNameEl = document.getElementById("target-member-name");
+    const amountEl = document.getElementById("input-points-amount");
+    const reasonEl = document.getElementById("input-points-reason");
+    const msgEl = document.getElementById("manage-points-modal-msg");
+    const pointsModal = document.getElementById("manage-points-modal");
+
+    if (targetIdEl) targetIdEl.value = empId;
+    if (targetNameEl) targetNameEl.textContent = `Anggota: ${empName}`;
+    if (amountEl) amountEl.value = "";
+    if (reasonEl) reasonEl.value = "";
+    if (msgEl) msgEl.textContent = "";
+
+    if (pointsModal) pointsModal.style.display = "flex";
+  }
+});
+
+const btnCancelPoints = document.getElementById("cancel-manage-points");
+if (btnCancelPoints) {
+  btnCancelPoints.addEventListener("click", () => {
+    const pointsModal = document.getElementById("manage-points-modal");
+    if (pointsModal) pointsModal.style.display = "none";
+  });
+}
+
+const btnSavePoints = document.getElementById("save-manage-points");
+if (btnSavePoints) {
+  btnSavePoints.addEventListener("click", async () => {
+    const empId = document.getElementById("target-member-id").value;
+    const amount = parseInt(document.getElementById("input-points-amount").value);
+    const reason = document.getElementById("input-points-reason").value.trim();
+    const msgEl = document.getElementById("manage-points-modal-msg");
+
+    if (isNaN(amount) || amount === 0 || !reason) {
+      if (msgEl) msgEl.textContent = "Masukkan jumlah poin valid dan alasannya!";
+      return;
+    }
+
+    btnSavePoints.textContent = "Memproses...";
+
+    const { data: emp } = await supabase.from("employees").select("points").eq("id", empId).single();
+    const currentPoints = emp ? (emp.points || 0) : 0;
+    const newTotal = currentPoints + amount;
+
+    const { error: updateErr } = await supabase.from("employees").update({ points: newTotal }).eq("id", empId);
+
+    if (updateErr) {
+      if (msgEl) msgEl.textContent = "Gagal mengupdate poin: " + updateErr.message;
+    } else {
+      await supabase.from("point_logs").insert({
+        employee_id: empId,
+        points_added: amount,
+        reason: reason
+      });
+
+      const pointsModal = document.getElementById("manage-points-modal");
+      if (pointsModal) pointsModal.style.display = "none";
+      alert(`Berhasil memperbarui poin! Total poin baru: ${newTotal}`);
+      await loadEmployeeManagement();
+      if (empId === currentUserId) await loadUserProfile();
+    }
+
+    btnSavePoints.textContent = "Proses Poin";
+  });
+}
+
+// ==============================
+// 12. ADMIN PANEL & KIOSK
+// ==============================
 if (switchToAdminBtn) {
   switchToAdminBtn.addEventListener("click", async () => {
     if (userSection) userSection.style.display = "none";
@@ -1400,6 +1664,7 @@ if (tabRekapBtn && tabKaryawanBtn && tabKioskBtn) {
     tabKioskBtn.classList.add("active");
     tabRekapBtn.classList.remove("active");
     tabKaryawanBtn.classList.remove("active");
+    
     startAdminKioskQr();
   });
 }
@@ -1411,11 +1676,15 @@ function startAdminKioskQr() {
 
   if (!qrBox) return;
   qrBox.innerHTML = "";
+
   if (kioskTimerInterval) clearInterval(kioskTimerInterval);
 
   kioskQrObject = new QRCode(qrBox, {
-    text: "INIT", width: 220, height: 220,
-    colorDark: "#000000", colorLight: "#ffffff",
+    text: "INIT",
+    width: 220,
+    height: 220,
+    colorDark: "#000000",
+    colorLight: "#ffffff",
     correctLevel: QRCode.CorrectLevel.H
   });
 
@@ -1431,17 +1700,347 @@ function startAdminKioskQr() {
     kioskQrObject.makeCode(kioskUrl);
 
     if (timerText) timerText.textContent = `Memperbarui dalam ${secondsRemaining}s`;
-    if (fillBar) fillBar.style.width = `${(secondsRemaining / 15) * 100}%`;
+    if (fillBar) {
+      const percentage = (secondsRemaining / 15) * 100;
+      fillBar.style.width = `${percentage}%`;
+    }
   }
 
   updateKioskFrame();
   kioskTimerInterval = setInterval(updateKioskFrame, 1000);
 }
 
-// LIGHT & DARK MODE
+if (adminFilterDate) adminFilterDate.addEventListener("change", loadAdminAttendance);
+if (adminFilterStatus) adminFilterStatus.addEventListener("change", loadAdminAttendance);
+if (adminChartFilter) adminChartFilter.addEventListener("change", loadAdminChart);
+
+async function loadAdminAttendance() {
+  if (!adminAttendanceList) return;
+  adminAttendanceList.innerHTML = "<p style='color: var(--text-sub);'>Memuat rekap...</p>";
+
+  let query = supabase.from("attendance").select("attendance_date, check_in, status, employees(name, employee_code)").order("check_in", { ascending: false });
+  if (adminFilterDate && adminFilterDate.value) query = query.eq("attendance_date", adminFilterDate.value);
+  if (adminFilterStatus && adminFilterStatus.value !== "ALL") query = query.eq("status", adminFilterStatus.value);
+
+  const { data } = await query;
+  if (!data || data.length === 0) {
+    adminAttendanceList.innerHTML = "<p style='font-size: 13px; color: var(--text-sub);'>Tidak ada data.</p>";
+    return;
+  }
+
+  adminAttendanceList.innerHTML = "";
+  data.forEach(row => {
+    const time = new Date(row.check_in).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" });
+    const name = row.employees ? row.employees.name : "Dihapus";
+    const badge = row.status === "late" ? `<span class="badge-late">Terlambat</span>` : `<span class="badge-present">Hadir</span>`;
+
+    const item = document.createElement("div");
+    item.className = "history-item";
+    item.innerHTML = `<div><strong style="color: var(--text-main);">${name}</strong><div style="font-size: 11px; color: var(--text-sub);">${row.attendance_date} &bull; ${time} WIB</div></div><div>${badge}</div>`;
+    adminAttendanceList.appendChild(item);
+  });
+}
+
+async function loadAdminChart() {
+  if (!adminChartContainer) return;
+  adminChartContainer.innerHTML = "<p style='font-size: 12px; color: var(--text-sub); margin: auto;'>Memuat grafik...</p>";
+
+  const filterType = adminChartFilter ? adminChartFilter.value : "month";
+  const { data } = await supabase.from("attendance").select("attendance_date, status");
+  if (!data) return;
+
+  const grouped = {};
+  data.forEach(row => {
+    let key = row.attendance_date;
+    if (filterType === "month") key = row.attendance_date.substring(0, 7);
+    else if (filterType === "year") key = row.attendance_date.substring(0, 4);
+
+    if (!grouped[key]) grouped[key] = { total: 0 };
+    grouped[key].total++;
+  });
+
+  const keys = Object.keys(grouped).sort().slice(-7);
+  if (keys.length === 0) {
+    adminChartContainer.innerHTML = "<p style='font-size: 12px; color: var(--text-sub); margin: auto;'>Belum ada data.</p>";
+    return;
+  }
+
+  const max = Math.max(...keys.map(k => grouped[k].total), 5);
+  adminChartContainer.innerHTML = "";
+
+  keys.forEach(k => {
+    const total = grouped[k].total;
+    const heightPercentage = Math.round((total / max) * 100);
+    const wrapper = document.createElement("div");
+    wrapper.style.cssText = "display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; min-width: 32px;";
+    wrapper.innerHTML = `
+      <div style="font-size: 11px; font-weight: 700; color: #60a5fa; margin-bottom: 4px;">${total}</div>
+      <div style="width: 100%; max-width: 24px; height: ${Math.max(heightPercentage, 12)}%; background: linear-gradient(180deg, #3b82f6, #1d4ed8); border-radius: 6px 6px 0 0;"></div>
+      <div style="font-size: 10px; color: var(--text-sub); margin-top: 6px; white-space: nowrap; font-weight: 600;">${k}</div>
+    `;
+    adminChartContainer.appendChild(wrapper);
+  });
+}
+
+async function loadEmployeeManagement() {
+  if (!adminEmployeeList) return;
+  adminEmployeeList.innerHTML = "<p style='color: var(--text-sub);'>Memuat anggota...</p>";
+
+  const { data } = await supabase.from("employees").select("id, name, employee_code, role, is_active, phone, points").order("name");
+  if (!data) return;
+
+  adminEmployeeList.innerHTML = "";
+  data.forEach(emp => {
+    let roleBadgeBg = "rgba(0, 92, 191, 0.2)";
+    let roleBadgeColor = "#60a5fa";
+    let roleText = "MEMBER";
+
+    if (emp.role === "adm1n") {
+      roleBadgeBg = "rgba(255, 59, 48, 0.25)";
+      roleBadgeColor = "#f87171";
+      roleText = "ADM1N";
+    } else if (emp.role === "admin") {
+      roleBadgeBg = "rgba(245, 158, 11, 0.25)";
+      roleBadgeColor = "#fbbf24";
+      roleText = "ADMIN";
+    } else if (emp.role === "pengurus") {
+      roleBadgeBg = "rgba(16, 185, 129, 0.25)";
+      roleBadgeColor = "#34d399";
+      roleText = "PENGURUS";
+    }
+
+    const card = document.createElement("div");
+    card.className = "emp-card-item";
+    card.style.marginBottom = "10px";
+    card.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px;">
+            <strong style="font-size: 14px; color: var(--text-main);">${emp.name}</strong>
+            <span style="font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: ${roleBadgeBg}; color: ${roleBadgeColor};">${roleText}</span>
+          </div>
+          <div style="font-size: 11px; color: var(--text-sub);">Kode: ${emp.employee_code} | WA: ${emp.phone || '-'}</div>
+          <div style="margin-top: 4px;">
+            <span style="font-size: 11px; font-weight: 800; color: #f59e0b; background: rgba(245, 158, 11, 0.15); padding: 2px 8px; border-radius: 8px;">
+              🪙 ${emp.points || 0} Poin
+            </span>
+          </div>
+        </div>
+        <div style="display: flex; gap: 6px;">
+          <button class="btn-add-points" data-id="${emp.id}" data-name="${emp.name}" style="padding: 4px 10px; font-size: 11px; border-radius: 8px; font-weight: 700; background: #f59e0b; color: white; border: none; cursor: pointer;">🪙 Poin</button>
+          <button class="btn-edit-member secondary-button" style="padding: 4px 10px; font-size: 11px;">Edit</button>
+        </div>
+      </div>
+    `;
+    
+    card.querySelector(".btn-edit-member").addEventListener("click", () => {
+      editEmpId.value = emp.id;
+      editEmpName.value = emp.name;
+      editEmpPhone.value = emp.phone || "";
+      editEmpCode.value = emp.employee_code;
+      editEmpRole.value = emp.role;
+      editEmpActive.value = String(emp.is_active);
+      editModalMsg.textContent = "";
+      editEmpModal.style.display = "flex";
+    });
+    adminEmployeeList.appendChild(card);
+  });
+}
+
+if (cancelEditEmp) cancelEditEmp.addEventListener("click", () => editEmpModal.style.display = "none");
+
+if (saveEditEmp) {
+  saveEditEmp.addEventListener("click", async () => {
+    const id = editEmpId.value;
+    const name = editEmpName.value.trim();
+    const phone = editEmpPhone.value.trim();
+    const code = editEmpCode.value.trim();
+    const role = editEmpRole.value;
+    const isActive = editEmpActive.value === "true";
+
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data: me } = await supabase.from("employees").select("role").eq("id", user.id).single();
+
+    if (me.role !== "adm1n") {
+      const { data: target } = await supabase.from("employees").select("role").eq("id", id).single();
+      if (target.role !== role) {
+        editModalMsg.textContent = "Akses ditolak: Hanya Super Admin (adm1n) yang dapat mengubah role!";
+        return;
+      }
+    }
+
+    editModalMsg.textContent = "Menyimpan...";
+    const { error } = await supabase.from("employees").update({ name, phone, employee_code: code, role, is_active: isActive }).eq("id", id);
+    
+    if (error) {
+      editModalMsg.textContent = "Gagal: " + error.message;
+    } else {
+      editModalMsg.textContent = "Berhasil!";
+      setTimeout(() => {
+        editEmpModal.style.display = "none";
+        loadEmployeeManagement();
+      }, 700);
+    }
+  });
+}
+
+// ==============================
+// 13. ADVANCED EXCEL EXPORT
+// ==============================
+if (exportCsvBtn) {
+  exportCsvBtn.addEventListener("click", async () => {
+    const { data: attData, error } = await supabase
+      .from("attendance")
+      .select(`
+        attendance_date, check_in, status, employee_id, 
+        employees (name, phone, employee_code, role, birth_place, birth_date)
+      `)
+      .order("attendance_date", { ascending: false });
+
+    if (error || !attData) {
+      alert("Gagal mengambil data ekspor.");
+      return;
+    }
+
+    const pengurusRows = [];
+    const memberRows = [];
+
+    attData.forEach(row => {
+      const emp = row.employees || {};
+      const name = emp.name || "N/A";
+      const phone = emp.phone || "-";
+      const code = emp.employee_code || "N/A";
+      const role = (emp.role || "user").toLowerCase().trim();
+      const birthPlace = emp.birth_place || "-";
+      const birthDate = emp.birth_date ? new Date(emp.birth_date).toLocaleDateString("id-ID") : "-";
+      const date = row.attendance_date;
+      const time = new Date(row.check_in).toLocaleTimeString("id-ID", { timeZone: "Asia/Jakarta" });
+      const statusText = row.status === "late" ? "Terlambat" : "Tepat Waktu";
+
+      const isPengurus = (role === "pengurus" || role === "admin" || role === "adm1n");
+
+      const itemExcel = {
+        "Tanggal": date, "Kode Anggota": code, "Nama Lengkap": name, "No WhatsApp": phone,
+        "Tempat Lahir": birthPlace, "Tanggal Lahir": birthDate, "Jam Absen": time, "Status": statusText
+      };
+
+      if (isPengurus) pengurusRows.push(itemExcel);
+      else memberRows.push(itemExcel);
+    });
+
+    const workbook = XLSX.utils.book_new();
+    const wsPengurus = XLSX.utils.json_to_sheet(pengurusRows);
+    const wsMember = XLSX.utils.json_to_sheet(memberRows);
+
+    XLSX.utils.book_append_sheet(workbook, wsPengurus, "Data Pengurus");
+    XLSX.utils.book_append_sheet(workbook, wsMember, "Data Anggota");
+
+    XLSX.writeFile(workbook, `Rekap_Absensi_Mudiviverse_${new Date().toISOString().split("T")[0]}.xlsx`);
+  });
+}
+
+// ==============================
+// 14. SINKRONISASI GOOGLE SHEETS
+// ==============================
+const syncSheetsBtn = document.getElementById("sync-sheets-btn");
+
+if (syncSheetsBtn) {
+  syncSheetsBtn.addEventListener("click", async () => {
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxssFU-ZNmAL8rJ5iQqLhgxLqi_tCntFvVzJq8StAIKOGlIXJFXsGXFHJHHQU5sUl0rug/exec";
+
+    if (!WEB_APP_URL || WEB_APP_URL.includes("MASUKKAN_URL")) {
+      alert("URL Web App Google Sheets belum diatur!");
+      return;
+    }
+
+    syncSheetsBtn.textContent = "Menyinkronkan...";
+    syncSheetsBtn.disabled = true;
+
+    try {
+      const { data: empData, error: empError } = await supabase
+        .from("employees")
+        .select("id, name, phone, employee_code, role, birth_place, birth_date")
+        .order("name");
+
+      if (empError || !empData) throw new Error("Gagal mengambil data anggota: " + (empError ? empError.message : "Data kosong"));
+
+      const { data: attData, error: attError } = await supabase
+        .from("attendance")
+        .select("attendance_date, check_in, status, employee_id")
+        .order("attendance_date", { ascending: false });
+
+      if (attError || !attData) throw new Error("Gagal mengambil data riwayat absensi.");
+
+      const attMap = {};
+      (attData || []).forEach(att => {
+        if (!attMap[att.employee_id]) attMap[att.employee_id] = [];
+        attMap[att.employee_id].push(att);
+      });
+
+      const pengurusRows = [];
+      const memberRows = [];
+
+      empData.forEach(emp => {
+        const name = emp.name || "N/A";
+        const phone = emp.phone || "-";
+        const code = emp.employee_code || "N/A";
+        const roleStr = String(emp.role || "user").toLowerCase().trim();
+        const birthPlace = emp.birth_place || "-";
+        
+        let birthDate = "-";
+        if (emp.birth_date) {
+          try {
+            const bd = new Date(emp.birth_date);
+            if (!isNaN(bd.getTime())) birthDate = bd.toLocaleDateString("id-ID");
+          } catch (e) { birthDate = "-"; }
+        }
+
+        const isPengurus = (roleStr === "pengurus" || roleStr === "admin" || roleStr === "adm1n");
+        const userAttList = attMap[emp.id] || [];
+
+        if (userAttList.length > 0) {
+          userAttList.forEach(att => {
+            let time = "-";
+            if (att.check_in) {
+              try { time = new Date(att.check_in).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" }); } catch (e) { time = "-"; }
+            }
+            const statusText = att.status === "late" ? "Terlambat" : "Tepat Waktu";
+            const itemData = { "Kode Anggota": code, "Nama Lengkap": name, "No WhatsApp": phone, "Tempat Lahir": birthPlace, "Tanggal Lahir": birthDate, "Tanggal": att.attendance_date || "", "Jam Absen": time, "Status": statusText };
+            if (isPengurus) pengurusRows.push(itemData);
+            else memberRows.push(itemData);
+          });
+        } else {
+          const itemData = { "Kode Anggota": code, "Nama Lengkap": name, "No WhatsApp": phone, "Tempat Lahir": birthPlace, "Tanggal Lahir": birthDate, "Tanggal": "", "Jam Absen": "", "Status": "" };
+          if (isPengurus) pengurusRows.push(itemData);
+          else memberRows.push(itemData);
+        }
+      });
+
+      const payload = { pengurus: pengurusRows, anggota: memberRows };
+
+      await fetch(WEB_APP_URL, {
+        method: "POST", mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      alert("Berhasil! Seluruh data Pengurus dan Anggota telah disinkronkan.");
+    } catch (err) {
+      alert("Gagal sinkronisasi: " + err.message);
+    } finally {
+      syncSheetsBtn.textContent = "🔄 Sinkron";
+      syncSheetsBtn.disabled = false;
+    }
+  });
+}
+
+// ==============================
+// 15. LIGHT & DARK MODE LOGIC
+// ==============================
 function initThemeToggle() {
   const themeToggleBtn = document.getElementById("theme-toggle-btn");
   const themeIcon = document.getElementById("theme-icon");
+
   const savedTheme = localStorage.getItem("app_theme") || "dark";
   
   if (savedTheme === "light") {
@@ -1456,15 +2055,40 @@ function initThemeToggle() {
     themeToggleBtn.addEventListener("click", () => {
       document.body.classList.toggle("light-mode");
       const isLight = document.body.classList.contains("light-mode");
-      if (themeIcon) themeIcon.textContent = isLight ? "☀️" : "🌙";
-      localStorage.setItem("app_theme", isLight ? "light" : "dark");
+
+      if (isLight) {
+        if (themeIcon) themeIcon.textContent = "☀️";
+        localStorage.setItem("app_theme", "light");
+      } else {
+        if (themeIcon) themeIcon.textContent = "🌙";
+        localStorage.setItem("app_theme", "dark");
+      }
     });
   }
 }
 
-// NAVIGATION
+// =========================================
+// 16. DRAWER NAVIGATION & HISTORY API
+// =========================================
+const mobileHamburgerBtn = document.getElementById("mobile-hamburger-btn");
+const mobileNavOverlay = document.getElementById("mobile-nav-overlay");
+const closeMobileNavBtn = document.getElementById("close-mobile-nav");
+
+function openDrawer() { if (mobileNavOverlay) mobileNavOverlay.classList.add("open"); }
+function closeDrawer() { if (mobileNavOverlay) mobileNavOverlay.classList.remove("open"); }
+
+if (mobileHamburgerBtn) mobileHamburgerBtn.addEventListener("click", openDrawer);
+if (closeMobileNavBtn) closeMobileNavBtn.addEventListener("click", closeDrawer);
+
+if (mobileNavOverlay) {
+  mobileNavOverlay.addEventListener("click", (e) => {
+    if (e.target === mobileNavOverlay) closeDrawer();
+  });
+}
+
 function switchTab(tabName, pushToHistory = true) {
   closePublicProfile();
+
   const views = {
     home: document.getElementById("tab-home-view"),
     posts: document.getElementById("tab-posts-view"),
@@ -1474,11 +2098,19 @@ function switchTab(tabName, pushToHistory = true) {
     admin: document.getElementById("tab-admin-view")
   };
 
-  Object.keys(views).forEach(key => { if (views[key]) views[key].style.display = "none"; });
+  Object.keys(views).forEach(key => {
+    if (views[key]) views[key].style.display = "none";
+  });
+
   document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.remove("active"));
 
   if (views[tabName]) views[tabName].style.display = "block";
-  document.querySelectorAll(`.nav-btn[data-tab="${tabName}"]`).forEach(btn => btn.classList.add("active"));
+
+  document.querySelectorAll(`.nav-btn[data-tab="${tabName}"]`).forEach(btn => {
+    btn.classList.add("active");
+  });
+
+  closeDrawer();
 
   if (pushToHistory) history.pushState({ tab: tabName }, "", `#${tabName}`);
 }
@@ -1491,11 +2123,32 @@ document.addEventListener("click", (e) => {
   }
 });
 
+const btnSeeMore = document.getElementById("btn-see-more-posts");
+if (btnSeeMore) btnSeeMore.addEventListener("click", () => switchTab("posts", true));
+
+window.addEventListener("popstate", (event) => {
+  if (mobileNavOverlay && mobileNavOverlay.classList.contains("open")) {
+    closeDrawer();
+    return;
+  }
+
+  const publicCard = document.getElementById("public-profile-card");
+  if (publicCard && publicCard.style.display !== "none") {
+    closePublicProfile();
+    return;
+  }
+
+  if (event.state && event.state.tab) switchTab(event.state.tab, false);
+  else if (window.location.hash) switchTab(window.location.hash.replace("#", ""), false);
+  else switchTab("home", false);
+});
+
 document.addEventListener("DOMContentLoaded", () => {
   function updateClock() {
     const clockEl = document.getElementById("live-time");
     if (clockEl) {
-      clockEl.textContent = new Date().toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Asia/Jakarta' });
+      const now = new Date();
+      clockEl.textContent = now.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Asia/Jakarta' });
     }
   }
   setInterval(updateClock, 1000);
