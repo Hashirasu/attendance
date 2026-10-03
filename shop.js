@@ -1,151 +1,78 @@
 import { supabase } from "./app.js";
 
-export const SHOP_ITEMS = [
-  { id: "hat_cap", name: "Topi Kasual", type: "headwear", price: 50, icon: "🧢" },
-  { id: "hat_crown", name: "Mahkota Raja", type: "headwear", price: 150, icon: "👑" },
-  { id: "glasses_sun", name: "Kacamata Hitam", type: "eyewear", price: 40, icon: "🕶️" },
-  { id: "outfit_kimono", name: "Kimono Tradisional", type: "outfit", price: 100, icon: "👘" },
-  { id: "outfit_suit", name: "Setelan Jas", type: "outfit", price: 120, icon: "👔" }
-];
-
-let userOwnedItems = [];
-let userEquippedItems = {};
-
-export async function loadUserShopData(userId) {
-  if (!userId) return;
-
-  const { data: inventory } = await supabase
-    .from("user_inventory")
-    .select("item_id")
-    .eq("user_id", userId);
-
-  if (inventory) {
-    userOwnedItems = inventory.map(item => item.item_id);
-  }
-
-  const { data: equipped } = await supabase
-    .from("user_equipped")
+// =========================================
+// 1. TOKO FISIK (REAL ITEMS) & PUBLISH ADMIN
+// =========================================
+export async function getRealItems() {
+  const { data, error } = await supabase
+    .from("real_shop_items")
     .select("*")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (equipped) {
-    userEquippedItems = equipped.items || {};
-  }
-
-  renderShopItems();
-  renderAvatarPreview();
+    .order("created_at", { ascending: false });
+  if (error) return [];
+  return data || [];
 }
 
-export function renderShopItems() {
-  const shopContainer = document.getElementById("shop-item-list");
-  if (!shopContainer) return;
+export async function renderRealItems() {
+  const container = document.getElementById("real-shop-item-list");
+  if (!container) return;
 
-  shopContainer.innerHTML = "";
+  container.innerHTML = "<p style='text-align:center; color:var(--text-sub); font-size:12px; grid-column:1/-1;'>Memuat barang...</p>";
 
-  SHOP_ITEMS.forEach(item => {
-    const isOwned = userOwnedItems.includes(item.id);
-    const isEquipped = Object.values(userEquippedItems).includes(item.id);
+  const items = await getRealItems();
+  if (!items || items.length === 0) {
+    container.innerHTML = "<p style='text-align:center; color:var(--text-sub); font-size:12px; grid-column:1/-1;'>Belum ada barang fisik untuk ditukarkan.</p>";
+    return;
+  }
 
+  container.innerHTML = "";
+  items.forEach(item => {
     const card = document.createElement("div");
-    card.className = `shop-item-card ${isOwned ? "owned" : ""}`;
+    card.className = "shop-item-card";
     card.innerHTML = `
-      <div class="shop-item-icon">${item.icon}</div>
-      <div class="shop-item-info">
-        <h4>${item.name}</h4>
-        <p class="shop-item-price">🪙 ${item.price} Poin</p>
+      <img src="${item.image_url || 'https://via.placeholder.com/150'}" class="real-item-img" alt="${item.title}">
+      <div class="shop-item-info" style="margin-top:8px;">
+        <h4>${item.title}</h4>
+        <p style="font-size:11px; color:var(--text-sub); margin:4px 0;">${item.description || 'Tidak ada deskripsi.'}</p>
+        <p style="font-size:10px; color:var(--text-sub); margin-bottom:4px;">Stok: ${item.stock}</p>
+        <p class="shop-item-price">🪙 ${item.price_points} Poin</p>
       </div>
-      <div class="shop-item-action">
-        ${
-          !isOwned
-            ? `<button class="btn-buy-item" data-id="${item.id}" data-price="${item.price}">Beli</button>`
-            : isEquipped
-            ? `<button class="btn-unequip-item" data-id="${item.id}" data-type="${item.type}">Lepas</button>`
-            : `<button class="btn-equip-item" data-id="${item.id}" data-type="${item.type}">Pakai</button>`
-        }
-      </div>
+      <button class="btn-redeem-real" data-id="${item.id}" data-price="${item.price_points}" data-stock="${item.stock}" ${item.stock <= 0 ? 'disabled' : ''}>
+        ${item.stock > 0 ? 'Tukar Barang' : 'Stok Habis'}
+      </button>
     `;
-    shopContainer.appendChild(card);
+    container.appendChild(card);
   });
 }
 
-export async function buyShopItem(userId, itemId, itemPrice, currentPoints) {
-  if (currentPoints < itemPrice) {
-    alert("Poin kamu tidak mencukupi!");
-    return false;
-  }
+export async function publishRealItem(adminId, title, description, pricePoints, stock, fileImage) {
+  let imageUrl = "https://via.placeholder.com/150";
 
-  const newPoints = currentPoints - itemPrice;
+  if (fileImage) {
+    const fileExt = fileImage.name.split('.').pop();
+    const filePath = `real_items/item_${Date.now()}.${fileExt}`;
 
-  const { error: pointsErr } = await supabase
-    .from("employees")
-    .update({ points: newPoints })
-    .eq("id", userId);
+    const { error: uploadErr } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, fileImage, { upsert: true });
 
-  if (pointsErr) {
-    alert("Gagal memproses pembelian: " + pointsErr.message);
-    return false;
-  }
-
-  const { error: invErr } = await supabase
-    .from("user_inventory")
-    .insert({ user_id: userId, item_id: itemId });
-
-  if (invErr) {
-    alert("Gagal menyimpan item: " + invErr.message);
-    return false;
-  }
-
-  userOwnedItems.push(itemId);
-  alert("🎉 Pembelian kostum berhasil!");
-  return true;
-}
-
-export async function toggleEquipItem(userId, itemId, itemType, isEquip = true) {
-  if (isEquip) {
-    userEquippedItems[itemType] = itemId;
-  } else {
-    delete userEquippedItems[itemType];
-  }
-
-  const { error } = await supabase
-    .from("user_equipped")
-    .upsert({ user_id: userId, items: userEquippedItems }, { onConflict: "user_id" });
-
-  if (error) {
-    alert("Gagal update pakaian: " + error.message);
-  } else {
-    renderShopItems();
-    renderAvatarPreview();
-  }
-}
-
-export function renderAvatarPreview() {
-  const equippedOverlay = document.getElementById("avatar-equipped-overlay");
-  if (!equippedOverlay) return;
-
-  equippedOverlay.innerHTML = "";
-
-  Object.values(userEquippedItems).forEach(itemId => {
-    const item = SHOP_ITEMS.find(i => i.id === itemId);
-    if (item) {
-      const layer = document.createElement("span");
-      layer.className = `avatar-layer layer-${item.type}`;
-      layer.textContent = item.icon;
-      equippedOverlay.appendChild(layer);
+    if (uploadErr) {
+      alert("Gagal mengunggah gambar barang: " + uploadErr.message);
+      return false;
     }
-  });
-}
 
-// =========================================
-// FITUR BARANG PHYSICAL / HADIAH REAL
-// =========================================
-export async function publishRealItem(adminId, title, pricePoints, stock, imageUrl) {
+    const { data: { publicUrl } } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(filePath);
+
+    imageUrl = publicUrl;
+  }
+
   const { error } = await supabase.from("real_shop_items").insert({
     title,
+    description,
     price_points: pricePoints,
     stock,
-    image_url: imageUrl || "https://via.placeholder.com/150",
+    image_url: imageUrl,
     created_by: adminId
   });
 
@@ -154,12 +81,6 @@ export async function publishRealItem(adminId, title, pricePoints, stock, imageU
     return false;
   }
   return true;
-}
-
-export async function getRealItems() {
-  const { data, error } = await supabase.from("real_shop_items").select("*").order("created_at", { ascending: false });
-  if (error) return [];
-  return data || [];
 }
 
 export async function redeemRealItem(userId, itemId, pricePoints, currentPoints) {
@@ -191,6 +112,68 @@ export async function redeemRealItem(userId, itemId, pricePoints, currentPoints)
     points_used: pricePoints
   });
 
-  alert(`🎁 Berhasil menukarkan ${item.title}! Silakan hubungi pengurus untuk mengambil barang.`);
+  alert(`🎁 Berhasil menukarkan ${item.title}! Silakan hubungi pengurus Vihara.`);
+  return true;
+}
+
+// =========================================
+// 2. KUSTOMISASI AVATAR (BASIC + CLOTHING)
+// =========================================
+export let currentAvatarConfig = {
+  skin: "#fcd34d",
+  face: "😃",
+  headwear: "",
+  outfit: "👕",
+  pants: "JB"
+};
+
+export async function loadUserAvatarConfig(userId) {
+  const { data } = await supabase
+    .from("user_avatar_config")
+    .select("config")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (data && data.config) {
+    currentAvatarConfig = { ...currentAvatarConfig, ...data.config };
+  }
+  renderAvatarDisplay();
+}
+
+export function renderAvatarDisplay() {
+  const bodyBase = document.getElementById("avatar-base-body");
+  const faceEl = document.getElementById("avatar-layer-face");
+  const headwearEl = document.getElementById("avatar-layer-headwear");
+  const outfitEl = document.getElementById("avatar-layer-outfit");
+  const pantsEl = document.getElementById("avatar-layer-pants");
+
+  if (bodyBase) bodyBase.style.backgroundColor = currentAvatarConfig.skin || "#fcd34d";
+  if (faceEl) faceEl.textContent = currentAvatarConfig.face || "😃";
+  if (headwearEl) headwearEl.textContent = currentAvatarConfig.headwear || "";
+  if (outfitEl) outfitEl.textContent = currentAvatarConfig.outfit || "👕";
+  if (pantsEl) pantsEl.textContent = currentAvatarConfig.pants || "👖";
+}
+
+export async function saveUserAvatarConfig(userId) {
+  const { error } = await supabase
+    .from("user_avatar_config")
+    .upsert({ user_id: userId, config: currentAvatarConfig });
+
+  if (error) {
+    alert("Gagal menyimpan kustomisasi avatar: " + error.message);
+  } else {
+    alert("✅ Tampilan Avatar berhasil disimpan!");
+  }
+}
+
+export async function addNewCatalogItem(name, category, price, assetValue) {
+  const { error } = await supabase.from("avatar_catalog").insert({
+    name, category, price_points: price, asset_value: assetValue
+  });
+  if (error) {
+    alert("Gagal menambah item catalog: " + error.message);
+    return false;
+  }
+  alert("✅ Item aksesoris/pakaian baru berhasil ditambahkan!");
   return true;
 }

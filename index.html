@@ -582,7 +582,21 @@
     </div>
   </div>
 
-  <!-- MODALS -->
+  <!-- MODAL TOKO FISIK (DITAMBAHKAN AGAR TOMBOL 'TOKO VIHARA' BISA BERFUNGSI) -->
+  <div id="shop-modal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 520px; width: 92%;">
+      <div class="flex-between-center" style="margin-bottom: 12px;">
+        <h3 style="font-weight: 800; font-size: 18px; color: var(--text-main);">🎁 Tukar Barang Vihara</h3>
+        <button id="close-shop-modal" class="close-btn-sm" type="button" aria-label="Tutup">&times;</button>
+      </div>
+
+      <div id="real-shop-item-list" class="shop-grid-container" style="max-height: 380px; overflow-y: auto;">
+        <p style="text-align: center; color: var(--text-sub); font-size: 12px; margin: auto;">Memuat barang fisik...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALS LAINNYA -->
   <div id="edit-bio-modal" class="modal" style="display: none;">
     <div class="modal-content">
       <h3 style="font-weight: 700; font-size: 18px; margin-bottom: 18px; color: var(--text-main);">Edit Bio Profil</h3>
@@ -691,65 +705,133 @@
     </div>
   </div>
 
-  <!-- MODAL TOKO AVATAR & BARANG REAL -->
-  <div id="shop-modal" class="modal" style="display: none;">
-    <div class="modal-content" style="max-width: 520px; width: 92%;">
+  <!-- MODAL KUSTOMISASI AVATAR -->
+  <div id="avatar-custom-modal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 580px; width: 92%;">
       <div class="flex-between-center" style="margin-bottom: 12px;">
-        <h3 style="font-weight: 800; font-size: 18px; color: var(--text-main);">🛍️ Toko Vihara</h3>
-        <button id="close-shop-modal" class="close-btn-sm" type="button">&times;</button>
+        <h3 style="font-weight: 800; font-size: 18px; color: var(--text-main);">🎨 Kustomisasi Avatar</h3>
+        <button id="close-avatar-custom-modal" class="close-btn-sm" type="button" aria-label="Tutup">&times;</button>
       </div>
 
-      <!-- Tab Switch Toko -->
-      <div class="admin-tabs" style="margin-bottom: 14px;">
-        <button id="shop-tab-avatar" class="tab-btn active" type="button">👕 Kostum Avatar</button>
-        <button id="shop-tab-real" class="tab-btn" type="button">🎁 Tukar Barang</button>
+      <div class="avatar-canvas-container">
+        <div id="avatar-base-body" class="avatar-base-body">
+          <span id="avatar-layer-headwear" class="layer-item layer-headwear"></span>
+          <span id="avatar-layer-face" class="layer-item layer-face">😃</span>
+          <span id="avatar-layer-outfit" class="layer-item layer-outfit">👕</span>
+          <span id="avatar-layer-pants" class="layer-item layer-pants">👖</span>
+          <span id="avatar-layer-accessory" class="layer-item layer-accessory"></span>
+        </div>
       </div>
 
-      <!-- View 1: Avatar -->
-      <div id="shop-view-avatar">
-        <div class="avatar-character-box" style="margin-bottom: 14px;">
-          <div id="avatar-chara-stage" class="avatar-stage">
-            <div class="avatar-shadow"></div>
-            <img id="avatar-chara-img-preview" src="https://api.dicebear.com/7.x/bottts/svg?seed=AvatarChara" class="chara-sprite" alt="Avatar Preview">
-            <div id="avatar-equipped-overlay" class="avatar-equipped-overlay"></div>
+      <div class="avatar-editor-tabs" style="max-height: 260px; overflow-y: auto;">
+        <div class="editor-group">
+          <label>Warna Kulit</label>
+          <div class="options-row">
+            <button class="avatar-option-btn color-dot" style="background:#fcd34d;" data-type="skin" data-val="#fcd34d"></button>
+            <button class="avatar-option-btn color-dot" style="background:#f97316;" data-type="skin" data-val="#f97316"></button>
+            <button class="avatar-option-btn color-dot" style="background:#8d5524;" data-type="skin" data-val="#8d5524"></button>
+            <button class="avatar-option-btn color-dot" style="background:#e0ac69;" data-type="skin" data-val="#e0ac69"></button>
+            <button class="avatar-option-btn color-dot" style="background:#60a5fa;" data-type="skin" data-val="#60a5fa"></button>
           </div>
         </div>
-        <div id="shop-item-list" class="shop-grid-container" style="max-height: 280px; overflow-y: auto;">
-          <p style="text-align: center; color: var(--text-sub); font-size: 12px; margin: auto;">Memuat item avatar...</p>
+
+        <div class="editor-group">
+          <label>Ekspresi Wajah</label>
+          <div class="options-row">
+            <button class="avatar-option-btn" data-type="face" data-val="😃">😃</button>
+            <button class="avatar-option-btn" data-type="face" data-val="😎">😎</button>
+            <button class="avatar-option-btn" data-type="face" data-val="😉">😉</button>
+            <button class="avatar-option-btn" data-type="face" data-val="🤓">🤓</button>
+          </div>
+        </div>
+
+        <div class="editor-group">
+          <label>Topi / Aksesoris Kepala</label>
+          <div class="options-row">
+            <button class="avatar-option-btn" data-type="headwear" data-val="">(Lepas)</button>
+            <button class="avatar-option-btn" data-type="headwear" data-val="🧢">🧢 Topi</button>
+            <button class="avatar-option-btn" data-type="headwear" data-val="👑">👑 Mahkota</button>
+            <button class="avatar-option-btn" data-type="headwear" data-val="🪖">🪖 Helm</button>
+          </div>
+        </div>
+
+        <div class="editor-group">
+          <label>Kostum Baju</label>
+          <div class="options-row">
+            <button class="avatar-option-btn" data-type="outfit" data-val="👕">👕 T-Shirt</button>
+            <button class="avatar-option-btn" data-type="outfit" data-val="👔">👔 Kemeja</button>
+            <button class="avatar-option-btn" data-type="outfit" data-val="🥋">🥋 Kimono</button>
+            <button class="avatar-option-btn" data-type="outfit" data-val="🥼">🥼 Jas</button>
+          </div>
+        </div>
+
+        <div class="editor-group">
+          <label>Celana</label>
+          <div class="options-row">
+            <button class="avatar-option-btn" data-type="pants" data-val="👖">👖 Jeans</button>
+            <button class="avatar-option-btn" data-type="pants" data-val="🩳">🩳 Pendek</button>
+          </div>
         </div>
       </div>
 
-      <!-- View 2: Barang Real -->
-      <div id="shop-view-real" style="display: none;">
-        <div id="real-shop-item-list" class="shop-grid-container" style="max-height: 380px; overflow-y: auto;">
-          <p style="text-align: center; color: var(--text-sub); font-size: 12px; margin: auto;">Memuat barang fisik...</p>
+      <div id="admin-add-accessory-box" class="admin-only-box" style="display: none; margin-top: 14px; border-top: 1px dashed var(--card-border); padding-top: 12px;">
+        <h4 style="font-size: 13px; color: #f59e0b; margin-bottom: 8px;">⚙️ Admin: Tambah Aksesoris Katalog</h4>
+        <div class="flex-gap-8" style="margin-bottom: 8px;">
+          <input type="text" id="acc-name" class="custom-input" placeholder="Nama Aksesoris" style="font-size:12px; flex:2;">
+          <select id="acc-category" class="custom-select" style="font-size:12px; flex:1;">
+            <option value="headwear">Topi</option>
+            <option value="outfit">Baju</option>
+            <option value="pants">Celana</option>
+            <option value="accessory">Aksesoris</option>
+          </select>
+        </div>
+        <div class="flex-gap-8">
+          <input type="text" id="acc-asset" class="custom-input" placeholder="Emoji / Asset URL" style="font-size:12px; flex:2;">
+          <input type="number" id="acc-price" class="custom-input" placeholder="Harga Poin" style="font-size:12px; flex:1;">
+          <button id="btn-submit-new-accessory" class="secondary-button" style="background:#f59e0b; color:white; border:none; font-size:12px;">+ Tambah</button>
         </div>
       </div>
+
+      <button id="btn-save-avatar-config" class="main-button" style="margin-top: 16px; background: var(--ios-blue); color: white;">
+        💾 Simpan Tampilan Avatar
+      </button>
     </div>
   </div>
 
-  <!-- MODAL PUBLISH BARANG REAL (ADMIN/PENGURUS) -->
+  <!-- MODAL PUBLISH BARANG REAL (TOKO FISIK ADMIN) -->
   <div id="publish-shop-modal" class="modal" style="display: none;">
     <div class="modal-content">
-      <h3 style="font-weight: 700; font-size: 18px; margin-bottom: 14px; color: var(--text-main);">🎁 Terbitkan Barang Toko</h3>
+      <div class="flex-between-center" style="margin-bottom: 14px;">
+        <h3 style="font-weight: 700; font-size: 18px; color: var(--text-main);">🎁 Terbitkan Barang Toko</h3>
+        <button id="close-publish-shop-modal" class="close-btn-sm" type="button" aria-label="Tutup">&times;</button>
+      </div>
+      
       <div class="input-field-box" style="margin-bottom: 10px;">
         <label>Nama Barang / Hadiah</label>
         <input type="text" id="publish-title" class="custom-input" placeholder="Contoh: Buku Sadhana / Gantungan Kunci">
       </div>
+      
+      <div class="input-field-box" style="margin-bottom: 10px;">
+        <label>Deskripsi Barang</label>
+        <textarea id="publish-desc" class="custom-input" rows="2" placeholder="Tulis rincian atau keterangan barang..."></textarea>
+      </div>
+
       <div class="input-field-box" style="margin-bottom: 10px;">
         <label>Harga (Poin Vihara)</label>
         <input type="number" id="publish-points" class="custom-input" placeholder="Contoh: 100">
       </div>
+
       <div class="input-field-box" style="margin-bottom: 10px;">
         <label>Jumlah Stok</label>
         <input type="number" id="publish-stock" class="custom-input" placeholder="Contoh: 5">
       </div>
+
       <div class="input-field-box" style="margin-bottom: 14px;">
-        <label>URL Gambar Barang (Opsional)</label>
-        <input type="text" id="publish-img-url" class="custom-input" placeholder="https://...">
+        <label>Upload Gambar Barang (Galeri / File)</label>
+        <input type="file" id="publish-img-file" accept="image/*" class="custom-input" style="padding: 6px;">
       </div>
+
       <div class="flex-gap-10">
-        <button id="close-publish-shop-modal" class="secondary-button" style="flex:1;">Batal</button>
         <button id="btn-submit-publish-shop" class="main-button" style="flex:1; margin:0; background:#f59e0b; color:white;">Publish Barang</button>
       </div>
     </div>

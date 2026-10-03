@@ -1,4 +1,8 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+import { 
+  publishRealItem, redeemRealItem, renderRealItems,
+  currentAvatarConfig, loadUserAvatarConfig, renderAvatarDisplay, saveUserAvatarConfig, addNewCatalogItem 
+} from "./shop.js";
 
 const SUPABASE_URL = "https://njdrnrnnlsrxdyugmsww.supabase.co"; 
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qZHJucm5ubHNyeGR5dWdtc3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5MDExNDEsImV4cCI6MjEwNTQ3NzE0MX0.F65pU2A3XjyEaisye2GfzLPF9DCaQF1fklMxgSTRhs8";
@@ -347,6 +351,8 @@ async function loadUserProfile() {
     }
   }
 
+  await loadUserAvatarConfig(currentUserId);
+
   await Promise.all([
     loadTodayStatus(),
     loadAttendanceHistory(),
@@ -388,40 +394,6 @@ async function loadUserAchievements() {
       unlockedCount++;
     } else {
       status10.textContent = `${totalAbsen} / 10 Absen`;
-    }
-  }
-
-  const item30 = document.getElementById("badge-item-30");
-  const bar30 = document.getElementById("badge-bar-30");
-  const status30 = document.getElementById("badge-status-30");
-  if (item30 && bar30 && status30) {
-    const pct30 = Math.min(100, Math.round((totalAbsen / 30) * 100));
-    bar30.style.width = `${pct30}%`;
-    if (totalAbsen >= 30) {
-      item30.classList.remove("locked");
-      item30.classList.add("unlocked");
-      status30.textContent = "✅ Terbuka (30 / 30 Absen)";
-      status30.style.color = "#10b981";
-      unlockedCount++;
-    } else {
-      status30.textContent = `${totalAbsen} / 30 Absen`;
-    }
-  }
-
-  const item90 = document.getElementById("badge-item-90");
-  const bar90 = document.getElementById("badge-bar-90");
-  const status90 = document.getElementById("badge-status-90");
-  if (item90 && bar90 && status90) {
-    const pct90 = Math.min(100, Math.round((totalAbsen / 90) * 100));
-    bar90.style.width = `${pct90}%`;
-    if (totalAbsen >= 90) {
-      item90.classList.remove("locked");
-      item90.classList.add("unlocked");
-      status90.textContent = "✅ Terbuka (90 / 90 Absen)";
-      status90.style.color = "#10b981";
-      unlockedCount++;
-    } else {
-      status90.textContent = `${totalAbsen} / 90 Absen`;
     }
   }
 
@@ -1673,7 +1645,7 @@ function initThemeToggle() {
       const isLight = document.body.classList.contains("light-mode");
 
       if (isLight) {
-        if (themeIcon) themeIcon.textContent = "☀️";
+        if (themeIcon) themeIcon.textContent = "☀️️";
         localStorage.setItem("app_theme", "light");
       } else {
         if (themeIcon) themeIcon.textContent = "🌙";
@@ -1777,88 +1749,87 @@ document.addEventListener("DOMContentLoaded", () => {
 initThemeToggle();
 
 // =========================================
-// 15. TOKO AVATAR & PENUKARAN BARANG REAL
+// 15. INTEGRASI FITUR TOKO FISIK & KUSTOMISASI AVATAR (TAMBAHAN UTUH)
 // =========================================
-import { loadUserShopData, buyShopItem, toggleEquipItem, publishRealItem, redeemRealItem, getRealItems } from "./shop.js";
-
 const btnCustomAvatar = document.getElementById("btn-custom-avatar");
-const btnOpenShopModal = document.getElementById("btn-open-shop-modal");
-const shopModal = document.getElementById("shop-modal");
-const closeShopModal = document.getElementById("close-shop-modal");
-
-const shopTabAvatarBtn = document.getElementById("shop-tab-avatar");
-const shopTabRealBtn = document.getElementById("shop-tab-real");
-const shopViewAvatar = document.getElementById("shop-view-avatar");
-const shopViewReal = document.getElementById("shop-view-real");
-
-const btnAdminPublishShop = document.getElementById("btn-admin-publish-shop");
-const publishShopModal = document.getElementById("publish-shop-modal");
-const closePublishShopModal = document.getElementById("close-publish-shop-modal");
-const btnSubmitPublishShop = document.getElementById("btn-submit-publish-shop");
-
-// Tab Switch di Toko (Avatar vs Barang Real)
-if (shopTabAvatarBtn && shopTabRealBtn) {
-  shopTabAvatarBtn.addEventListener("click", () => {
-    shopTabAvatarBtn.classList.add("active");
-    shopTabRealBtn.classList.remove("active");
-    if (shopViewAvatar) shopViewAvatar.style.display = "block";
-    if (shopViewReal) shopViewReal.style.display = "none";
-  });
-
-  shopTabRealBtn.addEventListener("click", async () => {
-    shopTabRealBtn.classList.add("active");
-    shopTabAvatarBtn.classList.remove("active");
-    if (shopViewAvatar) shopViewAvatar.style.display = "none";
-    if (shopViewReal) shopViewReal.style.display = "block";
-    await renderRealItems();
-  });
-}
-
-async function renderRealItems() {
-  const container = document.getElementById("real-shop-item-list");
-  if (!container) return;
-
-  container.innerHTML = "<p style='text-align:center; color:var(--text-sub); font-size:12px; grid-column:1/-1;'>Memuat barang...</p>";
-
-  const items = await getRealItems();
-  if (!items || items.length === 0) {
-    container.innerHTML = "<p style='text-align:center; color:var(--text-sub); font-size:12px; grid-column:1/-1;'>Belum ada barang fisik untuk ditukarkan.</p>";
-    return;
-  }
-
-  container.innerHTML = "";
-  items.forEach(item => {
-    const card = document.createElement("div");
-    card.className = "shop-item-card";
-    card.innerHTML = `
-      <img src="${item.image_url || 'https://via.placeholder.com/100'}" class="real-item-img" alt="${item.title}">
-      <div class="shop-item-info" style="margin-top:6px;">
-        <h4>${item.title}</h4>
-        <p style="font-size:10px; color:var(--text-sub); margin-bottom:4px;">Stok: ${item.stock}</p>
-        <p class="shop-item-price">🪙 ${item.price_points} Poin</p>
-      </div>
-      <button class="btn-redeem-real" data-id="${item.id}" data-price="${item.price_points}" data-stock="${item.stock}" ${item.stock <= 0 ? 'disabled' : ''}>
-        ${item.stock > 0 ? 'Tukar Barang' : 'Stok Habis'}
-      </button>
-    `;
-    container.appendChild(card);
-  });
-}
-
-// Buka Modal Toko dari Profile
-function openShop() {
-  if (!currentUserId) return;
-  if (shopModal) shopModal.style.display = "flex";
-  loadUserShopData(currentUserId);
-}
+const avatarCustomModal = document.getElementById("avatar-custom-modal");
+const closeAvatarCustomModal = document.getElementById("close-avatar-custom-modal");
+const btnSaveAvatarConfig = document.getElementById("btn-save-avatar-config");
 
 if (btnCustomAvatar) {
   btnCustomAvatar.removeAttribute("disabled");
   btnCustomAvatar.style.opacity = "1";
-  btnCustomAvatar.addEventListener("click", openShop);
+  btnCustomAvatar.addEventListener("click", async () => {
+    if (avatarCustomModal) avatarCustomModal.style.display = "flex";
+    if (currentUserId) await loadUserAvatarConfig(currentUserId);
+
+    const adminAddBox = document.getElementById("admin-add-accessory-box");
+    if (adminAddBox) {
+      if (currentUserRole === "admin" || currentUserRole === "adm1n") {
+        adminAddBox.style.display = "block";
+      } else {
+        adminAddBox.style.display = "none";
+      }
+    }
+  });
 }
 
-if (btnOpenShopModal) btnOpenShopModal.addEventListener("click", openShop);
+if (closeAvatarCustomModal) {
+  closeAvatarCustomModal.addEventListener("click", () => {
+    if (avatarCustomModal) avatarCustomModal.style.display = "none";
+  });
+}
+
+if (btnSaveAvatarConfig) {
+  btnSaveAvatarConfig.addEventListener("click", async () => {
+    if (currentUserId) await saveUserAvatarConfig(currentUserId);
+  });
+}
+
+document.addEventListener("click", (e) => {
+  const opt = e.target.closest(".avatar-option-btn");
+  if (opt) {
+    const type = opt.getAttribute("data-type");
+    const val = opt.getAttribute("data-val");
+
+    if (type && val !== null) {
+      currentAvatarConfig[type] = val;
+      renderAvatarDisplay();
+    }
+  }
+});
+
+const btnSubmitNewAccessory = document.getElementById("btn-submit-new-accessory");
+if (btnSubmitNewAccessory) {
+  btnSubmitNewAccessory.addEventListener("click", async () => {
+    const name = document.getElementById("acc-name").value.trim();
+    const cat = document.getElementById("acc-category").value;
+    const price = parseInt(document.getElementById("acc-price").value) || 0;
+    const asset = document.getElementById("acc-asset").value.trim();
+
+    if (!name || !asset) {
+      alert("Lengkapi nama dan ikon/asset item!");
+      return;
+    }
+
+    const ok = await addNewCatalogItem(name, cat, price, asset);
+    if (ok) {
+      document.getElementById("acc-name").value = "";
+      document.getElementById("acc-asset").value = "";
+    }
+  });
+}
+
+const btnOpenShopModal = document.getElementById("btn-open-shop-modal");
+const shopModal = document.getElementById("shop-modal");
+const closeShopModal = document.getElementById("close-shop-modal");
+
+if (btnOpenShopModal) {
+  btnOpenShopModal.addEventListener("click", async () => {
+    if (shopModal) shopModal.style.display = "flex";
+    await renderRealItems();
+  });
+}
 
 if (closeShopModal) {
   closeShopModal.addEventListener("click", () => {
@@ -1866,7 +1837,11 @@ if (closeShopModal) {
   });
 }
 
-// Handler Publish Barang Real oleh Admin / Pengurus
+const btnAdminPublishShop = document.getElementById("btn-admin-publish-shop");
+const publishShopModal = document.getElementById("publish-shop-modal");
+const closePublishShopModal = document.getElementById("close-publish-shop-modal");
+const btnSubmitPublishShop = document.getElementById("btn-submit-publish-shop");
+
 if (btnAdminPublishShop) {
   btnAdminPublishShop.addEventListener("click", () => {
     if (publishShopModal) publishShopModal.style.display = "flex";
@@ -1882,25 +1857,28 @@ if (closePublishShopModal) {
 if (btnSubmitPublishShop) {
   btnSubmitPublishShop.addEventListener("click", async () => {
     const title = document.getElementById("publish-title").value.trim();
+    const desc = document.getElementById("publish-desc").value.trim();
     const points = parseInt(document.getElementById("publish-points").value);
     const stock = parseInt(document.getElementById("publish-stock").value);
-    const imgUrl = document.getElementById("publish-img-url").value.trim();
+    const fileInput = document.getElementById("publish-img-file");
+    const file = fileInput ? fileInput.files[0] : null;
 
     if (!title || isNaN(points) || isNaN(stock)) {
-      alert("Harap lengkapi semua data barang!");
+      alert("Harap lengkapi judul, poin, dan stok!");
       return;
     }
 
     btnSubmitPublishShop.textContent = "Menerbitkan...";
     btnSubmitPublishShop.disabled = true;
 
-    const success = await publishRealItem(currentUserId, title, points, stock, imgUrl);
+    const success = await publishRealItem(currentUserId, title, desc, points, stock, file);
     if (success) {
       alert("✅ Barang berhasil dipublish ke toko!");
       document.getElementById("publish-title").value = "";
+      document.getElementById("publish-desc").value = "";
       document.getElementById("publish-points").value = "";
       document.getElementById("publish-stock").value = "";
-      document.getElementById("publish-img-url").value = "";
+      if (fileInput) fileInput.value = "";
       if (publishShopModal) publishShopModal.style.display = "none";
       await renderRealItems();
     }
@@ -1910,32 +1888,7 @@ if (btnSubmitPublishShop) {
   });
 }
 
-// Global Click Handlers untuk Toko
 document.addEventListener("click", async (e) => {
-  if (e.target.classList.contains("btn-buy-item")) {
-    const itemId = e.target.getAttribute("data-id");
-    const price = parseInt(e.target.getAttribute("data-price"));
-    const currentPoints = currentEmployeeData ? (currentEmployeeData.points || 0) : 0;
-
-    const success = await buyShopItem(currentUserId, itemId, price, currentPoints);
-    if (success) {
-      await loadUserProfile();
-      await loadUserShopData(currentUserId);
-    }
-  }
-
-  if (e.target.classList.contains("btn-equip-item")) {
-    const itemId = e.target.getAttribute("data-id");
-    const type = e.target.getAttribute("data-type");
-    await toggleEquipItem(currentUserId, itemId, type, true);
-  }
-
-  if (e.target.classList.contains("btn-unequip-item")) {
-    const itemId = e.target.getAttribute("data-id");
-    const type = e.target.getAttribute("data-type");
-    await toggleEquipItem(currentUserId, itemId, type, false);
-  }
-
   if (e.target.classList.contains("btn-redeem-real")) {
     const itemId = e.target.getAttribute("data-id");
     const price = parseInt(e.target.getAttribute("data-price"));
