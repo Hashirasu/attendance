@@ -1,49 +1,69 @@
 import { supabase } from "./app.js";
 
 // =========================================
-// 1. DATA MASTER POKEMON (GEN 1 - 6) & SCENERY
+// 1. GENERATOR MASTER POKEMON GEN 1 - 6 (TOTAL 721 POKEMON)
 // =========================================
-export const FREE_STARTER_POKEMON = [
-  { id: "p-1", name: "Bulbasaur", gen: 1, price: 0, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1.png" },
-  { id: "p-152", name: "Chikorita", gen: 2, price: 0, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/152.png" },
-  { id: "p-252", name: "Treecko", gen: 3, price: 0, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/252.png" },
-  { id: "p-387", name: "Turtwig", gen: 4, price: 0, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/387.png" },
-  { id: "p-495", name: "Snivy", gen: 5, price: 0, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/495.png" },
-  { id: "p-650", name: "Chespin", gen: 6, price: 0, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/650.png" }
+
+// Daftar ID Pokédex untuk Starter Gratis (1 per Gen)
+export const STARTER_POKEMON_IDS = ["p-1", "p-152", "p-252", "p-387", "p-495", "p-650"];
+
+// Daftar nama khusus/popular & Legend untuk harga/kategori khusus
+const LEGENDARY_IDS = [
+  150, 151, 243, 244, 245, 249, 250, 251, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386,
+  480, 481, 482, 483, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493,
+  638, 639, 640, 641, 642, 643, 644, 645, 646, 647, 648, 649,
+  716, 717, 718, 719, 720, 721
 ];
 
-export const ALL_SHOP_POKEMON = [
-  ...FREE_STARTER_POKEMON,
-  { id: "p-4", name: "Charmander", gen: 1, price: 50, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/4.png" },
-  { id: "p-7", name: "Squirtle", gen: 1, price: 50, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/7.png" },
-  { id: "p-25", name: "Pikachu", gen: 1, price: 100, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png" },
-  { id: "p-155", name: "Cyndaquil", gen: 2, price: 50, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/155.png" },
-  { id: "p-158", name: "Totodile", gen: 2, price: 50, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/158.png" },
-  { id: "p-255", name: "Torchic", gen: 3, price: 50, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/255.png" },
-  { id: "p-258", name: "Mudkip", gen: 3, price: 50, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/258.png" },
-  { id: "p-390", name: "Chimchar", gen: 4, price: 60, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/390.png" },
-  { id: "p-393", name: "Piplup", gen: 4, price: 60, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/393.png" },
-  { id: "p-498", name: "Tepig", gen: 5, price: 60, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/498.png" },
-  { id: "p-501", name: "Oshawott", gen: 5, price: 60, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/501.png" },
-  { id: "p-653", name: "Fennekin", gen: 6, price: 70, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/653.png" },
-  { id: "p-656", name: "Froakie", gen: 6, price: 70, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/656.png" },
-  { id: "p-133", name: "Eevee", gen: 1, price: 120, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/133.png" },
-  { id: "p-150", name: "Mewtwo", gen: 1, price: 300, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/150.png" },
-  { id: "p-384", name: "Rayquaza", gen: 3, price: 350, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/384.png" },
-  { id: "p-448", name: "Lucario", gen: 4, price: 200, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/448.png" },
-  { id: "p-658", name: "Greninja", gen: 6, price: 220, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/658.png" }
-];
+function getGeneration(id) {
+  if (id <= 151) return 1;
+  if (id <= 251) return 2;
+  if (id <= 386) return 3;
+  if (id <= 493) return 4;
+  if (id <= 649) return 5;
+  return 6;
+}
 
+function calculatePrice(id) {
+  if (STARTER_POKEMON_IDS.includes(`p-${id}`)) return 0; // Gratis Starter
+  if (LEGENDARY_IDS.includes(id)) return 300; // Legendary
+  const gen = getGeneration(id);
+  return 40 + (gen * 10); // Price berkisar 50 - 100 Poin
+}
+
+// Generate 721 Pokemon
+export const ALL_SHOP_POKEMON = Array.from({ length: 721 }, (_, index) => {
+  const pId = index + 1;
+  const gen = getGeneration(pId);
+  const price = calculatePrice(pId);
+  
+  return {
+    id: `p-${pId}`,
+    pokedexNum: pId,
+    name: `Pokémon #${pId}`, // Nama Pokedex default, bisa dipercantik atau otomatis dimuat
+    gen: gen,
+    price: price,
+    img: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pId}.png`,
+    sprite: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pId}.png`
+  };
+});
+
+export const FREE_STARTER_POKEMON = ALL_SHOP_POKEMON.filter(p => STARTER_POKEMON_IDS.includes(p.id));
+
+// =========================================
+// 2. HABITAT SCENERY / KANDANG POKEMON
+// =========================================
 export const ALL_SHOP_SCENERY = [
-  { id: "sc-default", title: "Default Nature", price: 0, url: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1000&q=80" },
-  { id: "sc-vihara-zen", title: "Vihara Zen Garden", price: 80, url: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1000&q=80" },
-  { id: "sc-sakura-park", title: "Sakura Blossom Park", price: 100, url: "https://images.unsplash.com/photo-1522383225653-ed111181a951?auto=format&fit=crop&w=1000&q=80" },
-  { id: "sc-night-shrine", title: "Night Temple Shrine", price: 150, url: "https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1000&q=80" },
-  { id: "sc-mountain-mist", title: "Mountain Peak Mist", price: 120, url: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1000&q=80" }
+  { id: "sc-default", title: "Padang Rumput Hijau", price: 0, url: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1000&q=80" },
+  { id: "sc-vihara-zen", title: "Taman Zen Vihara", price: 80, url: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1000&q=80" },
+  { id: "sc-sakura-park", title: "Hutan Bunga Sakura", price: 100, url: "https://images.unsplash.com/photo-1522383225653-ed111181a951?auto=format&fit=crop&w=1000&q=80" },
+  { id: "sc-night-shrine", title: "Kuil Malam Hari", price: 150, url: "https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1000&q=80" },
+  { id: "sc-mountain-mist", title: "Puncak Gunung Berawan", price: 120, url: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1000&q=80" },
+  { id: "sc-beach-sunset", title: "Pantai Senja", price: 140, url: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1000&q=80" }
 ];
 
 // =========================================
-// 2. TOKO FISIK REAL ITEMS (PUBLISH, DELETE, REDEEM)
+// 3. TOKO BARANG FISIK
 // =========================================
 export async function getRealItems() {
   const { data, error } = await supabase
@@ -209,28 +229,33 @@ export async function loadItemRedemptions(itemId) {
 }
 
 // =========================================
-// 3. ADOPSI POKEMON & SCENERY TOKO
+// 4. ADOPSI POKEMON (KATALOG 721 POKEMON)
 // =========================================
-export async function renderPokemonShop(userId, currentPoints) {
+export async function renderPokemonShop(userId, currentPoints, searchFilter = "") {
   const container = document.getElementById("pokemon-shop-item-list");
   if (!container) return;
 
   const { data: userInventory } = await supabase.from("user_pokemon_inventory").select("pokemon_id").eq("user_id", userId);
   const ownedIds = (userInventory || []).map(i => i.pokemon_id);
 
+  const filteredPokemon = ALL_SHOP_POKEMON.filter(p => {
+    if (!searchFilter) return true;
+    return p.pokedexNum.toString().includes(searchFilter) || p.id.includes(searchFilter);
+  }).slice(0, 60); // Batch render 60 item pertama demi performa mulus
+
   container.innerHTML = "";
-  ALL_SHOP_POKEMON.forEach(poke => {
+  filteredPokemon.forEach(poke => {
     const isOwned = ownedIds.includes(poke.id);
     const card = document.createElement("div");
     card.className = "shop-item-card";
     card.innerHTML = `
-      <img src="${poke.img}" style="width:70px; height:70px; object-fit:contain; margin-bottom:6px;" alt="${poke.name}">
-      <h4 style="font-size:13px; font-weight:700; color:var(--text-main);">${poke.name}</h4>
+      <img src="${poke.img}" style="width:70px; height:70px; object-fit:contain; margin-bottom:6px;" alt="#${poke.pokedexNum}">
+      <h4 style="font-size:12px; font-weight:700; color:var(--text-main);">#${poke.pokedexNum}</h4>
       <span style="font-size:10px; color:var(--text-sub);">Gen ${poke.gen}</span>
       <p style="font-size:11px; color:#f59e0b; font-weight:800; margin-top:4px;">${poke.price === 0 ? 'GRATIS STARTER' : `🪙 ${poke.price} Poin`}</p>
 
-      <button class="btn-buy-pokemon btn-redeem-real" data-id="${poke.id}" data-price="${poke.price}" data-name="${poke.name}" ${isOwned ? 'disabled' : ''}>
-        ${isOwned ? '✅ Sudah Miliki' : '🐾 Adopsi'}
+      <button class="btn-buy-pokemon btn-redeem-real" data-id="${poke.id}" data-price="${poke.price}" data-name="#${poke.pokedexNum}" ${isOwned ? 'disabled' : ''}>
+        ${isOwned ? '✅ Owned' : '🐾 Adopsi'}
       </button>
     `;
     container.appendChild(card);
@@ -253,7 +278,7 @@ export async function buyPokemon(userId, pokemonId, price, name, currentPoints) 
 
   await supabase.from("user_pokemon_inventory").insert({ user_id: userId, pokemon_id: pokemonId });
 
-  alert(`🎉 Selamat! Kamu telah berhasil mengadopsi ${name}!`);
+  alert(`🎉 Selamat! Kamu telah berhasil mengadopsi Pokémon ${name}!`);
   return true;
 }
 
@@ -278,10 +303,10 @@ export async function renderSceneryShop(userId, currentPoints, currentActiveScen
       <p style="font-size:11px; color:#f59e0b; font-weight:800; margin-top:2px;">${sc.price === 0 ? 'GRATIS' : `🪙 ${sc.price} Poin`}</p>
 
       ${!isOwned ? `
-        <button class="btn-buy-scenery btn-redeem-real" data-id="${sc.id}" data-price="${sc.price}" data-url="${sc.url}" data-title="${sc.title}">🛍️ Beli Background</button>
+        <button class="btn-buy-scenery btn-redeem-real" data-id="${sc.id}" data-price="${sc.price}" data-url="${sc.url}" data-title="${sc.title}">🛍️ Beli Habitat</button>
       ` : `
-        <button class="btn-equip-scenery secondary-button-sm" data-url="${sc.url}" style="width:100%; margin-top:6px; ${isActive ? 'background:#10b981; color:white;' : ''}">
-          ${isActive ? '✨ Sedang Dipakai' : '🖼️ Pasang'}
+        <button class="btn-equip-scenery secondary-button-sm" data-url="${sc.url}" style="width:100\%; margin-top:6px; ${isActive ? 'background:#10b981; color:white;' : ''}">
+          ${isActive ? '✨ Habitat Aktif' : '🏞️ Pasang Kandang'}
         </button>
       `}
     `;
@@ -300,12 +325,12 @@ export async function buyScenery(userId, sceneryId, price, url, title, currentPo
   await supabase.from("user_scenery_inventory").insert({ user_id: userId, scenery_id: sceneryId });
   await supabase.from("employees").update({ active_scenery_url: url }).eq("id", userId);
 
-  alert(`🎉 Berhasil membeli dan memasang Background ${title}!`);
+  alert(`🎉 Berhasil membeli dan memasang Habitat ${title}!`);
   return true;
 }
 
 // =========================================
-// 4. ENSURE FREE POKEMON STARTER
+// 5. ENSURE FREE POKEMON STARTER
 // =========================================
 export async function ensureFreeStarterPokemon(userId) {
   const { data } = await supabase.from("user_pokemon_inventory").select("id").eq("user_id", userId);

@@ -1031,3 +1031,70 @@ body.light-mode .chat-input {
   background: var(--ios-blue);
   color: white;
 }
+
+
+/* =========================================
+   KANDANG / HABITAT POKEMON ANIMATED STAGE
+========================================= */
+.pokemon-habitat-stage {
+  width: 100%;
+  height: 200px;
+  border-radius: var(--radius-xl);
+  background-size: cover;
+  background-position: center;
+  border: 1px solid var(--card-border);
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+}
+
+.habitat-pokemon-container {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+/* SPRITE POKEMON BERGERAK / MEMBAL */
+.animated-habitat-poke {
+  position: absolute;
+  bottom: 20px;
+  width: 68px;
+  height: 68px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4));
+  animation: pokeWander 12s infinite ease-in-out, pokeBounce 0.8s infinite alternate ease-in-out;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.animated-habitat-poke:hover {
+  transform: scale(1.25) !important;
+}
+
+/* Animasi Bouncing (Membal-membal saat jalan) */
+@keyframes pokeBounce {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-10px); }
+}
+
+/* Animasi Berkeliaran Kiri - Kanan di dalam Kandang */
+@keyframes pokeWander {
+  0% { left: 10%; transform: scaleX(1); }
+  45% { left: 75%; transform: scaleX(1); }
+  50% { left: 75%; transform: scaleX(-1); }
+  95% { left: 10%; transform: scaleX(-1); }
+  100% { left: 10%; transform: scaleX(1); }
+}
+
+/* Delay offset supaya 3 pokemon tidak jalan bersamaan */
+.animated-habitat-poke:nth-child(2) {
+  animation-delay: -4s, -0.3s;
+  bottom: 35px;
+}
+
+.animated-habitat-poke:nth-child(3) {
+  animation-delay: -8s, -0.6s;
+  bottom: 15px;
+}

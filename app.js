@@ -1177,42 +1177,38 @@ if (closePokedexModal) {
   });
 }
 
-async function renderPokedexModal() {
-  const container = document.getElementById("pokedex-container");
-  if (!container || !currentUserId) return;
+// RENDER KANDANG & HABITAT ANIMASI 3 POKEMON PROFIL SAYA
+async function renderMyPokemonShowcase(userId) {
+  const stage = document.getElementById("pokemon-habitat-stage");
+  const container = document.getElementById("habitat-pokemon-container");
+  if (!container || !stage) return;
 
-  container.innerHTML = "<p style='font-size:12px; color:var(--text-sub); text-align:center;'>Memuat Pokedex...</p>";
+  // Set background kandang sesuai active_scenery_url
+  if (currentEmployeeData && currentEmployeeData.active_scenery_url) {
+    stage.style.backgroundImage = `url('${currentEmployeeData.active_scenery_url}')`;
+  }
 
-  const { data: userInventory } = await supabase.from("user_pokemon_inventory").select("pokemon_id").eq("user_id", currentUserId);
-  const ownedIds = (userInventory || []).map(i => i.pokemon_id);
-
-  const { data: showcase } = await supabase.from("user_pokemon_showcase").select("pokemon_id").eq("user_id", currentUserId);
-  const showcaseIds = (showcase || []).map(s => s.pokemon_id);
-
+  const { data: showcase } = await supabase
+    .from("user_pokemon_showcase")
+    .select("pokemon_id, slot_index")
+    .eq("user_id", userId);
+  
   container.innerHTML = "";
-  ALL_SHOP_POKEMON.forEach(poke => {
-    const isOwned = ownedIds.includes(poke.id);
-    const isDisplayed = showcaseIds.includes(poke.id);
 
-    const card = document.createElement("div");
-    card.className = `shop-item-card ${isOwned ? 'owned' : 'locked'}`;
-    card.style.opacity = isOwned ? "1" : "0.5";
-    card.style.filter = isOwned ? "none" : "grayscale(0.9)";
+  if (!showcase || showcase.length === 0) {
+    container.innerHTML = `<div style="display:flex; height:100%; align-items:center; justify-content:center; color:white; text-shadow:0 2px 4px rgba(0,0,0,0.8); font-size:12px; font-weight:700;">🐾 Kandang masih kosong. Buka Pokédex untuk melepas Pokémon di sini!</div>`;
+    return;
+  }
 
-    card.innerHTML = `
-      <img src="${poke.img}" style="width:60px; height:60px; object-fit:contain; margin-bottom:4px;" alt="${poke.name}">
-      <h4 style="font-size:12px; font-weight:700; color:var(--text-main);">${poke.name}</h4>
-      <span style="font-size:10px; color:var(--text-sub);">Gen ${poke.gen}</span>
-
-      ${isOwned ? `
-        <button class="btn-toggle-showcase secondary-button-sm" data-id="${poke.id}" style="width:100%; margin-top:6px; font-size:10px; ${isDisplayed ? 'background:#10b981; color:white;' : ''}">
-          ${isDisplayed ? '✨ Dipajang' : '📌 Pajang'}
-        </button>
-      ` : `
-        <span style="font-size:10px; color:var(--text-sub); margin-top:6px; display:block;">🔒 Belum Dimiliki</span>
-      `}
-    `;
-    container.appendChild(card);
+  showcase.forEach((slot) => {
+    const pokeObj = ALL_SHOP_POKEMON.find(p => p.id === slot.pokemon_id);
+    if (pokeObj) {
+      const img = document.createElement("img");
+      img.src = pokeObj.img;
+      img.className = "animated-habitat-poke";
+      img.title = `Pokémon #${pokeObj.pokedexNum}`;
+      container.appendChild(img);
+    }
   });
 }
 
