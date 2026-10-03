@@ -336,14 +336,14 @@
         <!-- PUBLIC PROFILE VIEW -->
         <div id="public-profile-card" class="card-box" style="display: none;">
           <div class="flex-between-center" style="margin-bottom: 12px;">
-            <button id="btn-back-friends-list" class="secondary-button-sm">⬅️ Kembali</button>
+            <button id="btn-back-friends-list" class="secondary-button-sm">⬅️️ Kembali</button>
             <span class="card-badge">Profil Anggota</span>
           </div>
           
-          <div id="public-profile-banner" class="profile-page-header-banner" style="background-image: url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1000&q=80');">
+          <div id="public-profile-banner" class="profile-page-header-banner">
             <div class="profile-main-display" style="align-items: center; text-align: center;">
               <div class="profile-avatar-circle" style="margin: 0 auto 12px auto;">
-                <img id="public-avatar-img" src="" alt="Avatar">
+                <img id="public-avatar-img" src="https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png" alt="Avatar">
               </div>
               <h2 id="public-name-text" class="profile-display-name">Member</h2>
               <p id="public-code-text" class="profile-display-code">MDV-0000</p>
@@ -379,10 +379,10 @@
 
       <!-- TAB 5: PROFILE SAYA -->
       <section id="tab-profile-view" class="tab-content" style="display: none;">
-        <div id="my-profile-banner" class="profile-page-header-banner" style="background-image: url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1000&q=80');">
+        <div id="my-profile-banner" class="profile-page-header-banner">
           <div class="profile-main-display">
             <div class="profile-avatar-circle">
-              <img id="profile-page-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=Mudivi" alt="Avatar">
+              <img id="profile-page-avatar" src="https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png" alt="Avatar">
               <label for="upload-avatar-file" class="avatar-edit-overlay" title="Ganti Foto Profil">📷</label>
               <input type="file" id="upload-avatar-file" accept="image/*" style="display: none;">
             </div>
@@ -594,11 +594,13 @@
       <div class="flex-between-center" style="margin-bottom: 12px;">
         <h3 style="font-weight: 800; font-size: 18px; color: var(--text-main);">🛒 Toko Penukaran Vihara</h3>
         <div style="display: flex; align-items: center; gap: 8px;">
+          <!-- TOMBOL PUBLISH KHUSUS ADMIN DARI DALAM MODAL TOKO -->
           <button id="btn-modal-publish-shop" class="secondary-button-sm" style="background:#f59e0b; color:white; border:none; display:none; font-weight:700;">➕ Publish Barang</button>
           <button id="close-shop-modal" class="close-btn-sm" type="button" aria-label="Tutup">&times;</button>
         </div>
       </div>
 
+      <!-- SHOP TABS -->
       <div class="shop-tabs-nav" style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid var(--card-border); padding-bottom: 8px;">
         <button class="shop-tab-btn active" data-shop-tab="physical">🎁 Barang Fisik</button>
         <button class="shop-tab-btn" data-shop-tab="pokemon">🐾 Adopsi Pokémon</button>

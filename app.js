@@ -10,10 +10,11 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const KIOSK_SECRET = "VIHARA_ZEN_SECRET_2026";
+const DEFAULT_AVATAR = "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png";
 
 const loginSection = document.getElementById("login-section");
-const userSection = document.getElementById("tab-home-view");
-const adminSection = document.getElementById("tab-admin-view");
+const userSection = document.getElementById("user-section");
+const adminSection = document.getElementById("admin-section");
 
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
@@ -39,6 +40,7 @@ const attendanceHistory = document.getElementById("attendance-history");
 const switchToAdminBtn = document.getElementById("switch-to-admin");
 const switchToUserBtn = document.getElementById("switch-to-user");
 const logoutBtn = document.getElementById("logout-button");
+const adminLogoutBtn = document.getElementById("admin-logout-button");
 
 const tabRekapBtn = document.getElementById("tab-rekap-btn");
 const tabKaryawanBtn = document.getElementById("tab-karyawan-btn");
@@ -268,6 +270,7 @@ async function handleLogout() {
 }
 
 if (logoutBtn) logoutBtn.addEventListener("click", handleLogout);
+if (adminLogoutBtn) adminLogoutBtn.addEventListener("click", handleLogout);
 
 function showLoginSection() {
   const authContainer = document.getElementById("auth-container");
@@ -277,6 +280,8 @@ function showLoginSection() {
   if (dashboardWorkspace) dashboardWorkspace.style.display = "none";
 
   if (loginSection) loginSection.style.display = "block";
+  if (userSection) userSection.style.display = "none";
+  if (adminSection) adminSection.style.display = "none";
   if (unverifiedSection) unverifiedSection.style.display = "none";
   if (emailInput) emailInput.style.display = "block";
   if (passwordInput) passwordInput.style.display = "block";
@@ -301,6 +306,10 @@ async function loadUserProfile() {
   if (authContainer) authContainer.style.display = "none";
   if (dashboardWorkspace) dashboardWorkspace.style.display = "flex";
 
+  if (loginSection) loginSection.style.display = "none";
+  if (userSection) userSection.style.display = "block";
+  if (adminSection) adminSection.style.display = "none";
+
   await ensureFreeStarterPokemon(currentUserId);
 
   const { data: empData, error } = await supabase
@@ -322,7 +331,9 @@ async function loadUserProfile() {
     const profilePagePoints = document.getElementById("profile-page-points");
     const profilePageBio = document.getElementById("profile-page-bio");
 
-    const avatarUrl = empData.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${empData.name}`;
+    const avatarUrl = (empData.avatar_url && empData.avatar_url.trim() !== "") 
+      ? empData.avatar_url 
+      : DEFAULT_AVATAR;
 
     if (profilePageAvatar) profilePageAvatar.src = avatarUrl;
     if (profilePageName) profilePageName.textContent = empData.name;
@@ -527,12 +538,12 @@ async function loadFriendsSystem() {
         `;
       }
 
-      const avatar = u.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${u.name}`;
+      const avatar = (u.avatar_url && u.avatar_url.trim() !== "") ? u.avatar_url : DEFAULT_AVATAR;
       const item = document.createElement("div");
       item.className = "friend-item-card";
       item.innerHTML = `
         <div class="friend-user-info" data-user-id="${u.id}">
-          <img src="${avatar}" class="friend-avatar-mini" alt="Avatar">
+          <img src="${avatar}" class="friend-avatar-mini" alt="Avatar" onerror="this.src='${DEFAULT_AVATAR}'">
           <div>
             <div class="friend-name">${u.name}</div>
             <div class="friend-code">Kode: ${u.employee_code}</div>
@@ -587,7 +598,7 @@ async function openPublicProfile(targetUserId) {
 
   const stats = await getUserSocialStats(targetUserId);
 
-  document.getElementById("public-avatar-img").src = u.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${u.name}`;
+  document.getElementById("public-avatar-img").src = (u.avatar_url && u.avatar_url.trim() !== "") ? u.avatar_url : DEFAULT_AVATAR;
   document.getElementById("public-name-text").textContent = u.name;
   document.getElementById("public-code-text").textContent = `Kode: ${u.employee_code}`;
   document.getElementById("public-bio-text").textContent = `"${u.bio || 'Halo, salam kenal!'}"`;
@@ -620,6 +631,7 @@ async function openPublicProfile(targetUserId) {
     actionBtnBox.innerHTML = btnHTML;
   }
 
+  // RENDER POKEMON KANDANG PUBLIC
   const pokeContainer = document.getElementById("public-pokemon-showcase");
   if (pokeContainer) {
     const { data: showcase } = await supabase.from("user_pokemon_showcase").select("pokemon_id, slot_index").eq("user_id", targetUserId);
@@ -701,12 +713,12 @@ async function loadMyFriendsList() {
     const u = (f.user_id === currentUserId) ? f.friend_emp : f.user_emp;
     if (!u) return;
 
-    const avatar = u.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${u.name}`;
+    const avatar = (u.avatar_url && u.avatar_url.trim() !== "") ? u.avatar_url : DEFAULT_AVATAR;
     const card = document.createElement("div");
     card.className = "friend-item-card";
     card.innerHTML = `
       <div class="friend-user-info" data-user-id="${u.id}">
-        <img src="${avatar}" class="friend-avatar-mini" alt="Avatar">
+        <img src="${avatar}" class="friend-avatar-mini" alt="Avatar" onerror="this.src='${DEFAULT_AVATAR}'">
         <div>
           <div class="friend-name">${u.name}</div>
           <div class="friend-code">Kode: ${u.employee_code}</div>
@@ -835,7 +847,7 @@ async function openChatWindow(friendId, friendName, friendAvatar) {
   activeChatFriendId = friendId;
   const chatWin = document.getElementById("floating-chat-window");
   document.getElementById("chat-target-name").textContent = friendName;
-  document.getElementById("chat-target-avatar").src = friendAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${friendName}`;
+  document.getElementById("chat-target-avatar").src = (friendAvatar && friendAvatar.trim() !== "") ? friendAvatar : DEFAULT_AVATAR;
   chatWin.style.display = "flex";
 
   await supabase.from("direct_messages").update({ is_read: true }).eq("sender_id", friendId).eq("receiver_id", currentUserId).eq("is_read", false);
@@ -1405,6 +1417,7 @@ if (closeRedemptionModal) {
   });
 }
 
+// PUBLISH BARANG ADMIN HANDLERS
 const btnAdminPublishShop = document.getElementById("btn-admin-publish-shop");
 const btnModalPublishShop = document.getElementById("btn-modal-publish-shop");
 const publishShopModal = document.getElementById("publish-shop-modal");
@@ -1602,7 +1615,8 @@ if (btnSavePoints) {
 // ==============================
 if (switchToAdminBtn) {
   switchToAdminBtn.addEventListener("click", async () => {
-    switchTab("admin", true);
+    if (userSection) userSection.style.display = "none";
+    if (adminSection) adminSection.style.display = "block";
     if (adminFilterDate) adminFilterDate.value = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
     await loadAdminAttendance();
     await loadAdminChart();
@@ -1611,7 +1625,8 @@ if (switchToAdminBtn) {
 
 if (switchToUserBtn) {
   switchToUserBtn.addEventListener("click", () => {
-    switchTab("home", true);
+    if (adminSection) adminSection.style.display = "none";
+    if (userSection) userSection.style.display = "block";
     if (kioskTimerInterval) clearInterval(kioskTimerInterval);
   });
 }
