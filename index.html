@@ -13,17 +13,17 @@
 </head>
 <body>
 
-  <!-- FLOATING HAMBURGER BUTTON (Pojok Kiri Atas - Fixed & Statis) -->
+  <!-- FLOATING HAMBURGER BUTTON (Pojok Kiri Atas - Fixed) -->
   <button id="mobile-hamburger-btn" class="mobile-hamburger-btn" type="button" aria-label="Buka Navigasi">
     <span class="hamburger-icon">☰</span>
   </button>
 
-  <!-- FLOATING THEME TOGGLE BUTTON (Pojok Kanan Atas - Fixed & Statis) -->
+  <!-- FLOATING THEME TOGGLE BUTTON (Pojok Kanan Atas - Fixed) -->
   <button id="theme-toggle-btn" class="theme-toggle-btn" type="button" title="Ganti Mode">
     <span id="theme-icon">🌙</span>
   </button>
 
-  <!-- SIDEBAR / DRAWER NAVIGASI SLIDE DARI KIRI (Filling ~20-25% Layar) -->
+  <!-- SIDEBAR / DRAWER NAVIGASI SLIDE DARI KIRI (~20-25% Layar) -->
   <div id="mobile-nav-overlay" class="mobile-nav-overlay">
     <aside class="drawer-sidebar-card">
       <div class="drawer-header">
@@ -44,6 +44,15 @@
         <button type="button" class="nav-btn" data-tab="posts">
           <span class="nav-icon">📰</span>
           <span>Post</span>
+        </button>
+        <button type="button" class="nav-btn" data-tab="friends">
+          <span class="nav-icon">👥</span>
+          <span>Friends</span>
+        </button>
+        <button type="button" class="nav-btn" data-tab="notifications">
+          <span class="nav-icon">🔔</span>
+          <span>Notifications</span>
+          <span id="notif-badge-count" class="notif-badge-pill" style="display: none;">0</span>
         </button>
         <button type="button" class="nav-btn" data-tab="presensi">
           <span class="nav-icon">📋</span>
@@ -147,11 +156,10 @@
   <!-- WORKSPACE DASHBOARD -->
   <div id="dashboard-workspace" class="app-workspace" style="display: none;">
 
-    <!-- MAIN CONTENT WINDOW -->
     <main class="glass-content-window">
       
       <header class="workspace-topbar">
-        <!-- BRAND BANNER / LOGO + TULISAN PERSIS DI TENGAH HOMEPAGE -->
+        <!-- BRAND BANNER (Center) -->
         <div class="topbar-brand-center">
           <div class="logo-box-mini">
             <img src="logo.png" alt="Logo">
@@ -160,7 +168,7 @@
         </div>
 
         <div class="topbar-bottom-row">
-          <div class="user-greeting">
+          <div class="user-greeting-box">
             <h3>Halo, <span id="user-name-display">Member</span> 👋</h3>
             <span id="user-code" class="user-code-badge">Kode: -</span>
           </div>
@@ -170,9 +178,6 @@
               <span id="live-time">00:00:00</span>
               <span class="live-zone">WIB</span>
             </div>
-            <button id="mobile-logout-button" class="logout-btn-mobile mobile-only" type="button">
-              🚪 Logout
-            </button>
           </div>
         </div>
       </header>
@@ -267,7 +272,42 @@
         </div>
       </section>
 
-      <!-- TAB 3: PRESENSI -->
+      <!-- TAB 3: FRIENDS & SEARCH -->
+      <section id="tab-friends-view" class="tab-content" style="display: none;">
+        <div class="card-box" style="margin-bottom: 20px;">
+          <h3 class="section-heading" style="margin-bottom: 12px;">🔍 Cari Teman Baru</h3>
+          <div class="search-box-container">
+            <input type="text" id="friend-search-input" class="custom-input" placeholder="Ketik nama anggota... (misal: Calvin)" autocomplete="off">
+            <div id="search-autocomplete-dropdown" class="autocomplete-dropdown" style="display: none;"></div>
+          </div>
+        </div>
+
+        <!-- SEARCH RESULTS OR FRIENDS LIST CONTAINER -->
+        <div class="card-box">
+          <div class="flex-between-center" style="margin-bottom: 16px;">
+            <h3 id="friends-section-title" class="section-heading">👥 Teman Saya</h3>
+            <span id="friends-count-badge" class="card-badge">0 Teman</span>
+          </div>
+          <div id="friends-list-container">
+            <p style="color: var(--text-sub); text-align: center;">Memuat daftar teman...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: NOTIFICATIONS -->
+      <section id="tab-notifications-view" class="tab-content" style="display: none;">
+        <div class="card-box">
+          <div class="flex-between-center" style="margin-bottom: 16px;">
+            <h3 class="section-heading">🔔 Aktivitas & Notifikasi Terbaru</h3>
+            <button id="btn-clear-notifs" class="secondary-button" style="font-size: 11px;">Tandai Dibaca</button>
+          </div>
+          <div id="notifications-list-container">
+            <p style="color: var(--text-sub); text-align: center;">Memuat notifikasi...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: PRESENSI -->
       <section id="tab-presensi-view" class="tab-content" style="display: none;">
         <div class="today-grid">
           <div class="card-box">
@@ -287,9 +327,7 @@
               <button id="open-scanner-btn-user" class="main-button btn-scan">
                 📷 Buka Scanner
               </button>
-              <p class="sub-text-center">
-                Arahkan kamera ke QR Kios Vihara.
-              </p>
+              <p class="sub-text-center">Arahkan kamera ke QR Kios Vihara.</p>
             </div>
           </div>
         </div>
@@ -330,15 +368,13 @@
         </div>
       </section>
 
-      <!-- TAB 4: PROFILE -->
+      <!-- TAB 6: PROFILE SAYA -->
       <section id="tab-profile-view" class="tab-content" style="display: none;">
         <div class="profile-page-header">
           <div class="profile-main-display">
             <div class="profile-avatar-circle">
               <img id="profile-page-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=Mudivi" alt="Avatar">
-              <label for="upload-avatar-file" class="avatar-edit-overlay" title="Ganti Foto Profil dari Galeri">
-                📷
-              </label>
+              <label for="upload-avatar-file" class="avatar-edit-overlay" title="Ganti Foto Profil dari Galeri">📷</label>
               <input type="file" id="upload-avatar-file" accept="image/*" style="display: none;">
             </div>
 
@@ -346,18 +382,15 @@
             <p id="profile-page-code" class="profile-display-code">MDV-0000</p>
 
             <div class="profile-badge-row">
-              <div class="points-pill">
-                🪙 <span id="profile-page-points">0</span> Poin Vihara
-              </div>
+              <div class="points-pill">🪙 <span id="profile-page-points">0</span> Poin Vihara</div>
               <button id="btn-open-edit-bio-modal" class="secondary-button-sm">✏️ Edit Bio</button>
             </div>
 
-            <p id="profile-page-bio" class="profile-display-bio">
-              "Halo, salam kenal ya!"
-            </p>
+            <p id="profile-page-bio" class="profile-display-bio">"Halo, salam kenal ya!"</p>
           </div>
 
-          <div class="avatar-character-box">
+          <!-- WADAH MODUL AVATAR (UNTUK PEMISAHAN FILE AVATAR) -->
+          <div id="avatar-render-stage" class="avatar-character-box">
             <div class="avatar-stage">
               <div class="avatar-shadow"></div>
               <img id="avatar-chara-img" src="https://api.dicebear.com/7.x/bottts/svg?seed=AvatarChara" class="chara-sprite" alt="Avatar Character">
@@ -381,9 +414,7 @@
                 <div class="badge-info">
                   <h4>Keep it up!</h4>
                   <p>Hadir dan melakukan presensi sebanyak 10 kali.</p>
-                  <div class="badge-progress-track">
-                    <div id="badge-bar-10" class="badge-progress-fill" style="width: 0%;"></div>
-                  </div>
+                  <div class="badge-progress-track"><div id="badge-bar-10" class="badge-progress-fill" style="width: 0%;"></div></div>
                   <span id="badge-status-10" class="badge-status-text">0 / 10 Absen</span>
                 </div>
               </div>
@@ -393,9 +424,7 @@
                 <div class="badge-info">
                   <h4>Well Done!</h4>
                   <p>Hadir dan melakukan presensi sebanyak 30 kali.</p>
-                  <div class="badge-progress-track">
-                    <div id="badge-bar-30" class="badge-progress-fill" style="width: 0%;"></div>
-                  </div>
+                  <div class="badge-progress-track"><div id="badge-bar-30" class="badge-progress-fill" style="width: 0%;"></div></div>
                   <span id="badge-status-30" class="badge-status-text">0 / 30 Absen</span>
                 </div>
               </div>
@@ -405,9 +434,7 @@
                 <div class="badge-info">
                   <h4>Loyal Member</h4>
                   <p>Hadir dan melakukan presensi sebanyak 90 kali.</p>
-                  <div class="badge-progress-track">
-                    <div id="badge-bar-90" class="badge-progress-fill" style="width: 0%;"></div>
-                  </div>
+                  <div class="badge-progress-track"><div id="badge-bar-90" class="badge-progress-fill" style="width: 0%;"></div></div>
                   <span id="badge-status-90" class="badge-status-text">0 / 90 Absen</span>
                 </div>
               </div>
@@ -416,20 +443,29 @@
 
           <div class="card-box">
             <div class="flex-between-center" style="margin-bottom: 14px;">
-              <h3 class="section-heading">👥 Daftar Teman</h3>
-              <span class="card-badge">Fitur Komunitas</span>
+              <h3 class="section-heading">👥 Statistik Pertemanan</h3>
+              <span class="card-badge">Komunitas</span>
             </div>
-
-            <div class="friends-placeholder-box">
-              <div class="friends-empty-icon">🤝</div>
-              <h4>Fitur Pertemanan Segera Hadir!</h4>
-              <p>Nanti kamu bisa mencari teman sesama anggota Vihara, melihat profil/avatar mereka, dan berkirim pesan secara langsung.</p>
+            <div style="display: flex; gap: 20px; justify-content: center; padding: 20px 0;">
+              <div style="text-align: center;">
+                <h2 id="my-friends-count-stat" style="font-size: 28px; font-weight: 800; color: var(--ios-blue);">0</h2>
+                <span style="font-size: 12px; color: var(--text-sub);">Teman</span>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- TAB 5: ADMIN PANEL -->
+      <!-- TAB 7: PUBLIC PROFILE USER LAIN -->
+      <section id="tab-public-profile-view" class="tab-content" style="display: none;">
+        <button id="btn-back-from-public-profile" class="secondary-button" style="margin-bottom: 16px;">← Kembali</button>
+        
+        <div id="public-profile-container">
+          <!-- Rendered dynamically -->
+        </div>
+      </section>
+
+      <!-- TAB 8: ADMIN PANEL -->
       <section id="tab-admin-view" class="tab-content" style="display: none;">
         <div class="admin-tabs">
           <button id="tab-rekap-btn" class="tab-btn active" type="button">Data Absensi</button>
@@ -457,17 +493,11 @@
             <h3 class="section-heading" style="margin-bottom: 12px;">Aksi Integrasi</h3>
             
             <div class="flex-gap-8" style="margin-bottom: 12px;">
-              <a href="https://docs.google.com/spreadsheets/d/1bIaTuqe0iRxnWdIYf_RUFrjbIEBl-89471Z1GFdAMWA/edit?usp=sharing" target="_blank" class="btn-sheet-link">
-                📊 Buka Sheets
-              </a>
-              <button id="sync-sheets-btn" class="secondary-button btn-sync" type="button">
-                🔄 Sinkron
-              </button>
+              <a href="https://docs.google.com/spreadsheets/d/1bIaTuqe0iRxnWdIYf_RUFrjbIEBl-89471Z1GFdAMWA/edit?usp=sharing" target="_blank" class="btn-sheet-link">📊 Buka Sheets</a>
+              <button id="sync-sheets-btn" class="secondary-button btn-sync" type="button">🔄 Sinkron</button>
             </div>
 
-            <button id="export-csv-btn" class="secondary-button btn-export" type="button">
-              📥 Export Excel (Cadangan)
-            </button>
+            <button id="export-csv-btn" class="secondary-button btn-export" type="button">📥 Export Excel (Cadangan)</button>
 
             <div class="flex-gap-10" style="margin-top: 16px;">
               <input type="date" id="admin-filter-date" class="custom-input" style="padding: 10px; font-size: 13px; flex: 1;">
@@ -515,7 +545,40 @@
     </main>
   </div>
 
-  <!-- MODALS -->
+  <!-- CHAT ROOM MODAL/PAGE (REFERENSI GAMBAR 2) -->
+  <div id="chat-room-modal" class="chat-modal-backdrop" style="display: none;">
+    <div class="chat-room-card">
+      <header class="chat-room-header">
+        <button id="btn-close-chat" class="chat-back-btn" type="button" aria-label="Kembali">&lt;</button>
+        <div class="chat-header-user-info">
+          <img id="chat-header-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=User" alt="Avatar">
+          <div>
+            <h4 id="chat-header-name">Nama Teman</h4>
+            <span id="chat-header-username" class="chat-sub-username">mudiviva &bull; Member</span>
+          </div>
+        </div>
+        <button id="btn-chat-options" class="chat-options-btn" type="button" title="Pengaturan Chat">⚙️</button>
+      </header>
+
+      <div class="chat-profile-banner">
+        <img id="chat-banner-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=User" alt="Avatar">
+        <h3 id="chat-banner-name">Nama Teman</h3>
+        <p id="chat-banner-sub">mudiviva &bull; Mudiviverse Member</p>
+        <button id="btn-view-profile-from-chat" class="secondary-button-sm" style="margin-top: 8px;">View profile</button>
+      </div>
+
+      <div id="chat-messages-container" class="chat-messages-body">
+        <!-- Messages rendered here -->
+      </div>
+
+      <footer class="chat-input-bar">
+        <input type="text" id="chat-message-input" placeholder="Message..." class="chat-input-field">
+        <button id="btn-send-message" class="chat-send-btn" type="button">🚀</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- MODALS DIVERSITY -->
   <div id="edit-bio-modal" class="modal" style="display: none;">
     <div class="modal-content">
       <h3 style="font-weight: 700; font-size: 18px; margin-bottom: 18px; color: var(--text-main);">Edit Bio Profil</h3>
@@ -552,32 +615,11 @@
     </div>
   </div>
 
-  <div id="edit-quote-modal" class="modal" style="display: none;">
-    <div class="modal-content">
-      <h3 style="font-weight: 700; font-size: 18px; margin-bottom: 18px; color: var(--text-main);">Edit Perenungan Hari Ini</h3>
-      <div class="input-field-box" style="margin-bottom: 12px;">
-        <label>Isi Kutipan / Perenungan</label>
-        <textarea id="edit-quote-text-input" class="custom-input" rows="4" style="resize: vertical;"></textarea>
-      </div>
-      <div class="input-field-box">
-        <label>Sumber Kutipan</label>
-        <input type="text" id="edit-quote-source-input" class="custom-input" placeholder="Contoh: Dhammapada, Yamakavagga">
-      </div>
-      <p id="edit-quote-modal-msg" style="font-size: 12px; color: #f87171; font-weight: 600; margin-top: 10px;"></p>
-      <div class="flex-gap-10" style="margin-top: 24px;">
-        <button id="cancel-edit-quote" class="secondary-button" type="button" style="flex: 1;">Batal</button>
-        <button id="save-edit-quote" class="main-button" type="button" style="flex: 1; margin: 0; background: #3b82f6; color: white;">Simpan</button>
-      </div>
-    </div>
-  </div>
-
   <div id="scanner-modal" class="modal-backdrop" style="display: none;">
     <div class="scanner-modal-card">
       <h3 style="margin-bottom: 15px; font-size: 18px; color: var(--text-main);">Arahkan Kamera ke QR</h3>
       <div id="reader" style="width: 100%; border-radius: 12px; overflow: hidden;"></div>
-      <button id="close-scanner-btn" class="btn-close-scanner" type="button">
-        Tutup Kamera
-      </button>
+      <button id="close-scanner-btn" class="btn-close-scanner" type="button">Tutup Kamera</button>
     </div>
   </div>
 
