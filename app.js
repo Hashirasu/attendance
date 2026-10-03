@@ -342,7 +342,6 @@ async function loadUserProfile() {
     if (profilePageBio) profilePageBio.textContent = `"${empData.bio || 'Halo, salam kenal ya!'}"`;
 
     const navAdminBtns = document.querySelectorAll(".nav-admin-btn");
-    const btnAdminPublishShop = document.getElementById("btn-admin-publish-shop");
     const btnModalPublishShop = document.getElementById("btn-modal-publish-shop");
 
     const isAdmin = currentUserRole === "admin" || currentUserRole === "adm1n" || currentUserRole === "pengurus";
@@ -351,13 +350,11 @@ async function loadUserProfile() {
       if (switchToAdminBtn) switchToAdminBtn.style.display = "inline-block";
       navAdminBtns.forEach(btn => btn.style.display = "flex");
       if (tabKioskBtn) tabKioskBtn.style.display = "inline-block";
-      if (btnAdminPublishShop) btnAdminPublishShop.style.display = "inline-block";
       if (btnModalPublishShop) btnModalPublishShop.style.display = "inline-block";
     } else {
       if (switchToAdminBtn) switchToAdminBtn.style.display = "none";
       navAdminBtns.forEach(btn => btn.style.display = "none");
       if (tabKioskBtn) tabKioskBtn.style.display = "none";
-      if (btnAdminPublishShop) btnAdminPublishShop.style.display = "none";
       if (btnModalPublishShop) btnModalPublishShop.style.display = "none";
     }
   }
@@ -1418,7 +1415,6 @@ if (closeRedemptionModal) {
 }
 
 // PUBLISH BARANG ADMIN HANDLERS
-const btnAdminPublishShop = document.getElementById("btn-admin-publish-shop");
 const btnModalPublishShop = document.getElementById("btn-modal-publish-shop");
 const publishShopModal = document.getElementById("publish-shop-modal");
 const closePublishShopModal = document.getElementById("close-publish-shop-modal");
@@ -1435,7 +1431,6 @@ function openPublishModal() {
   if (publishShopModal) publishShopModal.style.display = "flex";
 }
 
-if (btnAdminPublishShop) btnAdminPublishShop.addEventListener("click", openPublishModal);
 if (btnModalPublishShop) btnModalPublishShop.addEventListener("click", openPublishModal);
 
 if (closePublishShopModal) {
