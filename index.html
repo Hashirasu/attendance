@@ -13,17 +13,34 @@
 </head>
 <body>
 
-  <!-- FLOATING HAMBURGER BUTTON (Pojok Kiri Atas - Fixed & Statis) -->
+  <!-- FLOATING HAMBURGER BUTTON -->
   <button id="mobile-hamburger-btn" class="mobile-hamburger-btn" type="button" aria-label="Buka Navigasi">
     <span class="hamburger-icon">☰</span>
   </button>
 
-  <!-- FLOATING THEME TOGGLE BUTTON (Pojok Kanan Atas - Fixed & Statis) -->
+  <!-- FLOATING NOTIFICATION BUTTON -->
+  <button id="notif-toggle-btn" class="notif-toggle-btn" type="button" title="Notifikasi">
+    <span id="notif-icon">🔔</span>
+    <span id="notif-badge-count" class="notif-badge" style="display: none;">0</span>
+  </button>
+
+  <!-- FLOATING THEME TOGGLE BUTTON -->
   <button id="theme-toggle-btn" class="theme-toggle-btn" type="button" title="Ganti Mode">
     <span id="theme-icon">🌙</span>
   </button>
 
-  <!-- SIDEBAR / DRAWER NAVIGASI SLIDE DARI KIRI (Filling ~20-25% Layar) -->
+  <!-- NOTIFICATION PANEL POPUP -->
+  <div id="notif-dropdown-panel" class="notif-dropdown-panel" style="display: none;">
+    <div class="notif-header">
+      <h4>🔔 Notifikasi Aktivitas</h4>
+      <button id="close-notif-btn" class="close-btn-sm">&times;</button>
+    </div>
+    <div id="notif-list-container" class="notif-list-container">
+      <p style="color: var(--text-sub); font-size: 12px; text-align: center; padding: 12px;">Tidak ada notifikasi baru.</p>
+    </div>
+  </div>
+
+  <!-- SIDEBAR / DRAWER NAVIGASI SLIDE DARI KIRI -->
   <div id="mobile-nav-overlay" class="mobile-nav-overlay">
     <aside class="drawer-sidebar-card">
       <div class="drawer-header">
@@ -48,6 +65,10 @@
         <button type="button" class="nav-btn" data-tab="presensi">
           <span class="nav-icon">📋</span>
           <span>Presensi</span>
+        </button>
+        <button type="button" class="nav-btn" data-tab="friends">
+          <span class="nav-icon">👥</span>
+          <span>Friends</span>
         </button>
         <button type="button" class="nav-btn" data-tab="profile">
           <span class="nav-icon">👤</span>
@@ -151,7 +172,6 @@
     <main class="glass-content-window">
       
       <header class="workspace-topbar">
-        <!-- BRAND BANNER / LOGO + TULISAN PERSIS DI TENGAH HOMEPAGE -->
         <div class="topbar-brand-center">
           <div class="logo-box-mini">
             <img src="logo.png" alt="Logo">
@@ -327,7 +347,57 @@
         </div>
       </section>
 
-      <!-- TAB 4: PROFILE -->
+      <!-- TAB 4: FRIENDS & SEARCH COMMUNITY -->
+      <section id="tab-friends-view" class="tab-content" style="display: none;">
+        <div class="card-box" style="margin-bottom: 16px;">
+          <div class="flex-between-center" style="margin-bottom: 14px;">
+            <h3 class="section-heading">🔍 Cari & Temukan Anggota</h3>
+            <span class="card-badge">Komunitas</span>
+          </div>
+          <div class="input-field-box">
+            <input type="text" id="search-friend-input" class="custom-input" placeholder="Ketik nama atau kode anggota...">
+          </div>
+          <div id="search-friends-results" class="friends-list-box" style="margin-top: 14px;">
+            <p style="color: var(--text-sub); text-align: center; padding: 10px; font-size: 12px;">Memuat anggota...</p>
+          </div>
+        </div>
+
+        <!-- USER PUBLIC PROFILE DISPLAY MODAL / VIEW -->
+        <div id="public-profile-card" class="card-box" style="display: none;">
+          <div class="flex-between-center" style="margin-bottom: 12px;">
+            <button id="btn-back-friends-list" class="secondary-button-sm">⬅️ Kembali</button>
+            <span class="card-badge">Profil Anggota</span>
+          </div>
+          <div class="profile-main-display" style="align-items: center; text-align: center;">
+            <div class="profile-avatar-circle" style="margin: 0 auto 12px auto;">
+              <img id="public-avatar-img" src="" alt="Avatar">
+            </div>
+            <h2 id="public-name-text" class="profile-display-name">Member</h2>
+            <p id="public-code-text" class="profile-display-code">MDV-0000</p>
+            <p id="public-bio-text" class="profile-display-bio" style="margin-bottom: 16px;">"Bio..."</p>
+
+            <div class="public-stats-row">
+              <div class="stat-col">
+                <strong id="public-friends-count">0</strong>
+                <span>Friends</span>
+              </div>
+              <div class="stat-col">
+                <strong id="public-following-count">0</strong>
+                <span>Following</span>
+              </div>
+            </div>
+
+            <div id="public-action-btn-box" style="margin-top: 16px; width: 100%;"></div>
+          </div>
+
+          <div style="margin-top: 20px;">
+            <h4 class="section-heading" style="margin-bottom: 10px;">🏆 Achievements</h4>
+            <div id="public-achievements-container" class="achievement-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: PROFILE SAYA -->
       <section id="tab-profile-view" class="tab-content" style="display: none;">
         <div class="profile-page-header">
           <div class="profile-main-display">
@@ -413,22 +483,18 @@
 
           <div class="card-box">
             <div class="flex-between-center" style="margin-bottom: 14px;">
-              <h3 class="section-heading">👥 Cari & Tambah Teman</h3>
-              <span class="card-badge">Fitur Komunitas</span>
+              <h3 class="section-heading">👥 Teman Saya</h3>
+              <span class="card-badge">Daftar Teman</span>
             </div>
 
-            <div class="input-field-box" style="margin-bottom: 12px;">
-              <input type="text" id="search-friend-input" class="custom-input" placeholder="Cari nama anggota...">
-            </div>
-
-            <div id="friends-list-container" class="friends-list-box">
-              <p style="color: var(--text-sub); text-align: center; padding: 10px; font-size: 12px;">Memuat daftar anggota...</p>
+            <div id="my-friends-container" class="friends-list-box">
+              <p style="color: var(--text-sub); text-align: center; font-size: 12px; padding: 10px;">Belum ada teman.</p>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- TAB 5: ADMIN PANEL -->
+      <!-- TAB 6: ADMIN PANEL -->
       <section id="tab-admin-view" class="tab-content" style="display: none;">
         <div class="admin-tabs">
           <button id="tab-rekap-btn" class="tab-btn active" type="button">Data Absensi</button>
@@ -512,6 +578,24 @@
       </section>
 
     </main>
+  </div>
+
+  <!-- FLOATING CHATBOX / FULLSCREEN CHAT FOR MOBILE -->
+  <div id="floating-chat-window" class="floating-chat-window" style="display: none;">
+    <div class="chat-header">
+      <div class="chat-user-title">
+        <img id="chat-target-avatar" src="" alt="Avatar">
+        <span id="chat-target-name">Chat Member</span>
+      </div>
+      <button id="close-chat-btn" class="close-btn-sm">&times;</button>
+    </div>
+    <div id="chat-messages-body" class="chat-messages-body">
+      <p style="font-size: 11px; color: var(--text-sub); text-align: center; margin: auto;">Belum ada pesan.</p>
+    </div>
+    <div class="chat-input-row">
+      <input type="text" id="chat-text-input" class="chat-input" placeholder="Tulis pesan...">
+      <button id="btn-send-chat" class="btn-send-chat">Kirim</button>
+    </div>
   </div>
 
   <!-- MODALS -->

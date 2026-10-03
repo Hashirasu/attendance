@@ -70,6 +70,7 @@ let currentUserId = null;
 let currentEmployeeData = null;
 let kioskTimerInterval = null;
 let kioskQrObject = null;
+let activeChatFriendId = null;
 
 // ==============================
 // 1. AUTO CHECK-IN & QR SCANNER
@@ -206,16 +207,8 @@ if (authMainButton) {
       }
 
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email, 
-        password, 
-        options: { 
-          data: { 
-            full_name: name,
-            birth_place: birthPlace,
-            birth_date: birthDate,
-            phone: phone
-          } 
-        }
+        email, password,
+        options: { data: { full_name: name, birth_place: birthPlace, birth_date: birthDate, phone: phone } }
       });
 
       if (signUpError) {
@@ -355,7 +348,9 @@ async function loadUserProfile() {
     loadAttendanceHistory(),
     loadMonthlyStatistics(),
     loadUserAchievements(),
-    loadFriendsSystem()
+    loadFriendsSystem(),
+    loadNotificationsSystem(),
+    loadMyFriendsList()
   ]);
 
   if (window.initFeedSystem) {
@@ -431,33 +426,28 @@ async function loadUserAchievements() {
   }
 }
 
-// ==============================
-// FITUR PERTEMANAN (FRIENDS SYSTEM)
-// ==============================
+// =========================================
+// 4. SISTEM FRIENDS, PROFIL & CHATBOX
+// =========================================
 async function loadFriendsSystem() {
-  const container = document.getElementById("friends-list-container");
+  const container = document.getElementById("search-friends-results");
   const searchInput = document.getElementById("search-friend-input");
   if (!container || !currentUserId) return;
 
-  const { data: allUsers, error: errUser } = await supabase
+  const { data: allUsers } = await supabase
     .from("employees")
-    .select("id, name, employee_code, avatar_url")
+    .select("id, name, employee_code, avatar_url, bio")
     .neq("id", currentUserId)
     .order("name");
 
-  const { data: friendships, error: errFriend } = await supabase
+  const { data: friendships } = await supabase
     .from("friendships")
     .select("*")
     .or(`user_id.eq.${currentUserId},friend_id.eq.${currentUserId}`);
 
-  if (errUser || !allUsers) {
-    container.innerHTML = `<p style="color:var(--text-sub); font-size:12px; text-align:center;">Gagal memuat daftar anggota.</p>`;
-    return;
-  }
-
-  function renderList(filterQuery = "") {
+  function renderSearchList(query = "") {
     container.innerHTML = "";
-    const filtered = allUsers.filter(u => u.name.toLowerCase().includes(filterQuery.toLowerCase()));
+    const filtered = (allUsers || []).filter(u => u.name.toLowerCase().includes(query.toLowerCase()) || u.employee_code.toLowerCase().includes(query.toLowerCase()));
 
     if (filtered.length === 0) {
       container.innerHTML = `<p style="color:var(--text-sub); font-size:12px; text-align:center; padding:10px;">Anggota tidak ditemukan.</p>`;
@@ -474,16 +464,23 @@ async function loadFriendsSystem() {
       if (!rel) {
         btnHTML = `<button class="btn-friend-action btn-friend-add" data-id="${u.id}">+ Add</button>`;
       } else if (rel.status === "pending") {
-        btnHTML = `<button class="btn-friend-action btn-friend-pending" disabled>Pending</button>`;
+        if (rel.user_id === currentUserId) {
+          btnHTML = `<button class="btn-friend-action btn-friend-pending" disabled>Pending</button>`;
+        } else {
+          btnHTML = `
+            <button class="btn-friend-action btn-friend-accept" data-id="${rel.id}">Accept</button>
+            <button class="btn-friend-action btn-friend-reject" data-id="${rel.id}">Reject</button>
+          `;
+        }
       } else if (rel.status === "accepted") {
-        btnHTML = `<button class="btn-friend-action btn-friend-msg" data-id="${u.id}">Message</button>`;
+        btnHTML = `<button class="btn-friend-action btn-friend-msg" data-id="${u.id}" data-name="${u.name}" data-avatar="${u.avatar_url || ''}">Message</button>`;
       }
 
       const avatar = u.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${u.name}`;
       const item = document.createElement("div");
       item.className = "friend-item-card";
       item.innerHTML = `
-        <div class="friend-user-info">
+        <div class="friend-user-info" data-user-id="${u.id}">
           <img src="${avatar}" class="friend-avatar-mini" alt="Avatar">
           <div>
             <div class="friend-name">${u.name}</div>
@@ -496,41 +493,275 @@ async function loadFriendsSystem() {
     });
   }
 
-  renderList();
+  renderSearchList();
 
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
-      renderList(e.target.value.trim());
+      renderSearchList(e.target.value.trim());
     });
   }
 }
 
+// VIEW PUBLIC PROFILE ANGOTA LAIN
+async function openPublicProfile(targetUserId) {
+  const publicCard = document.getElementById("public-profile-card");
+  const searchResults = document.getElementById("search-friends-results");
+  const searchInput = document.getElementById("search-friend-input");
+
+  if (!publicCard) return;
+
+  const { data: u } = await supabase.from("employees").select("*").eq("id", targetUserId).single();
+  if (!u) return;
+
+  const { data: friendsList } = await supabase.from("friendships").select("id").or(`user_id.eq.${targetUserId},friend_id.eq.${targetUserId}`).eq("status", "accepted");
+  const { data: attCount } = await supabase.from("attendance").select("id", { count: "exact", head: true }).eq("employee_id", targetUserId);
+
+  document.getElementById("public-avatar-img").src = u.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${u.name}`;
+  document.getElementById("public-name-text").textContent = u.name;
+  document.getElementById("public-code-text").textContent = `Kode: ${u.employee_code}`;
+  document.getElementById("public-bio-text").textContent = `"${u.bio || 'Halo, salam kenal!'}"`;
+  document.getElementById("public-friends-count").textContent = friendsList ? friendsList.length : 0;
+  document.getElementById("public-following-count").textContent = friendsList ? friendsList.length : 0;
+
+  const achievementsBox = document.getElementById("public-achievements-container");
+  const totalAbsen = attCount || 0;
+  achievementsBox.innerHTML = `
+    <div class="badge-card ${totalAbsen >= 10 ? 'unlocked' : 'locked'}">
+      <div class="badge-icon">🌱</div>
+      <div class="badge-info">
+        <h4>Keep it up!</h4>
+        <p>${totalAbsen >= 10 ? '✅ Unlocked' : `${totalAbsen} / 10 Absen`}</p>
+      </div>
+    </div>
+    <div class="badge-card ${totalAbsen >= 30 ? 'unlocked' : 'locked'}">
+      <div class="badge-icon">⭐</div>
+      <div class="badge-info">
+        <h4>Well Done!</h4>
+        <p>${totalAbsen >= 30 ? '✅ Unlocked' : `${totalAbsen} / 30 Absen`}</p>
+      </div>
+    </div>
+  `;
+
+  if (searchResults) searchResults.style.display = "none";
+  if (searchInput) searchInput.style.display = "none";
+  publicCard.style.display = "block";
+}
+
+const btnBackFriends = document.getElementById("btn-back-friends-list");
+if (btnBackFriends) {
+  btnBackFriends.addEventListener("click", () => {
+    document.getElementById("public-profile-card").style.display = "none";
+    document.getElementById("search-friends-results").style.display = "flex";
+    document.getElementById("search-friend-input").style.display = "block";
+  });
+}
+
+async function loadMyFriendsList() {
+  const container = document.getElementById("my-friends-container");
+  if (!container || !currentUserId) return;
+
+  const { data: friendships } = await supabase
+    .from("friendships")
+    .select("*, employees!friendships_friend_id_fkey(id, name, employee_code, avatar_url)")
+    .eq("user_id", currentUserId)
+    .eq("status", "accepted");
+
+  if (!friendships || friendships.length === 0) {
+    container.innerHTML = `<p style="color:var(--text-sub); font-size:12px; text-align:center; padding:10px;">Belum ada teman.</p>`;
+    return;
+  }
+
+  container.innerHTML = "";
+  friendships.forEach(f => {
+    const u = f.employees;
+    if (!u) return;
+    const avatar = u.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${u.name}`;
+    const card = document.createElement("div");
+    card.className = "friend-item-card";
+    card.innerHTML = `
+      <div class="friend-user-info" data-user-id="${u.id}">
+        <img src="${avatar}" class="friend-avatar-mini" alt="Avatar">
+        <div>
+          <div class="friend-name">${u.name}</div>
+          <div class="friend-code">Kode: ${u.employee_code}</div>
+        </div>
+      </div>
+      <button class="btn-friend-action btn-friend-msg" data-id="${u.id}" data-name="${u.name}" data-avatar="${avatar}">Message</button>
+    `;
+    container.appendChild(card);
+  });
+}
+
+// ACTION BUTTON EVENTS (ADD, ACCEPT, REJECT, MESSAGE)
 document.addEventListener("click", async (e) => {
-  if (e.target.classList.contains("btn-friend-add")) {
-    const targetBtn = e.target;
-    const friendId = targetBtn.getAttribute("data-id");
-    if (!friendId || !currentUserId) return;
-
-    targetBtn.disabled = true;
-    targetBtn.className = "btn-friend-action btn-friend-pending";
-    targetBtn.textContent = "Pending";
-
-    const { error } = await supabase.from("friendships").insert({
-      user_id: currentUserId,
-      friend_id: friendId,
-      status: "pending"
-    });
-
-    if (error) {
-      alert("Gagal menambahkan teman: " + error.message);
-      await loadFriendsSystem();
+  const userInfoBox = e.target.closest(".friend-user-info");
+  if (userInfoBox) {
+    const uId = userInfoBox.getAttribute("data-user-id");
+    if (uId) {
+      switchTab("friends", true);
+      await openPublicProfile(uId);
     }
   }
 
+  if (e.target.classList.contains("btn-friend-add")) {
+    const btn = e.target;
+    const friendId = btn.getAttribute("data-id");
+    btn.disabled = true;
+    btn.className = "btn-friend-action btn-friend-pending";
+    btn.textContent = "Pending";
+
+    await supabase.from("friendships").insert({ user_id: currentUserId, friend_id: friendId, status: "pending" });
+    await supabase.from("notifications").insert({
+      user_id: friendId,
+      sender_id: currentUserId,
+      type: "friend_request",
+      title: "Permintaan Pertemanan Baru",
+      body: "Mengirimkan permintaan pertemanan."
+    });
+  }
+
+  if (e.target.classList.contains("btn-friend-accept")) {
+    const relId = e.target.getAttribute("data-id");
+    await supabase.from("friendships").update({ status: "accepted" }).eq("id", relId);
+    await Promise.all([loadFriendsSystem(), loadMyFriendsList(), loadNotificationsSystem()]);
+  }
+
+  if (e.target.classList.contains("btn-friend-reject")) {
+    const relId = e.target.getAttribute("data-id");
+    await supabase.from("friendships").delete().eq("id", relId);
+    await Promise.all([loadFriendsSystem(), loadNotificationsSystem()]);
+  }
+
   if (e.target.classList.contains("btn-friend-msg")) {
-    alert("Fitur Pesan Langsung akan segera hadir!");
+    const fId = e.target.getAttribute("data-id");
+    const fName = e.target.getAttribute("data-name");
+    const fAvatar = e.target.getAttribute("data-avatar");
+    openChatWindow(fId, fName, fAvatar);
   }
 });
+
+// FLOATING CHATBOX
+function openChatWindow(friendId, friendName, friendAvatar) {
+  activeChatFriendId = friendId;
+  const chatWin = document.getElementById("floating-chat-window");
+  document.getElementById("chat-target-name").textContent = friendName;
+  document.getElementById("chat-target-avatar").src = friendAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${friendName}`;
+  chatWin.style.display = "flex";
+  loadChatMessages();
+}
+
+const closeChatBtn = document.getElementById("close-chat-btn");
+if (closeChatBtn) closeChatBtn.addEventListener("click", () => {
+  document.getElementById("floating-chat-window").style.display = "none";
+});
+
+async function loadChatMessages() {
+  const body = document.getElementById("chat-messages-body");
+  if (!body || !activeChatFriendId || !currentUserId) return;
+
+  const { data: msgs } = await supabase
+    .from("direct_messages")
+    .select("*")
+    .or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${activeChatFriendId}),and(sender_id.eq.${activeChatFriendId},receiver_id.eq.${currentUserId})`)
+    .order("created_at", { ascending: true });
+
+  if (!msgs || msgs.length === 0) {
+    body.innerHTML = `<p style="font-size: 11px; color: var(--text-sub); text-align: center; margin: auto;">Belum ada pesan.</p>`;
+    return;
+  }
+
+  body.innerHTML = "";
+  msgs.forEach(m => {
+    const isMine = m.sender_id === currentUserId;
+    const bubble = document.createElement("div");
+    bubble.className = `chat-bubble ${isMine ? 'mine' : 'other'}`;
+    bubble.textContent = m.message;
+    body.appendChild(bubble);
+  });
+  body.scrollTop = body.scrollHeight;
+}
+
+const btnSendChat = document.getElementById("btn-send-chat");
+const chatTextInput = document.getElementById("chat-text-input");
+
+if (btnSendChat) {
+  btnSendChat.addEventListener("click", async () => {
+    const text = chatTextInput.value.trim();
+    if (!text || !activeChatFriendId) return;
+
+    chatTextInput.value = "";
+    await supabase.from("direct_messages").insert({
+      sender_id: currentUserId,
+      receiver_id: activeChatFriendId,
+      message: text
+    });
+    await loadChatMessages();
+  });
+}
+
+// =========================================
+// 5. SISTEM NOTIFIKASI
+// =========================================
+const notifToggleBtn = document.getElementById("notif-toggle-btn");
+const notifDropdown = document.getElementById("notif-dropdown-panel");
+const closeNotifBtn = document.getElementById("close-notif-btn");
+
+if (notifToggleBtn) {
+  notifToggleBtn.addEventListener("click", () => {
+    notifDropdown.style.display = notifDropdown.style.display === "none" ? "block" : "none";
+  });
+}
+
+if (closeNotifBtn) {
+  closeNotifBtn.addEventListener("click", () => {
+    notifDropdown.style.display = "none";
+  });
+}
+
+async function loadNotificationsSystem() {
+  const container = document.getElementById("notif-list-container");
+  const countBadge = document.getElementById("notif-badge-count");
+  if (!container || !currentUserId) return;
+
+  const { data: notifs } = await supabase
+    .from("notifications")
+    .select("*, employees!notifications_sender_id_fkey(name, avatar_url)")
+    .eq("user_id", currentUserId)
+    .order("created_at", { ascending: false });
+
+  if (!notifs || notifs.length === 0) {
+    container.innerHTML = `<p style="color: var(--text-sub); font-size: 12px; text-align: center; padding: 12px;">Tidak ada notifikasi baru.</p>`;
+    countBadge.style.display = "none";
+    return;
+  }
+
+  countBadge.textContent = notifs.length;
+  countBadge.style.display = "inline-block";
+
+  container.innerHTML = "";
+  notifs.forEach(n => {
+    const sender = n.employees || {};
+    const item = document.createElement("div");
+    item.className = "notif-item";
+
+    let actionsHTML = "";
+    if (n.type === "friend_request") {
+      actionsHTML = `
+        <div class="notif-actions">
+          <button class="btn-friend-action btn-friend-accept" data-id="${n.id}">Accept</button>
+          <button class="btn-friend-action btn-friend-reject" data-id="${n.id}">Reject</button>
+        </div>
+      `;
+    }
+
+    item.innerHTML = `
+      <div class="notif-item-title" data-sender-id="${n.sender_id}">${sender.name || 'Sistem'}: ${n.title}</div>
+      <div class="notif-item-body">${n.body}</div>
+      ${actionsHTML}
+    `;
+    container.appendChild(item);
+  });
+}
 
 const uploadAvatarFileInput = document.getElementById("upload-avatar-file");
 
@@ -717,7 +948,7 @@ async function loadMonthlyStatistics() {
 }
 
 // ==============================
-// 4. QR SCANNER KAMERA
+// 6. QR SCANNER KAMERA
 // ==============================
 const openScannerBtnUser = document.getElementById("open-scanner-btn-user");
 const scannerModal = document.getElementById("scanner-modal");
@@ -779,7 +1010,7 @@ if (openScannerBtnUser) openScannerBtnUser.addEventListener("click", startQrScan
 if (closeScannerBtn) closeScannerBtn.addEventListener("click", stopQrScanner);
 
 // ==============================
-// 5. MANAJEMEN POIN MEMBER
+// 7. MANAJEMEN POIN MEMBER
 // ==============================
 document.addEventListener("click", (e) => {
   if (e.target.classList.contains("btn-add-points")) {
@@ -853,7 +1084,7 @@ if (btnSavePoints) {
 }
 
 // ==============================
-// 6. ADMIN PANEL & KIOSK GENERATOR
+// 8. ADMIN PANEL & KIOSK GENERATOR
 // ==============================
 if (switchToAdminBtn) {
   switchToAdminBtn.addEventListener("click", async () => {
@@ -1127,25 +1358,15 @@ if (saveEditEmp) {
 }
 
 // ==============================
-// 7. ADVANCED EXCEL EXPORT
+// 9. ADVANCED EXCEL EXPORT
 // ==============================
 if (exportCsvBtn) {
   exportCsvBtn.addEventListener("click", async () => {
     const { data: attData, error } = await supabase
       .from("attendance")
       .select(`
-        attendance_date, 
-        check_in, 
-        status, 
-        employee_id, 
-        employees (
-          name, 
-          phone,
-          employee_code, 
-          role, 
-          birth_place, 
-          birth_date
-        )
+        attendance_date, check_in, status, employee_id, 
+        employees (name, phone, employee_code, role, birth_place, birth_date)
       `)
       .order("attendance_date", { ascending: false });
 
@@ -1172,21 +1393,12 @@ if (exportCsvBtn) {
       const isPengurus = (role === "pengurus" || role === "admin" || role === "adm1n");
 
       const itemExcel = {
-        "Tanggal": date,
-        "Kode Anggota": code,
-        "Nama Lengkap": name,
-        "No WhatsApp": phone,
-        "Tempat Lahir": birthPlace,
-        "Tanggal Lahir": birthDate,
-        "Jam Absen": time,
-        "Status": statusText
+        "Tanggal": date, "Kode Anggota": code, "Nama Lengkap": name, "No WhatsApp": phone,
+        "Tempat Lahir": birthPlace, "Tanggal Lahir": birthDate, "Jam Absen": time, "Status": statusText
       };
 
-      if (isPengurus) {
-        pengurusRows.push(itemExcel);
-      } else {
-        memberRows.push(itemExcel);
-      }
+      if (isPengurus) pengurusRows.push(itemExcel);
+      else memberRows.push(itemExcel);
     });
 
     const workbook = XLSX.utils.book_new();
@@ -1201,7 +1413,7 @@ if (exportCsvBtn) {
 }
 
 // ==============================
-// 8. SINKRONISASI KE GOOGLE SHEETS
+// 10. SINKRONISASI GOOGLE SHEETS
 // ==============================
 const syncSheetsBtn = document.getElementById("sync-sheets-btn");
 
@@ -1223,24 +1435,18 @@ if (syncSheetsBtn) {
         .select("id, name, phone, employee_code, role, birth_place, birth_date")
         .order("name");
 
-      if (empError || !empData) {
-        throw new Error("Gagal mengambil data anggota: " + (empError ? empError.message : "Data kosong"));
-      }
+      if (empError || !empData) throw new Error("Gagal mengambil data anggota: " + (empError ? empError.message : "Data kosong"));
 
       const { data: attData, error: attError } = await supabase
         .from("attendance")
         .select("attendance_date, check_in, status, employee_id")
         .order("attendance_date", { ascending: false });
 
-      if (attError || !attData) {
-        throw new Error("Gagal mengambil data riwayat absensi.");
-      }
+      if (attError || !attData) throw new Error("Gagal mengambil data riwayat absensi.");
 
       const attMap = {};
       (attData || []).forEach(att => {
-        if (!attMap[att.employee_id]) {
-          attMap[att.employee_id] = [];
-        }
+        if (!attMap[att.employee_id]) attMap[att.employee_id] = [];
         attMap[att.employee_id].push(att);
       });
 
@@ -1258,12 +1464,8 @@ if (syncSheetsBtn) {
         if (emp.birth_date) {
           try {
             const bd = new Date(emp.birth_date);
-            if (!isNaN(bd.getTime())) {
-              birthDate = bd.toLocaleDateString("id-ID");
-            }
-          } catch (e) {
-            birthDate = "-";
-          }
+            if (!isNaN(bd.getTime())) birthDate = bd.toLocaleDateString("id-ID");
+          } catch (e) { birthDate = "-"; }
         }
 
         const isPengurus = (roleStr === "pengurus" || roleStr === "admin" || roleStr === "adm1n");
@@ -1273,62 +1475,25 @@ if (syncSheetsBtn) {
           userAttList.forEach(att => {
             let time = "-";
             if (att.check_in) {
-              try {
-                time = new Date(att.check_in).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" });
-              } catch (e) {
-                time = "-";
-              }
+              try { time = new Date(att.check_in).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" }); } catch (e) { time = "-"; }
             }
             const statusText = att.status === "late" ? "Terlambat" : "Tepat Waktu";
-
-            const itemData = {
-              "Kode Anggota": code,
-              "Nama Lengkap": name,
-              "No WhatsApp": phone,
-              "Tempat Lahir": birthPlace,
-              "Tanggal Lahir": birthDate,
-              "Tanggal": att.attendance_date || "",
-              "Jam Absen": time,
-              "Status": statusText
-            };
-
-            if (isPengurus) {
-              pengurusRows.push(itemData);
-            } else {
-              memberRows.push(itemData);
-            }
+            const itemData = { "Kode Anggota": code, "Nama Lengkap": name, "No WhatsApp": phone, "Tempat Lahir": birthPlace, "Tanggal Lahir": birthDate, "Tanggal": att.attendance_date || "", "Jam Absen": time, "Status": statusText };
+            if (isPengurus) pengurusRows.push(itemData);
+            else memberRows.push(itemData);
           });
         } else {
-          const itemData = {
-            "Kode Anggota": code,
-            "Nama Lengkap": name,
-            "No WhatsApp": phone,
-            "Tempat Lahir": birthPlace,
-            "Tanggal Lahir": birthDate,
-            "Tanggal": "",
-            "Jam Absen": "",
-            "Status": ""
-          };
-
-          if (isPengurus) {
-            pengurusRows.push(itemData);
-          } else {
-            memberRows.push(itemData);
-          }
+          const itemData = { "Kode Anggota": code, "Nama Lengkap": name, "No WhatsApp": phone, "Tempat Lahir": birthPlace, "Tanggal Lahir": birthDate, "Tanggal": "", "Jam Absen": "", "Status": "" };
+          if (isPengurus) pengurusRows.push(itemData);
+          else memberRows.push(itemData);
         }
       });
 
-      const payload = {
-        pengurus: pengurusRows,
-        anggota: memberRows
-      };
+      const payload = { pengurus: pengurusRows, anggota: memberRows };
 
       await fetch(WEB_APP_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        method: "POST", mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
 
@@ -1343,7 +1508,7 @@ if (syncSheetsBtn) {
 }
 
 // ==============================
-// 9. LIGHT & DARK MODE TOGGLE LOGIC
+// 11. LIGHT & DARK MODE LOGIC
 // ==============================
 function initThemeToggle() {
   const themeToggleBtn = document.getElementById("theme-toggle-btn");
@@ -1376,48 +1541,30 @@ function initThemeToggle() {
 }
 
 // =========================================
-// 10. DRAWER NAVIGATION & HISTORY API (BACK FIX)
+// 12. DRAWER NAVIGATION & HISTORY API
 // =========================================
-
 const mobileHamburgerBtn = document.getElementById("mobile-hamburger-btn");
 const mobileNavOverlay = document.getElementById("mobile-nav-overlay");
 const closeMobileNavBtn = document.getElementById("close-mobile-nav");
 
-function openDrawer() {
-  if (mobileNavOverlay) {
-    mobileNavOverlay.classList.add("open");
-  }
-}
+function openDrawer() { if (mobileNavOverlay) mobileNavOverlay.classList.add("open"); }
+function closeDrawer() { if (mobileNavOverlay) mobileNavOverlay.classList.remove("open"); }
 
-function closeDrawer() {
-  if (mobileNavOverlay) {
-    mobileNavOverlay.classList.remove("open");
-  }
-}
+if (mobileHamburgerBtn) mobileHamburgerBtn.addEventListener("click", openDrawer);
+if (closeMobileNavBtn) closeMobileNavBtn.addEventListener("click", closeDrawer);
 
-if (mobileHamburgerBtn) {
-  mobileHamburgerBtn.addEventListener("click", openDrawer);
-}
-
-if (closeMobileNavBtn) {
-  closeMobileNavBtn.addEventListener("click", closeDrawer);
-}
-
-// Klik di luar drawer untuk menutup navigasi
 if (mobileNavOverlay) {
   mobileNavOverlay.addEventListener("click", (e) => {
-    if (e.target === mobileNavOverlay) {
-      closeDrawer();
-    }
+    if (e.target === mobileNavOverlay) closeDrawer();
   });
 }
 
-// FUNGSI SWITCH TAB DENGAN SUPPORT HISTORY BROWSER
 function switchTab(tabName, pushToHistory = true) {
   const views = {
     home: document.getElementById("tab-home-view"),
     posts: document.getElementById("tab-posts-view"),
     presensi: document.getElementById("tab-presensi-view"),
+    friends: document.getElementById("tab-friends-view"),
     profile: document.getElementById("tab-profile-view"),
     admin: document.getElementById("tab-admin-view")
   };
@@ -1428,9 +1575,7 @@ function switchTab(tabName, pushToHistory = true) {
 
   document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.remove("active"));
 
-  if (views[tabName]) {
-    views[tabName].style.display = "block";
-  }
+  if (views[tabName]) views[tabName].style.display = "block";
 
   document.querySelectorAll(`.nav-btn[data-tab="${tabName}"]`).forEach(btn => {
     btn.classList.add("active");
@@ -1438,27 +1583,19 @@ function switchTab(tabName, pushToHistory = true) {
 
   closeDrawer();
 
-  if (pushToHistory) {
-    history.pushState({ tab: tabName }, "", `#${tabName}`);
-  }
+  if (pushToHistory) history.pushState({ tab: tabName }, "", `#${tabName}`);
 }
 
 document.addEventListener("click", (e) => {
   const btn = e.target.closest(".nav-btn");
   if (btn) {
     const targetTab = btn.getAttribute("data-tab");
-    if (targetTab) {
-      switchTab(targetTab, true);
-    }
+    if (targetTab) switchTab(targetTab, true);
   }
 });
 
 const btnSeeMore = document.getElementById("btn-see-more-posts");
-if (btnSeeMore) {
-  btnSeeMore.addEventListener("click", () => {
-    switchTab("posts", true);
-  });
-}
+if (btnSeeMore) btnSeeMore.addEventListener("click", () => switchTab("posts", true));
 
 window.addEventListener("popstate", (event) => {
   if (mobileNavOverlay && mobileNavOverlay.classList.contains("open")) {
@@ -1466,14 +1603,9 @@ window.addEventListener("popstate", (event) => {
     return;
   }
 
-  if (event.state && event.state.tab) {
-    switchTab(event.state.tab, false);
-  } else if (window.location.hash) {
-    const hashTab = window.location.hash.replace("#", "");
-    switchTab(hashTab, false);
-  } else {
-    switchTab("home", false);
-  }
+  if (event.state && event.state.tab) switchTab(event.state.tab, false);
+  else if (window.location.hash) switchTab(window.location.hash.replace("#", ""), false);
+  else switchTab("home", false);
 });
 
 document.addEventListener("DOMContentLoaded", () => {
