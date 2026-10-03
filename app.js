@@ -340,17 +340,22 @@ async function loadUserProfile() {
 
     const navAdminBtns = document.querySelectorAll(".nav-admin-btn");
     const btnAdminPublishShop = document.getElementById("btn-admin-publish-shop");
+    const btnModalPublishShop = document.getElementById("btn-modal-publish-shop");
 
-    if (currentUserRole === "admin" || currentUserRole === "adm1n" || currentUserRole === "pengurus") {
+    const isAdmin = currentUserRole === "admin" || currentUserRole === "adm1n" || currentUserRole === "pengurus";
+
+    if (isAdmin) {
       if (switchToAdminBtn) switchToAdminBtn.style.display = "inline-block";
       navAdminBtns.forEach(btn => btn.style.display = "flex");
       if (tabKioskBtn) tabKioskBtn.style.display = "inline-block";
       if (btnAdminPublishShop) btnAdminPublishShop.style.display = "inline-block";
+      if (btnModalPublishShop) btnModalPublishShop.style.display = "inline-block";
     } else {
       if (switchToAdminBtn) switchToAdminBtn.style.display = "none";
       navAdminBtns.forEach(btn => btn.style.display = "none");
       if (tabKioskBtn) tabKioskBtn.style.display = "none";
       if (btnAdminPublishShop) btnAdminPublishShop.style.display = "none";
+      if (btnModalPublishShop) btnModalPublishShop.style.display = "none";
     }
   }
 
@@ -441,7 +446,7 @@ async function loadUserAchievements() {
 }
 
 // ==========================================================
-// 4. REALTIME PERTEMANAN & CHAT
+// 4. REALTIME PERTEMANAN, CHAT & POKEMON PLAYGROUND
 // ==========================================================
 function setupRealtimeListeners() {
   if (!currentUserId) return;
@@ -460,6 +465,18 @@ function setupRealtimeListeners() {
       const newMsg = payload.new;
       if (activeChatFriendId && (newMsg.sender_id === activeChatFriendId || newMsg.receiver_id === activeChatFriendId)) {
         await loadChatMessages();
+      }
+    })
+    .on("postgres_changes", { event: "*", schema: "public", table: "user_pokemon_showcase" }, async (payload) => {
+      // Refresh real-time kandang milik sendiri
+      if (payload.new && payload.new.user_id === currentUserId) {
+        await renderMyPokemonShowcase(currentUserId);
+      }
+      // Refresh real-time jika sedang melihat profil publik anggota lain
+      const publicCard = document.getElementById("public-profile-card");
+      if (publicCard && publicCard.style.display !== "none") {
+        const activeProfileId = window.location.hash.replace("#profile-", "");
+        if (activeProfileId) await openPublicProfile(activeProfileId);
       }
     })
     .subscribe();
@@ -613,7 +630,7 @@ async function openPublicProfile(targetUserId) {
     actionBtnBox.innerHTML = btnHTML;
   }
 
-  // RENDER POKEMON KANDANG PUBLIC
+  // RENDER POKEMON KANDANG PUBLIC (REALTIME ACCURATE)
   const pokeContainer = document.getElementById("public-pokemon-showcase");
   if (pokeContainer) {
     const { data: showcase } = await supabase.from("user_pokemon_showcase").select("pokemon_id, slot_index").eq("user_id", targetUserId);
@@ -1121,7 +1138,7 @@ async function loadMonthlyStatistics() {
 }
 
 // ==============================
-// 8. POKEDEX & HABITAT KANDANG (721 POKEMON)
+// 8. POKEDEX & HABITAT KANDANG (TANPA DELAY UI)
 // ==============================
 const btnOpenPokedexModal = document.getElementById("btn-open-pokedex-modal");
 const pokedexModal = document.getElementById("pokedex-modal");
@@ -1151,11 +1168,9 @@ async function renderPokedexModal() {
   const { data: showcase } = await supabase.from("user_pokemon_showcase").select("pokemon_id").eq("user_id", currentUserId);
   const showcaseIds = (showcase || []).map(s => s.pokemon_id);
 
-  // Pisahkan: Milik Saya vs Belum Memiliki
   const ownedList = ALL_SHOP_POKEMON.filter(p => ownedIds.includes(p.id)).sort((a, b) => a.pokedexNum - b.pokedexNum);
   const unownedList = ALL_SHOP_POKEMON.filter(p => !ownedIds.includes(p.id)).sort((a, b) => a.pokedexNum - b.pokedexNum);
 
-  // Gabungkan (Milik Saya di paling atas)
   const sortedPokemonList = [...ownedList, ...unownedList];
 
   container.innerHTML = "";
@@ -1173,7 +1188,7 @@ async function renderPokedexModal() {
       <span style="font-size:9px; color:var(--text-sub);">#${poke.pokedexNum} &bull; Gen ${poke.gen}</span>
 
       ${isOwned ? `
-        <button class="btn-toggle-showcase secondary-button-sm" data-id="${poke.id}" style="width:100\%; margin-top:4px; font-size:10px; ${isDisplayed ? 'background:#10b981; color:white;' : ''}">
+        <button class="btn-toggle-showcase secondary-button-sm" data-id="${poke.id}" style="width:100%; margin-top:4px; font-size:10px; ${isDisplayed ? 'background:#10b981; color:white;' : ''}">
           ${isDisplayed ? '✨ Di Kandang' : '📌 Lepas ke Kandang'}
         </button>
       ` : `
@@ -1184,10 +1199,17 @@ async function renderPokedexModal() {
   });
 }
 
-// TOGGLE PAJANGAN KANDANG (INSTANT AUTO-REFRESH KANDANG)
+// TOGGLE PAJANGAN KANDANG (FAST & INSTANT FEEDBACK UI)
 document.addEventListener("click", async (e) => {
   if (e.target.classList.contains("btn-toggle-showcase")) {
-    const pokeId = e.target.getAttribute("data-id");
+    const btn = e.target;
+    if (btn.disabled) return;
+
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "⏳ Memproses...";
+
+    const pokeId = btn.getAttribute("data-id");
     const { data: showcase } = await supabase.from("user_pokemon_showcase").select("*").eq("user_id", currentUserId);
 
     const existingIndex = (showcase || []).findIndex(s => s.pokemon_id === pokeId);
@@ -1196,7 +1218,9 @@ document.addEventListener("click", async (e) => {
       await supabase.from("user_pokemon_showcase").delete().eq("user_id", currentUserId).eq("pokemon_id", pokeId);
     } else {
       if ((showcase || []).length >= 3) {
-        alert("Kamu hanya bisa melepas maksimal 3 Pokémon di Kandang! Masukkan salah satu kembali terlebih dahulu.");
+        alert("Kamu hanya bisa melepas maksimal 3 Pokémon di Playground! Masukkan salah satu kembali terlebih dahulu.");
+        btn.disabled = false;
+        btn.textContent = originalText;
         return;
       }
 
@@ -1222,10 +1246,6 @@ async function renderMyPokemonShowcase(userId) {
   const container = document.getElementById("habitat-pokemon-container");
   if (!container || !stage) return;
 
-  if (currentEmployeeData && currentEmployeeData.active_scenery_url) {
-    stage.style.backgroundImage = `url('${currentEmployeeData.active_scenery_url}')`;
-  }
-
   const { data: showcase } = await supabase.from("user_pokemon_showcase").select("pokemon_id, slot_index").eq("user_id", userId);
   container.innerHTML = "";
 
@@ -1248,38 +1268,8 @@ async function renderMyPokemonShowcase(userId) {
   });
 }
 
-document.addEventListener("click", async (e) => {
-  if (e.target.classList.contains("btn-toggle-showcase")) {
-    const pokeId = e.target.getAttribute("data-id");
-    const { data: showcase } = await supabase.from("user_pokemon_showcase").select("*").eq("user_id", currentUserId);
-
-    const existingIndex = (showcase || []).findIndex(s => s.pokemon_id === pokeId);
-
-    if (existingIndex !== -1) {
-      await supabase.from("user_pokemon_showcase").delete().eq("user_id", currentUserId).eq("pokemon_id", pokeId);
-    } else {
-      if ((showcase || []).length >= 3) {
-        alert("Kamu hanya bisa melepas maksimal 3 Pokémon di dalam Kandang! Masukkan salah satu kembali terlebih dahulu.");
-        return;
-      }
-
-      const availableSlots = [0, 1, 2].filter(slot => !(showcase || []).some(s => s.slot_index === slot));
-      const targetSlot = availableSlots[0];
-
-      await supabase.from("user_pokemon_showcase").insert({
-        user_id: currentUserId,
-        pokemon_id: pokeId,
-        slot_index: targetSlot
-      });
-    }
-
-    await renderPokedexModal();
-    await renderMyPokemonShowcase(currentUserId);
-  }
-});
-
 // ==============================
-// 9. TOKO VIHARA (3 TAB SYSTEM)
+// 9. TOKO VIHARA (2 TAB SYSTEM)
 // ==============================
 const btnOpenShopModal = document.getElementById("btn-open-shop-modal");
 const shopModal = document.getElementById("shop-modal");
@@ -1385,32 +1375,6 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  if (e.target.classList.contains("btn-buy-scenery")) {
-    const scId = e.target.getAttribute("data-id");
-    const price = parseInt(e.target.getAttribute("data-price"));
-    const url = e.target.getAttribute("data-url");
-    const title = e.target.getAttribute("data-title");
-    const currentPoints = currentEmployeeData ? (currentEmployeeData.points || 0) : 0;
-
-    if (confirm(`Beli Kandang ${title} seharga ${price} Poin?`)) {
-      const ok = await buyScenery(currentUserId, scId, price, url, title, currentPoints);
-      if (ok) {
-        await loadUserProfile();
-        await renderSceneryShop(currentUserId, currentEmployeeData.points, url);
-        await renderMyPokemonShowcase(currentUserId);
-      }
-    }
-  }
-
-  if (e.target.classList.contains("btn-equip-scenery")) {
-    const url = e.target.getAttribute("data-url");
-    await supabase.from("employees").update({ active_scenery_url: url }).eq("id", currentUserId);
-    if (currentEmployeeData) currentEmployeeData.active_scenery_url = url;
-    await loadUserProfile();
-    await renderSceneryShop(currentUserId, currentEmployeeData.points, url);
-    await renderMyPokemonShowcase(currentUserId);
-  }
-
   if (e.target.classList.contains("btn-edit-item")) {
     const id = e.target.getAttribute("data-id");
     document.getElementById("publish-title").value = e.target.getAttribute("data-title");
@@ -1464,22 +1428,26 @@ if (closeRedemptionModal) {
   });
 }
 
-// PUBLISH BARANG ADMIN
+// PUBLISH BARANG ADMIN HANDLERS
 const btnAdminPublishShop = document.getElementById("btn-admin-publish-shop");
+const btnModalPublishShop = document.getElementById("btn-modal-publish-shop");
 const publishShopModal = document.getElementById("publish-shop-modal");
 const closePublishShopModal = document.getElementById("close-publish-shop-modal");
 const btnSubmitPublishShop = document.getElementById("btn-submit-publish-shop");
 
-if (btnAdminPublishShop) {
-  btnAdminPublishShop.addEventListener("click", () => {
-    window.editingShopItemId = null;
-    document.getElementById("publish-title").value = "";
-    document.getElementById("publish-desc").value = "";
-    document.getElementById("publish-points").value = "";
-    document.getElementById("publish-stock").value = "";
-    if (publishShopModal) publishShopModal.style.display = "flex";
-  });
+function openPublishModal() {
+  window.editingShopItemId = null;
+  document.getElementById("publish-title").value = "";
+  document.getElementById("publish-desc").value = "";
+  document.getElementById("publish-points").value = "";
+  document.getElementById("publish-stock").value = "";
+  const fileInput = document.getElementById("publish-img-file");
+  if (fileInput) fileInput.value = "";
+  if (publishShopModal) publishShopModal.style.display = "flex";
 }
+
+if (btnAdminPublishShop) btnAdminPublishShop.addEventListener("click", openPublishModal);
+if (btnModalPublishShop) btnModalPublishShop.addEventListener("click", openPublishModal);
 
 if (closePublishShopModal) {
   closePublishShopModal.addEventListener("click", () => {

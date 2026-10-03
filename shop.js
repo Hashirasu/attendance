@@ -90,7 +90,7 @@ export async function renderRealItems(currentUserRole) {
     const card = document.createElement("div");
     card.className = "shop-item-card";
     card.innerHTML = `
-      <img src="${item.image_url || 'https://via.placeholder.com/150'}" class="real-item-img" alt="${item.title}">
+      <img src="${item.image_url || 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=300&q=80'}" class="real-item-img" alt="${item.title}">
       <div class="shop-item-info" style="margin-top:8px; text-align:left; width:100%;">
         <h4 style="font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:2px;">${item.title}</h4>
         <p style="font-size:11px; color:var(--text-sub); margin:4px 0; line-height:1.3;">${item.description || 'Tidak ada deskripsi.'}</p>
@@ -128,17 +128,18 @@ export async function publishRealItem(adminId, title, description, pricePoints, 
   let imageUrl = null;
 
   if (fileImage) {
-    const fileExt = fileImage.name.split('.').pop();
-    const filePath = `real_items/item_${Date.now()}.${fileExt}`;
+    try {
+      const fileExt = fileImage.name.split('.').pop();
+      const filePath = `real_items/item_${Date.now()}.${fileExt}`;
 
-    const { error: uploadErr } = await supabase.storage.from('avatars').upload(filePath, fileImage, { upsert: true });
-    if (uploadErr) {
-      alert("Gagal mengunggah gambar barang: " + uploadErr.message);
-      return false;
+      const { error: uploadErr } = await supabase.storage.from('avatars').upload(filePath, fileImage, { upsert: true });
+      if (!uploadErr) {
+        const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
+        imageUrl = publicUrl;
+      }
+    } catch (e) {
+      console.warn("Upload gambar terlewati:", e);
     }
-
-    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
-    imageUrl = publicUrl;
   }
 
   if (editItemId) {
@@ -153,7 +154,7 @@ export async function publishRealItem(adminId, title, description, pricePoints, 
   } else {
     const { error } = await supabase.from("real_shop_items").insert({
       title, description, price_points: pricePoints, stock,
-      image_url: imageUrl || 'https://via.placeholder.com/150',
+      image_url: imageUrl || 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=300&q=80',
       created_by: adminId
     });
 
