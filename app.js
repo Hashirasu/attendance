@@ -1140,12 +1140,10 @@ if (closePokedexModal) {
   });
 }
 
-// RENDER POKEDEX MODAL SAYA
+// RENDER POKEDEX DENGAN NAMA LENGKAP
 async function renderPokedexModal() {
   const container = document.getElementById("pokedex-container");
   if (!container || !currentUserId) return;
-
-  container.innerHTML = "<p style='font-size:12px; color:var(--text-sub); text-align:center; grid-column:1/-1;'>Memuat Pokédex (721 Pokémon)...</p>";
 
   const { data: userInventory } = await supabase.from("user_pokemon_inventory").select("pokemon_id").eq("user_id", currentUserId);
   const ownedIds = (userInventory || []).map(i => i.pokemon_id);
@@ -1161,47 +1159,39 @@ async function renderPokedexModal() {
     const card = document.createElement("div");
     card.className = `shop-item-card ${isOwned ? 'owned' : 'locked'}`;
     card.style.opacity = isOwned ? "1" : "0.35";
-    card.style.filter = isOwned ? "none" : "grayscale(1)";
 
     card.innerHTML = `
-      <img src="${poke.img}" style="width:55px; height:55px; object-fit:contain; margin-bottom:4px;" alt="#${poke.pokedexNum}">
-      <h4 style="font-size:11px; font-weight:700; color:var(--text-main);">#${poke.pokedexNum}</h4>
-      <span style="font-size:9px; color:var(--text-sub);">Gen ${poke.gen}</span>
+      <img src="${poke.img}" style="width:50px; height:50px; object-fit:contain;" alt="${poke.name}">
+      <h4 style="font-size:11px; font-weight:700; color:var(--text-main); margin-top:2px;">${poke.name}</h4>
+      <span style="font-size:9px; color:var(--text-sub);">#${poke.pokedexNum} &bull; Gen ${poke.gen}</span>
 
       ${isOwned ? `
-        <button class="btn-toggle-showcase secondary-button-sm" data-id="${poke.id}" style="width:100%; margin-top:6px; font-size:10px; ${isDisplayed ? 'background:#10b981; color:white;' : ''}">
+        <button class="btn-toggle-showcase secondary-button-sm" data-id="${poke.id}" style="width:100\%; margin-top:4px; font-size:10px; ${isDisplayed ? 'background:#10b981; color:white;' : ''}">
           ${isDisplayed ? '✨ Di Kandang' : '📌 Lepas ke Kandang'}
         </button>
       ` : `
-        <span style="font-size:9px; color:var(--text-sub); margin-top:6px; display:block;">🔒 Belum Dimiliki</span>
+        <span style="font-size:9px; color:var(--text-sub); margin-top:4px; display:block;">🔒 Belum Punya</span>
       `}
     `;
     container.appendChild(card);
   });
 }
 
-// RENDER PLAYGROUND KANDANG ANIMASI POKEMON
+// RENDER KANDANG PANGGUNG POKEMON BERGERAK
 async function renderMyPokemonShowcase(userId) {
   const stage = document.getElementById("pokemon-habitat-stage");
   const container = document.getElementById("habitat-pokemon-container");
   if (!container || !stage) return;
 
-  // Set background kandang sesuai pilihan
-  const bgUrl = (currentEmployeeData && currentEmployeeData.active_scenery_url) 
-    ? currentEmployeeData.active_scenery_url 
-    : ALL_SHOP_SCENERY[0].url;
+  if (currentEmployeeData && currentEmployeeData.active_scenery_url) {
+    stage.style.backgroundImage = `url('${currentEmployeeData.active_scenery_url}')`;
+  }
 
-  stage.style.backgroundImage = `url('${bgUrl}')`;
-
-  const { data: showcase } = await supabase
-    .from("user_pokemon_showcase")
-    .select("pokemon_id, slot_index")
-    .eq("user_id", userId);
-  
+  const { data: showcase } = await supabase.from("user_pokemon_showcase").select("pokemon_id, slot_index").eq("user_id", userId);
   container.innerHTML = "";
 
   if (!showcase || showcase.length === 0) {
-    container.innerHTML = `<div style="display:flex; height:100%; align-items:center; justify-content:center; color:white; text-shadow:0 2px 4px rgba(0,0,0,0.8); font-size:12px; font-weight:700;">🐾 Kandang masih kosong. Buka Pokédex untuk melepas Pokémon di sini!</div>`;
+    container.innerHTML = `<div style="display:flex; height:100%; align-items:center; justify-content:center; color:white; font-size:12px; font-weight:700; text-shadow:0 2px 4px rgba(0,0,0,0.8);">🐾 Kandang masih kosong. Buka Pokédex untuk melepas Pokémon di sini!</div>`;
     return;
   }
 
@@ -1210,10 +1200,9 @@ async function renderMyPokemonShowcase(userId) {
     if (pokeObj) {
       const wrapper = document.createElement("div");
       wrapper.className = "animated-habitat-poke-wrapper";
-      
       wrapper.innerHTML = `
         <span class="poke-name-tag">${pokeObj.name}</span>
-        <img src="${pokeObj.sprite}" class="animated-habitat-poke-img" title="${pokeObj.name} (#${pokeObj.pokedexNum})">
+        <img src="${pokeObj.sprite}" class="animated-habitat-poke-img" title="${pokeObj.name}">
       `;
       container.appendChild(wrapper);
     }

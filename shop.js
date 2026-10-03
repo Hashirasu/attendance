@@ -1,11 +1,8 @@
 import { supabase } from "./app.js";
 
-// =========================================
-// 1. STARTER GRATIS (LOW TIER 1 PER GEN)
-// =========================================
+// 1. STARTER GRATIS 1 PER GEN (LOW TIER)
 export const STARTER_POKEMON_IDS = ["p-1", "p-152", "p-252", "p-387", "p-495", "p-650"];
 
-// Daftar ID Legendary Gen 1-6 untuk penentuan harga khusus
 const LEGENDARY_IDS = [
   150, 151, 243, 244, 245, 249, 250, 251, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386,
   480, 481, 482, 483, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493,
@@ -23,24 +20,24 @@ function getGen(id) {
 }
 
 function getPrice(id) {
-  if (STARTER_POKEMON_IDS.includes(`p-${id}`)) return 0; // Gratis Starter
-  if (LEGENDARY_IDS.includes(id)) return 300; // Legendary
+  if (STARTER_POKEMON_IDS.includes(`p-${id}`)) return 0;
+  if (LEGENDARY_IDS.includes(id)) return 300;
   return 40 + (getGen(id) * 10);
 }
 
-// Map Nama Spesial Starter & Populer (Nama Pokedex Lengkap otomatis ditarik via PokeAPI / Format Resmi)
-const STARTER_NAMES = {
+// Default Starter Names
+const DEFAULT_NAMES = {
   1: "Bulbasaur", 152: "Chikorita", 252: "Treecko",
   387: "Turtwig", 495: "Snivy", 650: "Chespin"
 };
 
+// Generate Master 721 Pokémon
 export const ALL_SHOP_POKEMON = Array.from({ length: 721 }, (_, index) => {
   const pId = index + 1;
-  const rawName = STARTER_NAMES[pId] || `Pokémon #${pId}`;
   return {
     id: `p-${pId}`,
     pokedexNum: pId,
-    name: rawName,
+    name: DEFAULT_NAMES[pId] || `Pokémon #${pId}`,
     gen: getGen(pId),
     price: getPrice(pId),
     img: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pId}.png`,
@@ -50,27 +47,22 @@ export const ALL_SHOP_POKEMON = Array.from({ length: 721 }, (_, index) => {
 
 export const FREE_STARTER_POKEMON = ALL_SHOP_POKEMON.filter(p => STARTER_POKEMON_IDS.includes(p.id));
 
-// Otomatis melengkapi nama asli 721 Pokemon secara background
-(async function fetchPokemonNames() {
+// Auto Fetch Nama Asli 721 Pokémon
+(async function loadPokeNames() {
   try {
     const res = await fetch("https://pokeapi.co/api/v2/pokemon?limit=721");
     const data = await res.json();
     if (data && data.results) {
       data.results.forEach((item, idx) => {
-        const pObj = ALL_SHOP_POKEMON[idx];
-        if (pObj) {
-          pObj.name = item.name.charAt(0).toUpperCase() + item.name.slice(1);
+        if (ALL_SHOP_POKEMON[idx]) {
+          ALL_SHOP_POKEMON[idx].name = item.name.charAt(0).toUpperCase() + item.name.slice(1);
         }
       });
     }
-  } catch (e) {
-    console.log("Memakai nama Pokédex default.");
-  }
+  } catch (e) { console.log("PokeAPI offline"); }
 })();
 
-// =========================================
-// 2. HABITAT SCENERY (BACKGROUND KANDANG)
-// =========================================
+// HABITAT SCENERY (BACKGROUND KANDANG)
 export const ALL_SHOP_SCENERY = [
   { id: "sc-default", title: "Padang Rumput Hijau", price: 0, url: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1000&q=80" },
   { id: "sc-vihara-zen", title: "Taman Zen Vihara", price: 80, url: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1000&q=80" },
@@ -80,9 +72,7 @@ export const ALL_SHOP_SCENERY = [
   { id: "sc-beach-sunset", title: "Pantai Senja", price: 140, url: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1000&q=80" }
 ];
 
-// =========================================
-// 3. TOKO BARANG FISIK & REDEEM
-// =========================================
+// TOKO BARANG FISIK & ADMIN
 export async function getRealItems() {
   const { data, error } = await supabase.from("real_shop_items").select("*").order("created_at", { ascending: false });
   if (error) return [];
@@ -101,7 +91,7 @@ export async function renderRealItems(currentUserRole) {
     return;
   }
 
-  const isAdmin = currentUserRole === "admin" || currentUserRole === "adm1n";
+  const isAdmin = currentUserRole === "admin" || currentUserRole === "adm1n" || currentUserRole === "pengurus";
 
   container.innerHTML = "";
   items.forEach(item => {
@@ -136,7 +126,6 @@ export async function renderRealItems(currentUserRole) {
           <button class="btn-edit-item secondary-button-sm" data-id="${item.id}" data-title="${item.title}" data-desc="${item.description || ''}" data-price="${item.price_points}" data-stock="${item.stock}" style="flex:1; font-size:10px;">✏️ Edit</button>
           <button class="btn-delete-item secondary-button-sm" data-id="${item.id}" style="flex:1; font-size:10px; background:rgba(239,68,68,0.2); color:#f87171; border:none;">🗑️ Hapus</button>
         </div>
-        <button class="btn-check-redemptions secondary-button-sm" data-id="${item.id}" style="width:100%; margin-top:4px; font-size:10px; color:#60a5fa;">📋 Cek Penukar</button>
       ` : ''}
     `;
     container.appendChild(card);
@@ -186,11 +175,7 @@ export async function publishRealItem(adminId, title, description, pricePoints, 
 
 export async function deleteRealItem(itemId) {
   const { error } = await supabase.from("real_shop_items").delete().eq("id", itemId);
-  if (error) {
-    alert("Gagal menghapus barang: " + error.message);
-    return false;
-  }
-  return true;
+  return !error;
 }
 
 export async function redeemRealItem(userId, itemId, quantity, totalPoints, currentPoints) {
@@ -208,38 +193,21 @@ export async function redeemRealItem(userId, itemId, quantity, totalPoints, curr
   const newPoints = currentPoints - totalPoints;
   const newStock = item.stock - quantity;
 
-  const { error: pointsErr } = await supabase.from("employees").update({ points: newPoints }).eq("id", userId);
-  if (pointsErr) {
-    alert("Gagal memotong poin: " + pointsErr.message);
-    return false;
-  }
-
+  await supabase.from("employees").update({ points: newPoints }).eq("id", userId);
   await supabase.from("real_shop_items").update({ stock: newStock }).eq("id", itemId);
   await supabase.from("real_shop_redemptions").insert({
-    user_id: userId,
-    item_id: itemId,
-    quantity: quantity,
-    total_points: totalPoints
+    user_id: userId, item_id: itemId, quantity: quantity, total_points: totalPoints
   });
 
-  alert(`🎁 Berhasil menukarkan ${quantity}x ${item.title}! Silakan hubungi pengurus Vihara.`);
+  alert(`🎁 Berhasil menukarkan ${quantity}x ${item.title}!`);
   return true;
 }
 
 export async function loadItemRedemptions(itemId) {
-  const { data, error } = await supabase
-    .from("real_shop_redemptions")
-    .select("quantity, total_points, created_at, employees(name, employee_code)")
-    .eq("item_id", itemId)
-    .order("created_at", { ascending: false });
-
-  if (error) return [];
+  const { data } = await supabase.from("real_shop_redemptions").select("quantity, total_points, created_at, employees(name, employee_code)").eq("item_id", itemId);
   return data || [];
 }
 
-// =========================================
-// 4. RENDERING FULL 721 POKEMON DI TOKO
-// =========================================
 export async function renderPokemonShop(userId, currentPoints, searchFilter = "") {
   const container = document.getElementById("pokemon-shop-item-list");
   if (!container) return;
@@ -254,22 +222,15 @@ export async function renderPokemonShop(userId, currentPoints, searchFilter = ""
   });
 
   container.innerHTML = "";
-
-  if (filtered.length === 0) {
-    container.innerHTML = "<p style='color:var(--text-sub); font-size:12px; text-align:center; grid-column:1/-1;'>Pokémon tidak ditemukan.</p>";
-    return;
-  }
-
   filtered.forEach(poke => {
     const isOwned = ownedIds.includes(poke.id);
     const card = document.createElement("div");
     card.className = "shop-item-card";
     card.innerHTML = `
-      <img src="${poke.img}" style="width:65px; height:65px; object-fit:contain; margin-bottom:4px;" alt="${poke.name}">
-      <h4 style="font-size:11px; font-weight:700; color:var(--text-main);">${poke.name}</h4>
+      <img src="${poke.img}" style="width:60px; height:60px; object-fit:contain;" alt="${poke.name}">
+      <h4 style="font-size:11px; font-weight:700; color:var(--text-main); margin-top:4px;">${poke.name}</h4>
       <span style="font-size:9px; color:var(--text-sub);">#${poke.pokedexNum} &bull; Gen ${poke.gen}</span>
       <p style="font-size:10px; color:#f59e0b; font-weight:800; margin-top:2px;">${poke.price === 0 ? 'STARTER' : `🪙 ${poke.price} Pn`}</p>
-
       <button class="btn-buy-pokemon btn-redeem-real" data-id="${poke.id}" data-price="${poke.price}" data-name="${poke.name}" ${isOwned ? 'disabled' : ''} style="font-size:10px; padding:4px 8px; margin-top:4px;">
         ${isOwned ? '✅ Owned' : '🐾 Adopsi'}
       </button>
@@ -280,27 +241,18 @@ export async function renderPokemonShop(userId, currentPoints, searchFilter = ""
 
 export async function buyPokemon(userId, pokemonId, price, name, currentPoints) {
   if (currentPoints < price) {
-    alert("Poin kamu tidak cukup untuk mengadopsi Pokémon ini!");
+    alert("Poin tidak cukup!");
     return false;
   }
 
   const newPoints = currentPoints - price;
-
-  const { error: pointsErr } = await supabase.from("employees").update({ points: newPoints }).eq("id", userId);
-  if (pointsErr) {
-    alert("Gagal memotong poin: " + pointsErr.message);
-    return false;
-  }
-
+  await supabase.from("employees").update({ points: newPoints }).eq("id", userId);
   await supabase.from("user_pokemon_inventory").insert({ user_id: userId, pokemon_id: pokemonId });
 
-  alert(`🎉 Selamat! Kamu telah berhasil mengadopsi Pokémon ${name}!`);
+  alert(`🎉 Berhasil mengadopsi ${name}!`);
   return true;
 }
 
-// =========================================
-// 5. TOKO HABITAT KANDANG
-// =========================================
 export async function renderSceneryShop(userId, currentPoints, currentActiveScenery) {
   const container = document.getElementById("scenery-shop-item-list");
   if (!container) return;
@@ -317,14 +269,13 @@ export async function renderSceneryShop(userId, currentPoints, currentActiveScen
     const card = document.createElement("div");
     card.className = "shop-item-card";
     card.innerHTML = `
-      <div style="width:100%; height:70px; border-radius:8px; background-image:url('${sc.url}'); background-size:cover; background-position:center; margin-bottom:6px;"></div>
-      <h4 style="font-size:12px; font-weight:700; color:var(--text-main);">${sc.title}</h4>
-      <p style="font-size:11px; color:#f59e0b; font-weight:800; margin-top:2px;">${sc.price === 0 ? 'GRATIS' : `🪙 ${sc.price} Poin`}</p>
-
+      <div style="width:100%; height:65px; border-radius:8px; background-image:url('${sc.url}'); background-size:cover; background-position:center; margin-bottom:4px;"></div>
+      <h4 style="font-size:11px; font-weight:700; color:var(--text-main);">${sc.title}</h4>
+      <p style="font-size:10px; color:#f59e0b; font-weight:800; margin-top:2px;">${sc.price === 0 ? 'GRATIS' : `🪙 ${sc.price} Pn`}</p>
       ${!isOwned ? `
-        <button class="btn-buy-scenery btn-redeem-real" data-id="${sc.id}" data-price="${sc.price}" data-url="${sc.url}" data-title="${sc.title}">🛍️ Beli Kandang</button>
+        <button class="btn-buy-scenery btn-redeem-real" data-id="${sc.id}" data-price="${sc.price}" data-url="${sc.url}" data-title="${sc.title}" style="font-size:10px;">🛍️ Beli Kandang</button>
       ` : `
-        <button class="btn-equip-scenery secondary-button-sm" data-url="${sc.url}" style="width:100\%; margin-top:6px; ${isActive ? 'background:#10b981; color:white;' : ''}">
+        <button class="btn-equip-scenery secondary-button-sm" data-url="${sc.url}" style="width:100\%; margin-top:4px; font-size:10px; ${isActive ? 'background:#10b981; color:white;' : ''}">
           ${isActive ? '✨ Kandang Aktif' : '🏞️ Pasang Kandang'}
         </button>
       `}
@@ -335,7 +286,7 @@ export async function renderSceneryShop(userId, currentPoints, currentActiveScen
 
 export async function buyScenery(userId, sceneryId, price, url, title, currentPoints) {
   if (currentPoints < price) {
-    alert("Poin kamu tidak cukup!");
+    alert("Poin tidak cukup!");
     return false;
   }
 
@@ -344,7 +295,7 @@ export async function buyScenery(userId, sceneryId, price, url, title, currentPo
   await supabase.from("user_scenery_inventory").insert({ user_id: userId, scenery_id: sceneryId });
   await supabase.from("employees").update({ active_scenery_url: url }).eq("id", userId);
 
-  alert(`🎉 Berhasil membeli dan memasang Kandang ${title}!`);
+  alert(`🎉 Berhasil membeli kandang ${title}!`);
   return true;
 }
 
