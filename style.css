@@ -694,3 +694,108 @@ body.light-mode .chat-input {
   bottom: 20px;
   font-size: 28px;
 }
+
+
+
+/* =========================================
+   MUDIVIVERSE - SHOP & REAL ITEM SYSTEM
+========================================= */
+.shop-grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.shop-item-card {
+  background: var(--input-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.shop-item-card.owned {
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+.shop-item-icon {
+  font-size: 32px;
+  margin-bottom: 6px;
+}
+
+.real-item-img {
+  width: 100%;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.shop-item-info h4 {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 2px;
+}
+
+.shop-item-price {
+  font-size: 11px;
+  font-weight: 800;
+  color: #f59e0b;
+}
+
+.btn-buy-item, .btn-equip-item, .btn-unequip-item, .btn-redeem-real {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 800;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.btn-buy-item, .btn-redeem-real {
+  background: #f59e0b;
+  color: white;
+}
+
+.btn-redeem-real:disabled {
+  background: var(--input-border);
+  color: var(--text-sub);
+  cursor: not-allowed;
+}
+
+.btn-equip-item {
+  background: var(--ios-blue);
+  color: white;
+}
+
+.btn-unequip-item {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.avatar-equipped-overlay {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-layer {
+  position: absolute;
+}
+
+.avatar-layer.layer-headwear { top: 4px; font-size: 24px; }
+.avatar-layer.layer-eyewear { top: 28px; font-size: 18px; }
+.avatar-layer.layer-outfit { bottom: 18px; font-size: 26px; }

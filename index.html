@@ -18,14 +18,11 @@
     <span class="hamburger-icon">☰</span>
   </button>
 
-
-
   <!-- FLOATING THEME TOGGLE BUTTON -->
   <button id="theme-toggle-btn" class="theme-toggle-btn" type="button" title="Ganti Mode">
     <span id="theme-icon">🌙</span>
   </button>
 
-  
   <!-- SIDEBAR / DRAWER NAVIGASI SLIDE DARI KIRI -->
   <div id="mobile-nav-overlay" class="mobile-nav-overlay">
     <aside class="drawer-sidebar-card">
@@ -290,7 +287,6 @@
               <button id="open-scanner-btn-user" class="main-button btn-scan">
                 📷 Buka Scanner
               </button>
-              
             </div>
           </div>
         </div>
@@ -371,7 +367,6 @@
               </div>
             </div>
 
-            <!-- TOMBOL ADD / ACCEPT / REJECT / MESSAGE DI PROFIL DITARUH SINI -->
             <div id="public-action-btn-box" style="margin-top: 16px; width: 100%; display: flex; justify-content: center; gap: 8px;"></div>
           </div>
 
@@ -402,10 +397,8 @@
                 🪙 <span id="profile-page-points">0</span> Poin Vihara
               </div>
               <button id="btn-open-edit-bio-modal" class="secondary-button-sm">✏️ Edit Bio</button>
+              <button id="btn-open-shop-modal" class="secondary-button-sm" style="background: var(--ios-blue); color: white; border: none;">🛒 Toko Vihara</button>
             </div>
-            
-            <button id="btn-open-shop-modal" class="secondary-button-sm" style="background: var(--ios-blue); color: white; border: none;">🛒 Toko Avatar</button>
-           </div>
 
             <p id="profile-page-bio" class="profile-display-bio">
               "Halo, salam kenal ya!"
@@ -418,7 +411,7 @@
               <img id="avatar-chara-img" src="https://api.dicebear.com/7.x/bottts/svg?seed=AvatarChara" class="chara-sprite" alt="Avatar Character">
             </div>
             <button id="btn-custom-avatar" class="secondary-button-sm" style="margin-top: 10px; opacity: 0.7;" disabled>
-              👕 Edit Kostum Avatar (Soon)
+              👕 Edit Kostum Avatar
             </button>
           </div>
         </div>
@@ -507,7 +500,10 @@
           </div>
 
           <div class="card-box" style="margin-bottom: 16px;">
-            <h3 class="section-heading" style="margin-bottom: 12px;">Aksi Integrasi</h3>
+            <div class="flex-between-center" style="margin-bottom: 12px;">
+              <h3 class="section-heading">Aksi Integrasi & Toko</h3>
+              <button id="btn-admin-publish-shop" class="secondary-button" style="background:#f59e0b; color:white; border:none; display:none;">🎁 Publish Barang Toko</button>
+            </div>
             
             <div class="flex-gap-8" style="margin-bottom: 12px;">
               <a href="https://docs.google.com/spreadsheets/d/1bIaTuqe0iRxnWdIYf_RUFrjbIEBl-89471Z1GFdAMWA/edit?usp=sharing" target="_blank" class="btn-sheet-link">
@@ -695,6 +691,70 @@
     </div>
   </div>
 
+  <!-- MODAL TOKO AVATAR & BARANG REAL -->
+  <div id="shop-modal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 520px; width: 92%;">
+      <div class="flex-between-center" style="margin-bottom: 12px;">
+        <h3 style="font-weight: 800; font-size: 18px; color: var(--text-main);">🛍️ Toko Vihara</h3>
+        <button id="close-shop-modal" class="close-btn-sm" type="button">&times;</button>
+      </div>
+
+      <!-- Tab Switch Toko -->
+      <div class="admin-tabs" style="margin-bottom: 14px;">
+        <button id="shop-tab-avatar" class="tab-btn active" type="button">👕 Kostum Avatar</button>
+        <button id="shop-tab-real" class="tab-btn" type="button">🎁 Tukar Barang</button>
+      </div>
+
+      <!-- View 1: Avatar -->
+      <div id="shop-view-avatar">
+        <div class="avatar-character-box" style="margin-bottom: 14px;">
+          <div id="avatar-chara-stage" class="avatar-stage">
+            <div class="avatar-shadow"></div>
+            <img id="avatar-chara-img-preview" src="https://api.dicebear.com/7.x/bottts/svg?seed=AvatarChara" class="chara-sprite" alt="Avatar Preview">
+            <div id="avatar-equipped-overlay" class="avatar-equipped-overlay"></div>
+          </div>
+        </div>
+        <div id="shop-item-list" class="shop-grid-container" style="max-height: 280px; overflow-y: auto;">
+          <p style="text-align: center; color: var(--text-sub); font-size: 12px; margin: auto;">Memuat item avatar...</p>
+        </div>
+      </div>
+
+      <!-- View 2: Barang Real -->
+      <div id="shop-view-real" style="display: none;">
+        <div id="real-shop-item-list" class="shop-grid-container" style="max-height: 380px; overflow-y: auto;">
+          <p style="text-align: center; color: var(--text-sub); font-size: 12px; margin: auto;">Memuat barang fisik...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PUBLISH BARANG REAL (ADMIN/PENGURUS) -->
+  <div id="publish-shop-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <h3 style="font-weight: 700; font-size: 18px; margin-bottom: 14px; color: var(--text-main);">🎁 Terbitkan Barang Toko</h3>
+      <div class="input-field-box" style="margin-bottom: 10px;">
+        <label>Nama Barang / Hadiah</label>
+        <input type="text" id="publish-title" class="custom-input" placeholder="Contoh: Buku Sadhana / Gantungan Kunci">
+      </div>
+      <div class="input-field-box" style="margin-bottom: 10px;">
+        <label>Harga (Poin Vihara)</label>
+        <input type="number" id="publish-points" class="custom-input" placeholder="Contoh: 100">
+      </div>
+      <div class="input-field-box" style="margin-bottom: 10px;">
+        <label>Jumlah Stok</label>
+        <input type="number" id="publish-stock" class="custom-input" placeholder="Contoh: 5">
+      </div>
+      <div class="input-field-box" style="margin-bottom: 14px;">
+        <label>URL Gambar Barang (Opsional)</label>
+        <input type="text" id="publish-img-url" class="custom-input" placeholder="https://...">
+      </div>
+      <div class="flex-gap-10">
+        <button id="close-publish-shop-modal" class="secondary-button" style="flex:1;">Batal</button>
+        <button id="btn-submit-publish-shop" class="main-button" style="flex:1; margin:0; background:#f59e0b; color:white;">Publish Barang</button>
+      </div>
+    </div>
+  </div>
+
   <!-- FOOTER -->
   <footer class="app-footer">
     <div class="footer-content">
@@ -721,30 +781,6 @@
     &copy; 2026 Mudiviverse. All rights reserved.
     </div>
   </footer>
-
-  <!-- MODAL TOKO AVATAR -->
-  <div id="shop-modal" class="modal" style="display: none;">
-    <div class="modal-content" style="max-width: 520px; width: 92%;">
-      <div class="flex-between-center" style="margin-bottom: 14px;">
-        <h3 style="font-weight: 800; font-size: 18px; color: var(--text-main);">🛍️ Toko & Kostum Avatar</h3>
-        <button id="close-shop-modal" class="close-btn-sm" type="button">&times;</button>
-      </div>
-
-      <!-- Preview Stage Avatar -->
-      <div class="avatar-character-box" style="margin-bottom: 16px;">
-        <div id="avatar-chara-stage" class="avatar-stage">
-          <div class="avatar-shadow"></div>
-          <img id="avatar-chara-img-preview" src="https://api.dicebear.com/7.x/bottts/svg?seed=AvatarChara" class="chara-sprite" alt="Avatar Preview">
-          <div id="avatar-equipped-overlay" class="avatar-equipped-overlay"></div>
-        </div>
-      </div>
-
-      <!-- Container Daftar Item Toko -->
-      <div id="shop-item-list" class="shop-grid-container" style="max-height: 320px; overflow-y: auto;">
-        <p style="text-align: center; color: var(--text-sub); font-size: 12px; margin: auto;">Memuat item toko...</p>
-      </div>
-    </div>
-  </div>
 
   <script type="module" src="app.js"></script>
   <script type="module" src="feed.js"></script>

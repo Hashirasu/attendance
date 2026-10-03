@@ -1,9 +1,5 @@
-/* =========================================
-   MUDIVIVERSE - SHOP & AVATAR SYSTEM
-========================================= */
 import { supabase } from "./app.js";
 
-// Daftar item toko (bisa ditambah sesuai kebutuhan)
 export const SHOP_ITEMS = [
   { id: "hat_cap", name: "Topi Kasual", type: "headwear", price: 50, icon: "🧢" },
   { id: "hat_crown", name: "Mahkota Raja", type: "headwear", price: 150, icon: "👑" },
@@ -15,11 +11,9 @@ export const SHOP_ITEMS = [
 let userOwnedItems = [];
 let userEquippedItems = {};
 
-// Memuat data inventaris dan item yang terpasang dari Supabase
 export async function loadUserShopData(userId) {
   if (!userId) return;
 
-  // Fetch item yang dimiliki
   const { data: inventory } = await supabase
     .from("user_inventory")
     .select("item_id")
@@ -29,12 +23,11 @@ export async function loadUserShopData(userId) {
     userOwnedItems = inventory.map(item => item.item_id);
   }
 
-  // Fetch item yang sedang dipakai
   const { data: equipped } = await supabase
     .from("user_equipped")
     .select("*")
     .eq("user_id", userId)
-    .single();
+    .maybeSingle();
 
   if (equipped) {
     userEquippedItems = equipped.items || {};
@@ -44,7 +37,6 @@ export async function loadUserShopData(userId) {
   renderAvatarPreview();
 }
 
-// Menampilkan daftar item di toko & inventaris
 export function renderShopItems() {
   const shopContainer = document.getElementById("shop-item-list");
   if (!shopContainer) return;
@@ -77,16 +69,14 @@ export function renderShopItems() {
   });
 }
 
-// Beli Item
 export async function buyShopItem(userId, itemId, itemPrice, currentPoints) {
   if (currentPoints < itemPrice) {
-    alert("Poin kamu tidak mencukupi untuk membeli item ini!");
+    alert("Poin kamu tidak mencukupi!");
     return false;
   }
 
   const newPoints = currentPoints - itemPrice;
 
-  // 1. Kurangi Poin
   const { error: pointsErr } = await supabase
     .from("employees")
     .update({ points: newPoints })
@@ -97,22 +87,20 @@ export async function buyShopItem(userId, itemId, itemPrice, currentPoints) {
     return false;
   }
 
-  // 2. Tambahkan ke Inventaris
   const { error: invErr } = await supabase
     .from("user_inventory")
     .insert({ user_id: userId, item_id: itemId });
 
   if (invErr) {
-    alert("Gagal menyimpan item ke inventaris: " + invErr.message);
+    alert("Gagal menyimpan item: " + invErr.message);
     return false;
   }
 
   userOwnedItems.push(itemId);
-  alert("🎉 Pembelian berhasil!");
+  alert("🎉 Pembelian kostum berhasil!");
   return true;
 }
 
-// Pakai / Lepas Item
 export async function toggleEquipItem(userId, itemId, itemType, isEquip = true) {
   if (isEquip) {
     userEquippedItems[itemType] = itemId;
@@ -125,18 +113,14 @@ export async function toggleEquipItem(userId, itemId, itemType, isEquip = true) 
     .upsert({ user_id: userId, items: userEquippedItems }, { onConflict: "user_id" });
 
   if (error) {
-    alert("Gagal mengupdate pakaian avatar: " + error.message);
+    alert("Gagal update pakaian: " + error.message);
   } else {
     renderShopItems();
     renderAvatarPreview();
   }
 }
 
-// Render tampilan avatar sesuai item yang dipasang
 export function renderAvatarPreview() {
-  const avatarStage = document.getElementById("avatar-chara-stage");
-  if (!avatarStage) return;
-
   const equippedOverlay = document.getElementById("avatar-equipped-overlay");
   if (!equippedOverlay) return;
 
@@ -151,4 +135,62 @@ export function renderAvatarPreview() {
       equippedOverlay.appendChild(layer);
     }
   });
+}
+
+// =========================================
+// FITUR BARANG PHYSICAL / HADIAH REAL
+// =========================================
+export async function publishRealItem(adminId, title, pricePoints, stock, imageUrl) {
+  const { error } = await supabase.from("real_shop_items").insert({
+    title,
+    price_points: pricePoints,
+    stock,
+    image_url: imageUrl || "https://via.placeholder.com/150",
+    created_by: adminId
+  });
+
+  if (error) {
+    alert("Gagal publish barang: " + error.message);
+    return false;
+  }
+  return true;
+}
+
+export async function getRealItems() {
+  const { data, error } = await supabase.from("real_shop_items").select("*").order("created_at", { ascending: false });
+  if (error) return [];
+  return data || [];
+}
+
+export async function redeemRealItem(userId, itemId, pricePoints, currentPoints) {
+  if (currentPoints < pricePoints) {
+    alert("Poin kamu tidak cukup untuk menukarkan barang ini!");
+    return false;
+  }
+
+  const { data: item } = await supabase.from("real_shop_items").select("stock, title").eq("id", itemId).single();
+  if (!item || item.stock <= 0) {
+    alert("Stok barang sudah habis!");
+    return false;
+  }
+
+  const newPoints = currentPoints - pricePoints;
+  const newStock = item.stock - 1;
+
+  const { error: pointsErr } = await supabase.from("employees").update({ points: newPoints }).eq("id", userId);
+  if (pointsErr) {
+    alert("Gagal memotong poin: " + pointsErr.message);
+    return false;
+  }
+
+  await supabase.from("real_shop_items").update({ stock: newStock }).eq("id", itemId);
+  await supabase.from("redemption_logs").insert({
+    user_id: userId,
+    item_id: itemId,
+    item_title: item.title,
+    points_used: pricePoints
+  });
+
+  alert(`🎁 Berhasil menukarkan ${item.title}! Silakan hubungi pengurus untuk mengambil barang.`);
+  return true;
 }

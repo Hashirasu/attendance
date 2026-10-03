@@ -332,14 +332,18 @@ async function loadUserProfile() {
     if (profilePageBio) profilePageBio.textContent = `"${empData.bio || 'Halo, salam kenal ya!'}"`;
 
     const navAdminBtns = document.querySelectorAll(".nav-admin-btn");
+    const btnAdminPublishShop = document.getElementById("btn-admin-publish-shop");
+
     if (currentUserRole === "admin" || currentUserRole === "adm1n" || currentUserRole === "pengurus") {
       if (switchToAdminBtn) switchToAdminBtn.style.display = "inline-block";
       navAdminBtns.forEach(btn => btn.style.display = "flex");
       if (tabKioskBtn) tabKioskBtn.style.display = "inline-block";
+      if (btnAdminPublishShop) btnAdminPublishShop.style.display = "inline-block";
     } else {
       if (switchToAdminBtn) switchToAdminBtn.style.display = "none";
       navAdminBtns.forEach(btn => btn.style.display = "none");
       if (tabKioskBtn) tabKioskBtn.style.display = "none";
+      if (btnAdminPublishShop) btnAdminPublishShop.style.display = "none";
     }
   }
 
@@ -1772,28 +1776,89 @@ document.addEventListener("DOMContentLoaded", () => {
 
 initThemeToggle();
 
-
-
 // =========================================
-// INTEGRASI MODAL TOKO & KOSTUM AVATAR
+// 15. TOKO AVATAR & PENUKARAN BARANG REAL
 // =========================================
-import { loadUserShopData, buyShopItem, toggleEquipItem, SHOP_ITEMS } from "./shop.js";
+import { loadUserShopData, buyShopItem, toggleEquipItem, publishRealItem, redeemRealItem, getRealItems } from "./shop.js";
 
 const btnCustomAvatar = document.getElementById("btn-custom-avatar");
+const btnOpenShopModal = document.getElementById("btn-open-shop-modal");
 const shopModal = document.getElementById("shop-modal");
 const closeShopModal = document.getElementById("close-shop-modal");
 
-// Mengaktifkan tombol Edit Kostum
+const shopTabAvatarBtn = document.getElementById("shop-tab-avatar");
+const shopTabRealBtn = document.getElementById("shop-tab-real");
+const shopViewAvatar = document.getElementById("shop-view-avatar");
+const shopViewReal = document.getElementById("shop-view-real");
+
+const btnAdminPublishShop = document.getElementById("btn-admin-publish-shop");
+const publishShopModal = document.getElementById("publish-shop-modal");
+const closePublishShopModal = document.getElementById("close-publish-shop-modal");
+const btnSubmitPublishShop = document.getElementById("btn-submit-publish-shop");
+
+// Tab Switch di Toko (Avatar vs Barang Real)
+if (shopTabAvatarBtn && shopTabRealBtn) {
+  shopTabAvatarBtn.addEventListener("click", () => {
+    shopTabAvatarBtn.classList.add("active");
+    shopTabRealBtn.classList.remove("active");
+    if (shopViewAvatar) shopViewAvatar.style.display = "block";
+    if (shopViewReal) shopViewReal.style.display = "none";
+  });
+
+  shopTabRealBtn.addEventListener("click", async () => {
+    shopTabRealBtn.classList.add("active");
+    shopTabAvatarBtn.classList.remove("active");
+    if (shopViewAvatar) shopViewAvatar.style.display = "none";
+    if (shopViewReal) shopViewReal.style.display = "block";
+    await renderRealItems();
+  });
+}
+
+async function renderRealItems() {
+  const container = document.getElementById("real-shop-item-list");
+  if (!container) return;
+
+  container.innerHTML = "<p style='text-align:center; color:var(--text-sub); font-size:12px; grid-column:1/-1;'>Memuat barang...</p>";
+
+  const items = await getRealItems();
+  if (!items || items.length === 0) {
+    container.innerHTML = "<p style='text-align:center; color:var(--text-sub); font-size:12px; grid-column:1/-1;'>Belum ada barang fisik untuk ditukarkan.</p>";
+    return;
+  }
+
+  container.innerHTML = "";
+  items.forEach(item => {
+    const card = document.createElement("div");
+    card.className = "shop-item-card";
+    card.innerHTML = `
+      <img src="${item.image_url || 'https://via.placeholder.com/100'}" class="real-item-img" alt="${item.title}">
+      <div class="shop-item-info" style="margin-top:6px;">
+        <h4>${item.title}</h4>
+        <p style="font-size:10px; color:var(--text-sub); margin-bottom:4px;">Stok: ${item.stock}</p>
+        <p class="shop-item-price">🪙 ${item.price_points} Poin</p>
+      </div>
+      <button class="btn-redeem-real" data-id="${item.id}" data-price="${item.price_points}" data-stock="${item.stock}" ${item.stock <= 0 ? 'disabled' : ''}>
+        ${item.stock > 0 ? 'Tukar Barang' : 'Stok Habis'}
+      </button>
+    `;
+    container.appendChild(card);
+  });
+}
+
+// Buka Modal Toko dari Profile
+function openShop() {
+  if (!currentUserId) return;
+  if (shopModal) shopModal.style.display = "flex";
+  loadUserShopData(currentUserId);
+}
+
 if (btnCustomAvatar) {
   btnCustomAvatar.removeAttribute("disabled");
   btnCustomAvatar.style.opacity = "1";
-  
-  btnCustomAvatar.addEventListener("click", async () => {
-    if (!currentUserId) return;
-    if (shopModal) shopModal.style.display = "flex";
-    await loadUserShopData(currentUserId);
-  });
+  btnCustomAvatar.addEventListener("click", openShop);
 }
+
+if (btnOpenShopModal) btnOpenShopModal.addEventListener("click", openShop);
 
 if (closeShopModal) {
   closeShopModal.addEventListener("click", () => {
@@ -1801,7 +1866,51 @@ if (closeShopModal) {
   });
 }
 
-// Handler Klik Beli / Pakai / Lepas di Toko
+// Handler Publish Barang Real oleh Admin / Pengurus
+if (btnAdminPublishShop) {
+  btnAdminPublishShop.addEventListener("click", () => {
+    if (publishShopModal) publishShopModal.style.display = "flex";
+  });
+}
+
+if (closePublishShopModal) {
+  closePublishShopModal.addEventListener("click", () => {
+    if (publishShopModal) publishShopModal.style.display = "none";
+  });
+}
+
+if (btnSubmitPublishShop) {
+  btnSubmitPublishShop.addEventListener("click", async () => {
+    const title = document.getElementById("publish-title").value.trim();
+    const points = parseInt(document.getElementById("publish-points").value);
+    const stock = parseInt(document.getElementById("publish-stock").value);
+    const imgUrl = document.getElementById("publish-img-url").value.trim();
+
+    if (!title || isNaN(points) || isNaN(stock)) {
+      alert("Harap lengkapi semua data barang!");
+      return;
+    }
+
+    btnSubmitPublishShop.textContent = "Menerbitkan...";
+    btnSubmitPublishShop.disabled = true;
+
+    const success = await publishRealItem(currentUserId, title, points, stock, imgUrl);
+    if (success) {
+      alert("✅ Barang berhasil dipublish ke toko!");
+      document.getElementById("publish-title").value = "";
+      document.getElementById("publish-points").value = "";
+      document.getElementById("publish-stock").value = "";
+      document.getElementById("publish-img-url").value = "";
+      if (publishShopModal) publishShopModal.style.display = "none";
+      await renderRealItems();
+    }
+
+    btnSubmitPublishShop.textContent = "Publish Barang";
+    btnSubmitPublishShop.disabled = false;
+  });
+}
+
+// Global Click Handlers untuk Toko
 document.addEventListener("click", async (e) => {
   if (e.target.classList.contains("btn-buy-item")) {
     const itemId = e.target.getAttribute("data-id");
@@ -1810,7 +1919,7 @@ document.addEventListener("click", async (e) => {
 
     const success = await buyShopItem(currentUserId, itemId, price, currentPoints);
     if (success) {
-      await loadUserProfile(); // Update poin di UI
+      await loadUserProfile();
       await loadUserShopData(currentUserId);
     }
   }
@@ -1826,15 +1935,25 @@ document.addEventListener("click", async (e) => {
     const type = e.target.getAttribute("data-type");
     await toggleEquipItem(currentUserId, itemId, type, false);
   }
+
+  if (e.target.classList.contains("btn-redeem-real")) {
+    const itemId = e.target.getAttribute("data-id");
+    const price = parseInt(e.target.getAttribute("data-price"));
+    const stock = parseInt(e.target.getAttribute("data-stock"));
+    const currentPoints = currentEmployeeData ? (currentEmployeeData.points || 0) : 0;
+
+    if (stock <= 0) {
+      alert("Maaf, stok barang ini sudah habis!");
+      return;
+    }
+
+    const confirmRedeem = confirm(`Tukarkan ${price} Poin Vihara untuk barang ini?`);
+    if (!confirmRedeem) return;
+
+    const success = await redeemRealItem(currentUserId, itemId, price, currentPoints);
+    if (success) {
+      await loadUserProfile();
+      await renderRealItems();
+    }
+  }
 });
-
-
-// Listener untuk tombol Buka Toko dari profil
-const btnOpenShopModal = document.getElementById("btn-open-shop-modal");
-if (btnOpenShopModal) {
-  btnOpenShopModal.addEventListener("click", async () => {
-    if (!currentUserId) return;
-    if (shopModal) shopModal.style.display = "flex";
-    await loadUserShopData(currentUserId);
-  });
-}
