@@ -353,6 +353,9 @@ async function loadUserProfile() {
     loadMyFriendsList()
   ]);
 
+  // AKTIFKAN SUPABASE REALTIME SUBSCRIPTION
+  setupRealtimeListeners();
+
   if (window.initFeedSystem) {
     await window.initFeedSystem();
   }
@@ -426,8 +429,38 @@ async function loadUserAchievements() {
   }
 }
 
+// ==========================================================
+// 4. SUPABASE REALTIME LISTENERS (FRIENDS, NOTIFS & CHAT)
+// ==========================================================
+function setupRealtimeListeners() {
+  if (!currentUserId) return;
+
+  // Realtime Pertemanan & Notifikasi
+  supabase
+    .channel("public-realtime-channel")
+    .on("postgres_changes", { event: "*", schema: "public", table: "friendships" }, async () => {
+      await Promise.all([loadFriendsSystem(), loadMyFriendsList()]);
+      const publicCard = document.getElementById("public-profile-card");
+      if (publicCard && publicCard.style.display !== "none") {
+        const urlParams = new URLSearchParams(window.location.hash.replace('#', '?'));
+        const activeProfileId = window.location.hash.replace('#profile-', '');
+        if (activeProfileId) await openPublicProfile(activeProfileId);
+      }
+    })
+    .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${currentUserId}` }, async () => {
+      await loadNotificationsSystem();
+    })
+    .on("postgres_changes", { event: "*", schema: "public", table: "direct_messages" }, async (payload) => {
+      const newMsg = payload.new;
+      if (activeChatFriendId && (newMsg.sender_id === activeChatFriendId || newMsg.receiver_id === activeChatFriendId)) {
+        await loadChatMessages();
+      }
+    })
+    .subscribe();
+}
+
 // =========================================
-// 4. SISTEM FRIENDS, PROFIL & COUNTER LOGIC
+// 5. SISTEM FRIENDS, PROFIL & COUNTER LOGIC
 // =========================================
 async function loadFriendsSystem() {
   const container = document.getElementById("search-friends-results");
@@ -663,7 +696,6 @@ document.addEventListener("click", async (e) => {
     btn.className = "btn-friend-action btn-friend-pending";
     btn.textContent = "Pending";
 
-    // Insert friendship ke database
     const { error: friendErr } = await supabase.from("friendships").insert({
       user_id: currentUserId,
       friend_id: friendId,
@@ -678,7 +710,6 @@ document.addEventListener("click", async (e) => {
       return;
     }
 
-    // Insert notifikasi ke database
     const { error: notifErr } = await supabase.from("notifications").insert({
       user_id: friendId,
       sender_id: currentUserId,
@@ -705,7 +736,6 @@ document.addEventListener("click", async (e) => {
     const { error } = await supabase.from("friendships").update({ status: "accepted" }).eq("id", relId);
 
     if (!error) {
-      // Hapus notifikasi friend request terkait
       await supabase.from("notifications").delete().eq("user_id", currentUserId).eq("type", "friend_request").eq("sender_id", senderId);
 
       await Promise.all([loadFriendsSystem(), loadMyFriendsList(), loadNotificationsSystem()]);
@@ -749,24 +779,44 @@ document.addEventListener("click", async (e) => {
   }
 });
 
-// FLOATING CHATBOX
-function openChatWindow(friendId, friendName, friendAvatar) {
+// =========================================
+// 6. REALTIME CHATBOX & INDIKATOR SENT/READ
+// =========================================
+async function openChatWindow(friendId, friendName, friendAvatar) {
   activeChatFriendId = friendId;
   const chatWin = document.getElementById("floating-chat-window");
   document.getElementById("chat-target-name").textContent = friendName;
   document.getElementById("chat-target-avatar").src = friendAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${friendName}`;
   chatWin.style.display = "flex";
-  loadChatMessages();
+
+  // Tandai semua pesan dari kawan ini sebagai 'READ' saat room chat dibuka
+  await supabase
+    .from("direct_messages")
+    .update({ is_read: true })
+    .eq("sender_id", friendId)
+    .eq("receiver_id", currentUserId)
+    .eq("is_read", false);
+
+  await loadChatMessages();
 }
 
 const closeChatBtn = document.getElementById("close-chat-btn");
 if (closeChatBtn) closeChatBtn.addEventListener("click", () => {
   document.getElementById("floating-chat-window").style.display = "none";
+  activeChatFriendId = null;
 });
 
 async function loadChatMessages() {
   const body = document.getElementById("chat-messages-body");
   if (!body || !activeChatFriendId || !currentUserId) return;
+
+  // Otomatis update status read untuk pesan baru masuk dari lawan bicara yang sedang dibuka
+  await supabase
+    .from("direct_messages")
+    .update({ is_read: true })
+    .eq("sender_id", activeChatFriendId)
+    .eq("receiver_id", currentUserId)
+    .eq("is_read", false);
 
   const { data: msgs } = await supabase
     .from("direct_messages")
@@ -782,9 +832,22 @@ async function loadChatMessages() {
   body.innerHTML = "";
   msgs.forEach(m => {
     const isMine = m.sender_id === currentUserId;
+    const timeStr = new Date(m.created_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+    
+    // Status tick: Sent ✓ atau Read ✓✓
+    const statusTick = m.is_read 
+      ? `<span class="chat-status-tick read" title="Dibaca">✓✓</span>` 
+      : `<span class="chat-status-tick" title="Terkirim">✓</span>`;
+
     const bubble = document.createElement("div");
     bubble.className = `chat-bubble ${isMine ? 'mine' : 'other'}`;
-    bubble.textContent = m.message;
+    bubble.innerHTML = `
+      <span>${m.message}</span>
+      <div class="chat-meta">
+        <span>${timeStr}</span>
+        ${isMine ? statusTick : ''}
+      </div>
+    `;
     body.appendChild(bubble);
   });
   body.scrollTop = body.scrollHeight;
@@ -793,23 +856,47 @@ async function loadChatMessages() {
 const btnSendChat = document.getElementById("btn-send-chat");
 const chatTextInput = document.getElementById("chat-text-input");
 
-if (btnSendChat) {
-  btnSendChat.addEventListener("click", async () => {
-    const text = chatTextInput.value.trim();
-    if (!text || !activeChatFriendId) return;
+async function handleSendMessage() {
+  const text = chatTextInput.value.trim();
+  if (!text || !activeChatFriendId) return;
 
-    chatTextInput.value = "";
-    await supabase.from("direct_messages").insert({
-      sender_id: currentUserId,
-      receiver_id: activeChatFriendId,
-      message: text
-    });
+  chatTextInput.value = "";
+  
+  const { error } = await supabase.from("direct_messages").insert({
+    sender_id: currentUserId,
+    receiver_id: activeChatFriendId,
+    message: text,
+    is_read: false
+  });
+
+  if (error) {
+    alert("Gagal mengirim pesan: " + error.message);
+  } else {
     await loadChatMessages();
+  }
+}
+
+if (btnSendChat) btnSendChat.addEventListener("click", handleSendMessage);
+
+if (chatTextInput) {
+  chatTextInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  });
+
+  // Penanganan responsif scroll otomatis saat keyboard HP aktif
+  chatTextInput.addEventListener("focus", () => {
+    setTimeout(() => {
+      const body = document.getElementById("chat-messages-body");
+      if (body) body.scrollTop = body.scrollHeight;
+    }, 300);
   });
 }
 
 // =========================================
-// 5. SISTEM NOTIFIKASI
+// 7. SISTEM NOTIFIKASI & BADGE RED DOT
 // =========================================
 const notifToggleBtn = document.getElementById("notif-toggle-btn");
 const notifDropdown = document.getElementById("notif-dropdown-panel");
@@ -844,8 +931,9 @@ async function loadNotificationsSystem() {
     return;
   }
 
+  // Tampilkan Badge Merah & Jumlah Angka (Gambar 1)
   countBadge.textContent = notifs.length;
-  countBadge.style.display = "inline-block";
+  countBadge.style.display = "flex";
 
   container.innerHTML = "";
   notifs.forEach(n => {
@@ -1066,7 +1154,7 @@ async function loadMonthlyStatistics() {
 }
 
 // ==============================
-// 6. QR SCANNER KAMERA
+// 8. QR SCANNER KAMERA
 // ==============================
 const openScannerBtnUser = document.getElementById("open-scanner-btn-user");
 const scannerModal = document.getElementById("scanner-modal");
@@ -1128,7 +1216,7 @@ if (openScannerBtnUser) openScannerBtnUser.addEventListener("click", startQrScan
 if (closeScannerBtn) closeScannerBtn.addEventListener("click", stopQrScanner);
 
 // ==============================
-// 7. MANAJEMEN POIN MEMBER
+// 9. MANAJEMEN POIN MEMBER
 // ==============================
 document.addEventListener("click", (e) => {
   if (e.target.classList.contains("btn-add-points")) {
@@ -1202,7 +1290,7 @@ if (btnSavePoints) {
 }
 
 // ==============================
-// 8. ADMIN PANEL & KIOSK GENERATOR
+// 10. ADMIN PANEL & KIOSK GENERATOR
 // ==============================
 if (switchToAdminBtn) {
   switchToAdminBtn.addEventListener("click", async () => {
@@ -1476,7 +1564,7 @@ if (saveEditEmp) {
 }
 
 // ==============================
-// 9. ADVANCED EXCEL EXPORT
+// 11. ADVANCED EXCEL EXPORT
 // ==============================
 if (exportCsvBtn) {
   exportCsvBtn.addEventListener("click", async () => {
@@ -1531,7 +1619,7 @@ if (exportCsvBtn) {
 }
 
 // ==============================
-// 10. SINKRONISASI GOOGLE SHEETS
+// 12. SINKRONISASI GOOGLE SHEETS
 // ==============================
 const syncSheetsBtn = document.getElementById("sync-sheets-btn");
 
@@ -1626,7 +1714,7 @@ if (syncSheetsBtn) {
 }
 
 // ==============================
-// 11. LIGHT & DARK MODE LOGIC
+// 13. LIGHT & DARK MODE LOGIC
 // ==============================
 function initThemeToggle() {
   const themeToggleBtn = document.getElementById("theme-toggle-btn");
@@ -1659,7 +1747,7 @@ function initThemeToggle() {
 }
 
 // =========================================
-// 12. DRAWER NAVIGATION & HISTORY API
+// 14. DRAWER NAVIGATION & HISTORY API
 // =========================================
 const mobileHamburgerBtn = document.getElementById("mobile-hamburger-btn");
 const mobileNavOverlay = document.getElementById("mobile-nav-overlay");
