@@ -12,8 +12,8 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const KIOSK_SECRET = "VIHARA_ZEN_SECRET_2026";
 
 const loginSection = document.getElementById("login-section");
-const userSection = document.getElementById("user-section");
-const adminSection = document.getElementById("admin-section");
+const userSection = document.getElementById("tab-home-view");
+const adminSection = document.getElementById("tab-admin-view");
 
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
@@ -39,7 +39,6 @@ const attendanceHistory = document.getElementById("attendance-history");
 const switchToAdminBtn = document.getElementById("switch-to-admin");
 const switchToUserBtn = document.getElementById("switch-to-user");
 const logoutBtn = document.getElementById("logout-button");
-const adminLogoutBtn = document.getElementById("admin-logout-button");
 
 const tabRekapBtn = document.getElementById("tab-rekap-btn");
 const tabKaryawanBtn = document.getElementById("tab-karyawan-btn");
@@ -269,7 +268,6 @@ async function handleLogout() {
 }
 
 if (logoutBtn) logoutBtn.addEventListener("click", handleLogout);
-if (adminLogoutBtn) adminLogoutBtn.addEventListener("click", handleLogout);
 
 function showLoginSection() {
   const authContainer = document.getElementById("auth-container");
@@ -279,8 +277,6 @@ function showLoginSection() {
   if (dashboardWorkspace) dashboardWorkspace.style.display = "none";
 
   if (loginSection) loginSection.style.display = "block";
-  if (userSection) userSection.style.display = "none";
-  if (adminSection) adminSection.style.display = "none";
   if (unverifiedSection) unverifiedSection.style.display = "none";
   if (emailInput) emailInput.style.display = "block";
   if (passwordInput) passwordInput.style.display = "block";
@@ -290,8 +286,6 @@ function showLoginSection() {
   if (messageEl) messageEl.textContent = "";
 }
 
-
-const DEFAULT_AVATAR = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23cccccc'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/></svg>";
 // ==============================
 // 3. LOAD USER PROFILE
 // ==============================
@@ -306,10 +300,6 @@ async function loadUserProfile() {
 
   if (authContainer) authContainer.style.display = "none";
   if (dashboardWorkspace) dashboardWorkspace.style.display = "flex";
-
-  if (loginSection) loginSection.style.display = "none";
-  if (userSection) userSection.style.display = "block";
-  if (adminSection) adminSection.style.display = "none";
 
   await ensureFreeStarterPokemon(currentUserId);
 
@@ -470,11 +460,9 @@ function setupRealtimeListeners() {
       }
     })
     .on("postgres_changes", { event: "*", schema: "public", table: "user_pokemon_showcase" }, async (payload) => {
-      // Refresh real-time kandang milik sendiri
       if (payload.new && payload.new.user_id === currentUserId) {
         await renderMyPokemonShowcase(currentUserId);
       }
-      // Refresh real-time jika sedang melihat profil publik anggota lain
       const publicCard = document.getElementById("public-profile-card");
       if (publicCard && publicCard.style.display !== "none") {
         const activeProfileId = window.location.hash.replace("#profile-", "");
@@ -632,7 +620,6 @@ async function openPublicProfile(targetUserId) {
     actionBtnBox.innerHTML = btnHTML;
   }
 
-  // RENDER POKEMON KANDANG PUBLIC (REALTIME ACCURATE)
   const pokeContainer = document.getElementById("public-pokemon-showcase");
   if (pokeContainer) {
     const { data: showcase } = await supabase.from("user_pokemon_showcase").select("pokemon_id, slot_index").eq("user_id", targetUserId);
@@ -745,7 +732,6 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  // 1. ADD FRIEND
   if (e.target.classList.contains("btn-friend-add")) {
     const btn = e.target;
     const friendId = btn.getAttribute("data-id");
@@ -776,7 +762,6 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  // 2. ACCEPT FRIEND
   if (e.target.classList.contains("btn-friend-accept")) {
     const relId = e.target.getAttribute("data-id");
     const senderId = e.target.getAttribute("data-sender");
@@ -795,7 +780,6 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  // 3. REJECT FRIEND
   if (e.target.classList.contains("btn-friend-reject")) {
     const relId = e.target.getAttribute("data-id");
     const senderId = e.target.getAttribute("data-sender");
@@ -814,7 +798,6 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  // 4. UNFOLLOW / UNFRIEND
   if (e.target.classList.contains("btn-friend-unfollow")) {
     const relId = e.target.getAttribute("data-rel-id");
     const name = e.target.getAttribute("data-name");
@@ -837,7 +820,6 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  // 5. MESSAGE
   if (e.target.classList.contains("btn-friend-msg")) {
     const fId = e.target.getAttribute("data-id");
     const fName = e.target.getAttribute("data-name");
@@ -1140,7 +1122,7 @@ async function loadMonthlyStatistics() {
 }
 
 // ==============================
-// 8. POKEDEX & HABITAT KANDANG (TANPA DELAY UI)
+// 8. POKEDEX & HABITAT KANDANG
 // ==============================
 const btnOpenPokedexModal = document.getElementById("btn-open-pokedex-modal");
 const pokedexModal = document.getElementById("pokedex-modal");
@@ -1159,7 +1141,6 @@ if (closePokedexModal) {
   });
 }
 
-// RENDER POKEDEX (POKEMON TERMILIKI DISUSUN DI PALING ATAS)
 async function renderPokedexModal() {
   const container = document.getElementById("pokedex-container");
   if (!container || !currentUserId) return;
@@ -1201,7 +1182,6 @@ async function renderPokedexModal() {
   });
 }
 
-// TOGGLE PAJANGAN KANDANG (FAST & INSTANT FEEDBACK UI)
 document.addEventListener("click", async (e) => {
   if (e.target.classList.contains("btn-toggle-showcase")) {
     const btn = e.target;
@@ -1236,13 +1216,11 @@ document.addEventListener("click", async (e) => {
       });
     }
 
-    // Refresh otomatis Pokédex modal DAN Kandang Panggung di halaman profil secara langsung!
     await renderPokedexModal();
     await renderMyPokemonShowcase(currentUserId);
   }
 });
 
-// RENDER KANDANG PANGGUNG POKEMON BERGERAK
 async function renderMyPokemonShowcase(userId) {
   const stage = document.getElementById("pokemon-habitat-stage");
   const container = document.getElementById("habitat-pokemon-container");
@@ -1292,7 +1270,6 @@ if (closeShopModal) {
   });
 }
 
-// SEARCH POKEMON IN SHOP
 const searchPokeInput = document.getElementById("search-pokedex-input");
 if (searchPokeInput) {
   searchPokeInput.addEventListener("input", (e) => {
@@ -1301,7 +1278,6 @@ if (searchPokeInput) {
   });
 }
 
-// TAB NAVIGATION DI TOKO
 document.addEventListener("click", (e) => {
   if (e.target.classList.contains("shop-tab-btn")) {
     const targetTab = e.target.getAttribute("data-shop-tab");
@@ -1315,7 +1291,6 @@ document.addEventListener("click", (e) => {
   }
 });
 
-// HANDLER AKSI TOKO
 document.addEventListener("click", async (e) => {
   if (e.target.classList.contains("btn-qty-plus")) {
     const id = e.target.getAttribute("data-id");
@@ -1430,7 +1405,6 @@ if (closeRedemptionModal) {
   });
 }
 
-// PUBLISH BARANG ADMIN HANDLERS
 const btnAdminPublishShop = document.getElementById("btn-admin-publish-shop");
 const btnModalPublishShop = document.getElementById("btn-modal-publish-shop");
 const publishShopModal = document.getElementById("publish-shop-modal");
@@ -1628,8 +1602,7 @@ if (btnSavePoints) {
 // ==============================
 if (switchToAdminBtn) {
   switchToAdminBtn.addEventListener("click", async () => {
-    if (userSection) userSection.style.display = "none";
-    if (adminSection) adminSection.style.display = "block";
+    switchTab("admin", true);
     if (adminFilterDate) adminFilterDate.value = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
     await loadAdminAttendance();
     await loadAdminChart();
@@ -1638,8 +1611,7 @@ if (switchToAdminBtn) {
 
 if (switchToUserBtn) {
   switchToUserBtn.addEventListener("click", () => {
-    if (adminSection) adminSection.style.display = "none";
-    if (userSection) userSection.style.display = "block";
+    switchTab("home", true);
     if (kioskTimerInterval) clearInterval(kioskTimerInterval);
   });
 }
