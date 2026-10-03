@@ -429,7 +429,7 @@ async function loadUserAchievements() {
 }
 
 // ==========================================================
-// 4. SUPABASE REALTIME LISTENERS (PERTEMANAN, NOTIFIKASI, CHAT)
+// 4. SUPABASE REALTIME LISTENERS
 // ==========================================================
 function setupRealtimeListeners() {
   if (!currentUserId) return;
@@ -457,7 +457,7 @@ function setupRealtimeListeners() {
 }
 
 // =========================================
-// 5. FRIENDS SYSTEM, PROFIL & UNFOLLOW LOGIC
+// 5. PERBAIKAN AKURAT PERTEMANAN & STATS
 // =========================================
 async function loadFriendsSystem() {
   const container = document.getElementById("search-friends-results");
@@ -535,6 +535,7 @@ async function loadFriendsSystem() {
   }
 }
 
+// PERHITUNGAN AKURAT JUMLAH FRIENDS & FOLLOWING TARGET
 async function getUserSocialStats(targetUserId) {
   const { data: acceptedRel } = await supabase
     .from("friendships")
@@ -645,14 +646,15 @@ if (btnBackFriends) {
   });
 }
 
+// PERBAIKAN QUERY MENAMPILKAN DAFTAR TEMAN DARI KEDUA SISI RELASI
 async function loadMyFriendsList() {
   const container = document.getElementById("my-friends-container");
   if (!container || !currentUserId) return;
 
   const { data: friendships } = await supabase
     .from("friendships")
-    .select("*, employees!friendships_friend_id_fkey(id, name, employee_code, avatar_url)")
-    .eq("user_id", currentUserId)
+    .select("*, user_emp:employees!friendships_user_id_fkey(id, name, employee_code, avatar_url), friend_emp:employees!friendships_friend_id_fkey(id, name, employee_code, avatar_url)")
+    .or(`user_id.eq.${currentUserId},friend_id.eq.${currentUserId}`)
     .eq("status", "accepted");
 
   if (!friendships || friendships.length === 0) {
@@ -662,8 +664,9 @@ async function loadMyFriendsList() {
 
   container.innerHTML = "";
   friendships.forEach(f => {
-    const u = f.employees;
+    const u = (f.user_id === currentUserId) ? f.friend_emp : f.user_emp;
     if (!u) return;
+
     const avatar = u.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${u.name}`;
     const card = document.createElement("div");
     card.className = "friend-item-card";
@@ -684,7 +687,7 @@ async function loadMyFriendsList() {
   });
 }
 
-// GLOBAL EVENT HANDLER UNTUK ADD / ACCEPT / REJECT / UNFOLLOW / MESSAGE
+// HANDLER EVENT KLIK UNTUK ADD / ACCEPT / REJECT / UNFOLLOW / MESSAGE
 document.addEventListener("click", async (e) => {
   const userInfoBox = e.target.closest(".friend-user-info");
   if (userInfoBox) {
@@ -695,7 +698,7 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  // 1. TAMBAH TEMAN (+ ADD)
+  // 1. TAMBAH TEMAN
   if (e.target.classList.contains("btn-friend-add")) {
     const btn = e.target;
     const friendId = btn.getAttribute("data-id");
@@ -726,7 +729,7 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  // 2. ACCEPT PERMINTAAN TEMAN
+  // 2. ACCEPT PERMINTAAN
   if (e.target.classList.contains("btn-friend-accept")) {
     const relId = e.target.getAttribute("data-id");
     const senderId = e.target.getAttribute("data-sender");
@@ -747,7 +750,7 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  // 3. REJECT PERMINTAAN TEMAN
+  // 3. REJECT PERMINTAAN
   if (e.target.classList.contains("btn-friend-reject")) {
     const relId = e.target.getAttribute("data-id");
     const senderId = e.target.getAttribute("data-sender");
@@ -768,7 +771,7 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  // 4. UNFOLLOW / UNFRIEND DENGAN KONFIRMASI KEAMANAN
+  // 4. UNFOLLOW / UNFRIEND
   if (e.target.classList.contains("btn-friend-unfollow")) {
     const relId = e.target.getAttribute("data-rel-id");
     const name = e.target.getAttribute("data-name");
@@ -801,7 +804,7 @@ document.addEventListener("click", async (e) => {
 });
 
 // =========================================
-// 6. REALTIME CHATBOX & INDIKATOR READ
+// 6. REALTIME CHATBOX & READ TICK
 // =========================================
 async function openChatWindow(friendId, friendName, friendAvatar) {
   activeChatFriendId = friendId;
@@ -810,7 +813,6 @@ async function openChatWindow(friendId, friendName, friendAvatar) {
   document.getElementById("chat-target-avatar").src = friendAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${friendName}`;
   chatWin.style.display = "flex";
 
-  // Tandai pesan sebagai READ & hapus notifikasi chat dari user ini
   await Promise.all([
     supabase.from("direct_messages").update({ is_read: true }).eq("sender_id", friendId).eq("receiver_id", currentUserId).eq("is_read", false),
     supabase.from("notifications").delete().eq("user_id", currentUserId).eq("sender_id", friendId).eq("type", "chat")
@@ -912,7 +914,7 @@ if (chatTextInput) {
 }
 
 // =========================================
-// 7. NOTIFIKASI SYSTEM & BADGE MERAH
+// 7. NOTIFIKASI & BADGE RED DOT
 // =========================================
 const notifToggleBtn = document.getElementById("notif-toggle-btn");
 const notifDropdown = document.getElementById("notif-dropdown-panel");
@@ -947,7 +949,6 @@ async function loadNotificationsSystem() {
     return;
   }
 
-  // Tampilkan Angka Total Notifikasi di Badge Merah
   const totalCount = notifs.reduce((acc, curr) => acc + (curr.unread_count || 1), 0);
   if (countBadge) {
     countBadge.textContent = totalCount;
@@ -1107,6 +1108,7 @@ async function loadTodayStatus() {
   }
 }
 
+// MENGHAPUS TEKS (+50 / +10 POIN) PADA STATISTIK PRESENSI
 async function loadAttendanceHistory() {
   if (!attendanceHistory) return;
   attendanceHistory.innerHTML = "<p style='color: var(--text-sub);'>Memuat riwayat...</p>";
@@ -1130,7 +1132,7 @@ async function loadAttendanceHistory() {
     const date = new Date(row.attendance_date + "T00:00:00").toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Jakarta" });
     const time = new Date(row.check_in).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" });
     const isLate = row.status === "late";
-    const badge = isLate ? `<span class="badge-late">Terlambat (+10)</span>` : `<span class="badge-present">Hadir (+50)</span>`;
+    const badge = isLate ? `<span class="badge-late">Terlambat</span>` : `<span class="badge-present">Tepat Waktu</span>`;
 
     const item = document.createElement("div");
     item.className = "history-item";
