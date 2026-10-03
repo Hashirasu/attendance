@@ -71,7 +71,7 @@ export async function getRealItems() {
   return data || [];
 }
 
-export async function renderRealItems(currentUserRole) {
+export async function renderRealItems(currentUserRole, currentUserId = null) {
   const container = document.getElementById("real-shop-item-list");
   if (!container) return;
 
@@ -83,10 +83,22 @@ export async function renderRealItems(currentUserRole) {
     return;
   }
 
+  let userBoughtItemIds = [];
+  if (currentUserId) {
+    const { data: myRedemptions } = await supabase
+      .from("real_shop_redemptions")
+      .select("item_id")
+      .eq("user_id", currentUserId);
+    if (myRedemptions) {
+      userBoughtItemIds = myRedemptions.map(r => r.item_id);
+    }
+  }
+
   const isAdmin = currentUserRole === "admin" || currentUserRole === "adm1n" || currentUserRole === "pengurus";
 
   container.innerHTML = "";
   items.forEach(item => {
+    const isBought = userBoughtItemIds.includes(item.id);
     const card = document.createElement("div");
     card.className = "shop-item-card";
     card.innerHTML = `
@@ -97,7 +109,7 @@ export async function renderRealItems(currentUserRole) {
         <p style="font-size:11px; color:#f59e0b; font-weight:700;">🪙 ${item.price_points} Poin / pcs</p>
         <p style="font-size:10px; color:var(--text-sub); margin-bottom:8px;">Sisa Stok: <strong>${item.stock}</strong></p>
         
-        <div style="display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.08); border-radius:8px; padding:4px 8px; margin-bottom:8px;">
+        <div style="display:${isBought ? 'none' : 'flex'}; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.08); border-radius:8px; padding:4px 8px; margin-bottom:8px;">
           <label style="font-size:10px; color:var(--text-sub);">Beli Qty:</label>
           <div style="display:flex; align-items:center;">
             <button class="btn-qty-minus" data-id="${item.id}" data-price="${item.price_points}" style="background:none; border:none; color:white; font-weight:800; padding:2px 6px; cursor:pointer;">-</button>
@@ -106,15 +118,16 @@ export async function renderRealItems(currentUserRole) {
           </div>
         </div>
 
-        <p style="font-size:11px; font-weight:800; color:var(--text-main); margin-bottom:8px;">Total: 🪙 <span id="total-price-${item.id}">${item.price_points}</span> Poin</p>
+        <p style="display:${isBought ? 'none' : 'block'}; font-size:11px; font-weight:800; color:var(--text-main); margin-bottom:8px;">Total: 🪙 <span id="total-price-${item.id}">${item.price_points}</span> Poin</p>
       </div>
 
-      <button class="btn-redeem-real" data-id="${item.id}" data-price="${item.price_points}" ${item.stock <= 0 ? 'disabled' : ''}>
-        ${item.stock > 0 ? '🎁 Tukar Barang' : 'Stok Habis'}
+      <button class="btn-redeem-real" data-id="${item.id}" data-price="${item.price_points}" data-name="${item.title}" ${isBought || item.stock <= 0 ? 'disabled' : ''} style="${isBought ? 'background:#10b981; color:white;' : ''}">
+        ${isBought ? '✅ Buyed' : (item.stock > 0 ? '🎁 Tukar Barang' : 'Stok Habis')}
       </button>
 
       ${isAdmin ? `
-        <div style="display:flex; gap:4px; margin-top:8px; width:100%;">
+        <div style="display:flex; gap:4px; margin-top:8px; width:100%; flex-wrap:wrap;">
+          <button class="btn-check-redemptions secondary-button-sm" data-id="${item.id}" style="width:100%; font-size:10px; background:rgba(59,130,246,0.2); color:#60a5fa; border:none; margin-bottom:4px; padding:4px;">👥 Cek Pembeli</button>
           <button class="btn-edit-item secondary-button-sm" data-id="${item.id}" data-title="${item.title}" data-desc="${item.description || ''}" data-price="${item.price_points}" data-stock="${item.stock}" style="flex:1; font-size:10px;">✏️ Edit</button>
           <button class="btn-delete-item secondary-button-sm" data-id="${item.id}" style="flex:1; font-size:10px; background:rgba(239,68,68,0.2); color:#f87171; border:none;">🗑️ Hapus</button>
         </div>
@@ -186,7 +199,12 @@ export async function redeemRealItem(userId, itemId, quantity, totalPoints, curr
   const newPoints = currentPoints - totalPoints;
   const newStock = item.stock - quantity;
 
-  await supabase.from("employees").update({ points: newPoints }).eq("id", userId);
+  const { error: empErr } = await supabase.from("employees").update({ points: newPoints }).eq("id", userId);
+  if (empErr) {
+    alert("Gagal memperbarui poin: " + empErr.message);
+    return false;
+  }
+
   await supabase.from("real_shop_items").update({ stock: newStock }).eq("id", itemId);
   await supabase.from("real_shop_redemptions").insert({
     user_id: userId, item_id: itemId, quantity: quantity, total_points: totalPoints
@@ -227,8 +245,8 @@ export async function renderPokemonShop(userId, currentPoints, searchFilter = ""
       <h4 style="font-size:11px; font-weight:700; color:var(--text-main); margin-top:4px;">${poke.name}</h4>
       <span style="font-size:9px; color:var(--text-sub);">#${poke.pokedexNum} &bull; Gen ${poke.gen}</span>
       <p style="font-size:10px; color:#f59e0b; font-weight:800; margin-top:2px;">${poke.price === 0 ? 'STARTER' : `🪙 ${poke.price} Pn`}</p>
-      <button class="btn-buy-pokemon btn-redeem-real" data-id="${poke.id}" data-price="${poke.price}" data-name="${poke.name}" ${isOwned ? 'disabled' : ''} style="font-size:10px; padding:4px 8px; margin-top:4px;">
-        ${isOwned ? '✅ Owned' : '🐾 Adopsi'}
+      <button class="btn-buy-pokemon btn-redeem-real" data-id="${poke.id}" data-price="${poke.price}" data-name="${poke.name}" ${isOwned ? 'disabled' : ''} style="font-size:10px; padding:4px 8px; margin-top:4px; ${isOwned ? 'background:#10b981; color:white;' : ''}">
+        ${isOwned ? 'Adopted' : '🐾 Adopsi'}
       </button>
     `;
     container.appendChild(card);
@@ -237,15 +255,24 @@ export async function renderPokemonShop(userId, currentPoints, searchFilter = ""
 
 export async function buyPokemon(userId, pokemonId, price, name, currentPoints) {
   if (currentPoints < price) {
-    alert("Poin tidak cukup!");
+    alert("Poin kamu tidak cukup untuk mengadopsi Pokémon ini!");
     return false;
   }
 
   const newPoints = currentPoints - price;
-  await supabase.from("employees").update({ points: newPoints }).eq("id", userId);
-  await supabase.from("user_pokemon_inventory").insert({ user_id: userId, pokemon_id: pokemonId });
+  const { error: empErr } = await supabase.from("employees").update({ points: newPoints }).eq("id", userId);
+  if (empErr) {
+    alert("Gagal memperbarui poin: " + empErr.message);
+    return false;
+  }
 
-  alert(`🎉 Berhasil mengadopsi ${name}!`);
+  const { error: invErr } = await supabase.from("user_pokemon_inventory").insert({ user_id: userId, pokemon_id: pokemonId });
+  if (invErr) {
+    alert("Gagal menyimpan ke inventory: " + invErr.message);
+    return false;
+  }
+
+  alert(`🎉 Berhasil mengadopsi ${name}! Silakan cek di Pokédex kamu.`);
   return true;
 }
 

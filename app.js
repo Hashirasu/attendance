@@ -1268,7 +1268,7 @@ if (btnOpenShopModal) {
   btnOpenShopModal.addEventListener("click", async () => {
     if (shopModal) shopModal.style.display = "flex";
     const pts = currentEmployeeData ? (currentEmployeeData.points || 0) : 0;
-    await renderRealItems(currentUserRole);
+    await renderRealItems(currentUserRole, currentUserId);
     await renderPokemonShop(currentUserId, pts);
   });
 }
@@ -1312,7 +1312,7 @@ document.addEventListener("click", async (e) => {
     if (currentQty < stock) {
       currentQty++;
       qtyEl.textContent = currentQty;
-      totalEl.textContent = currentQty * price;
+      if (totalEl) totalEl.textContent = currentQty * price;
     }
   }
 
@@ -1326,22 +1326,29 @@ document.addEventListener("click", async (e) => {
     if (currentQty > 1) {
       currentQty--;
       qtyEl.textContent = currentQty;
-      totalEl.textContent = currentQty * price;
+      if (totalEl) totalEl.textContent = currentQty * price;
     }
   }
 
   if (e.target.classList.contains("btn-redeem-real")) {
     const id = e.target.getAttribute("data-id");
     const price = parseInt(e.target.getAttribute("data-price"));
-    const qty = parseInt(document.getElementById(`qty-count-${id}`).textContent);
+    const name = e.target.getAttribute("data-name");
+    const qtyEl = document.getElementById(`qty-count-${id}`);
+    const qty = qtyEl ? parseInt(qtyEl.textContent) : 1;
     const totalPoints = price * qty;
     const currentPoints = currentEmployeeData ? (currentEmployeeData.points || 0) : 0;
 
-    if (confirm(`Tukarkan ${totalPoints} Poin untuk ${qty}x barang ini?`)) {
+    if (currentPoints < totalPoints) {
+      alert(`Poin kamu tidak cukup! Kamu butuh ${totalPoints} Poin, sedangkan poin kamu saat ini: ${currentPoints} Poin.`);
+      return;
+    }
+
+    if (confirm(`Tukarkan ${totalPoints} Poin untuk ${qty}x ${name}?`)) {
       const ok = await redeemRealItem(currentUserId, id, qty, totalPoints, currentPoints);
       if (ok) {
         await loadUserProfile();
-        await renderRealItems(currentUserRole);
+        await renderRealItems(currentUserRole, currentUserId);
       }
     }
   }
@@ -1352,11 +1359,17 @@ document.addEventListener("click", async (e) => {
     const name = e.target.getAttribute("data-name");
     const currentPoints = currentEmployeeData ? (currentEmployeeData.points || 0) : 0;
 
+    if (currentPoints < price) {
+      alert(`Poin kamu tidak cukup untuk mengadopsi ${name}! Harga: ${price} Poin, Poin kamu: ${currentPoints} Poin.`);
+      return;
+    }
+
     if (confirm(`Adopsi ${name} seharga ${price} Poin?`)) {
       const ok = await buyPokemon(currentUserId, pokeId, price, name, currentPoints);
       if (ok) {
         await loadUserProfile();
-        await renderPokemonShop(currentUserId, currentEmployeeData.points);
+        const searchVal = searchPokeInput ? searchPokeInput.value.trim() : "";
+        await renderPokemonShop(currentUserId, currentEmployeeData.points, searchVal);
       }
     }
   }
@@ -1375,7 +1388,7 @@ document.addEventListener("click", async (e) => {
     const id = e.target.getAttribute("data-id");
     if (confirm("Yakin hapus barang ini?")) {
       const ok = await deleteRealItem(id);
-      if (ok) await renderRealItems(currentUserRole);
+      if (ok) await renderRealItems(currentUserRole, currentUserId);
     }
   }
 
@@ -1461,7 +1474,7 @@ if (btnSubmitPublishShop) {
     if (success) {
       alert("✅ Barang berhasil dipublish/diupdate!");
       if (publishShopModal) publishShopModal.style.display = "none";
-      await renderRealItems(currentUserRole);
+      await renderRealItems(currentUserRole, currentUserId);
     }
 
     btnSubmitPublishShop.textContent = "Publish Barang";
@@ -2052,7 +2065,7 @@ function initThemeToggle() {
       const isLight = document.body.classList.contains("light-mode");
 
       if (isLight) {
-        if (themeIcon) themeIcon.textContent = "☀️";
+        if (themeIcon) themeIcon.textContent = "☀️️";
         localStorage.setItem("app_theme", "light");
       } else {
         if (themeIcon) themeIcon.textContent = "🌙";
