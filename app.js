@@ -1180,15 +1180,18 @@ async function renderPokedexModal() {
   });
 }
 
-// RENDER KANDANG & HABITAT ANIMASI 3 POKEMON PROFIL SAYA
+// RENDER PLAYGROUND KANDANG ANIMASI POKEMON
 async function renderMyPokemonShowcase(userId) {
   const stage = document.getElementById("pokemon-habitat-stage");
   const container = document.getElementById("habitat-pokemon-container");
   if (!container || !stage) return;
 
-  if (currentEmployeeData && currentEmployeeData.active_scenery_url) {
-    stage.style.backgroundImage = `url('${currentEmployeeData.active_scenery_url}')`;
-  }
+  // Set background kandang sesuai pilihan
+  const bgUrl = (currentEmployeeData && currentEmployeeData.active_scenery_url) 
+    ? currentEmployeeData.active_scenery_url 
+    : ALL_SHOP_SCENERY[0].url;
+
+  stage.style.backgroundImage = `url('${bgUrl}')`;
 
   const { data: showcase } = await supabase
     .from("user_pokemon_showcase")
@@ -1205,11 +1208,14 @@ async function renderMyPokemonShowcase(userId) {
   showcase.forEach((slot) => {
     const pokeObj = ALL_SHOP_POKEMON.find(p => p.id === slot.pokemon_id);
     if (pokeObj) {
-      const img = document.createElement("img");
-      img.src = pokeObj.sprite;
-      img.className = "animated-habitat-poke";
-      img.title = `Pokémon #${pokeObj.pokedexNum}`;
-      container.appendChild(img);
+      const wrapper = document.createElement("div");
+      wrapper.className = "animated-habitat-poke-wrapper";
+      
+      wrapper.innerHTML = `
+        <span class="poke-name-tag">${pokeObj.name}</span>
+        <img src="${pokeObj.sprite}" class="animated-habitat-poke-img" title="${pokeObj.name} (#${pokeObj.pokedexNum})">
+      `;
+      container.appendChild(wrapper);
     }
   });
 }
