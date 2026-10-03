@@ -73,7 +73,7 @@ let kioskQrObject = null;
 let activeChatFriendId = null;
 
 // ==============================
-// 1. AUTO CHECK-IN & QR SCANNER
+// 1. AUTO CHECK-IN & PRESENSI UTAMA
 // ==============================
 async function checkUrlAutoAttendance() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -286,7 +286,7 @@ function showLoginSection() {
 }
 
 // ==============================
-// 3. LOAD USER PROFILE & ACHIEVEMENTS
+// 3. LOAD USER PROFILE
 // ==============================
 async function loadUserProfile() {
   const { data: { user } } = await supabase.auth.getUser();
@@ -349,7 +349,6 @@ async function loadUserProfile() {
     loadMonthlyStatistics(),
     loadUserAchievements(),
     loadFriendsSystem(),
-    loadNotificationsSystem(),
     loadMyFriendsList()
   ]);
 
@@ -363,7 +362,7 @@ async function loadUserProfile() {
 async function loadUserAchievements() {
   if (!currentUserId) return;
 
-  const { count, error } = await supabase
+  const { count } = await supabase
     .from("attendance")
     .select("id", { count: "exact", head: true })
     .eq("employee_id", currentUserId);
@@ -429,7 +428,7 @@ async function loadUserAchievements() {
 }
 
 // ==========================================================
-// 4. SUPABASE REALTIME LISTENERS
+// 4. REALTIME PERTEMANAN & CHAT
 // ==========================================================
 function setupRealtimeListeners() {
   if (!currentUserId) return;
@@ -444,9 +443,6 @@ function setupRealtimeListeners() {
         if (activeProfileId) await openPublicProfile(activeProfileId);
       }
     })
-    .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${currentUserId}` }, async () => {
-      await loadNotificationsSystem();
-    })
     .on("postgres_changes", { event: "*", schema: "public", table: "direct_messages" }, async (payload) => {
       const newMsg = payload.new;
       if (activeChatFriendId && (newMsg.sender_id === activeChatFriendId || newMsg.receiver_id === activeChatFriendId)) {
@@ -457,7 +453,7 @@ function setupRealtimeListeners() {
 }
 
 // =========================================
-// 5. PERBAIKAN AKURAT PERTEMANAN & STATS
+// 5. FRIENDS SYSTEM (ADD, ACCEPT, REJECT, UNFOLLOW)
 // =========================================
 async function loadFriendsSystem() {
   const container = document.getElementById("search-friends-results");
@@ -535,7 +531,6 @@ async function loadFriendsSystem() {
   }
 }
 
-// PERHITUNGAN AKURAT JUMLAH FRIENDS & FOLLOWING TARGET
 async function getUserSocialStats(targetUserId) {
   const { data: acceptedRel } = await supabase
     .from("friendships")
@@ -646,7 +641,6 @@ if (btnBackFriends) {
   });
 }
 
-// PERBAIKAN QUERY MENAMPILKAN DAFTAR TEMAN DARI KEDUA SISI RELASI
 async function loadMyFriendsList() {
   const container = document.getElementById("my-friends-container");
   if (!container || !currentUserId) return;
@@ -687,7 +681,7 @@ async function loadMyFriendsList() {
   });
 }
 
-// HANDLER EVENT KLIK UNTUK ADD / ACCEPT / REJECT / UNFOLLOW / MESSAGE
+// HANDLER CLICK EVENT UNTUK AKSI PERTEMANAN
 document.addEventListener("click", async (e) => {
   const userInfoBox = e.target.closest(".friend-user-info");
   if (userInfoBox) {
@@ -698,7 +692,7 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  // 1. TAMBAH TEMAN
+  // 1. ADD FRIEND
   if (e.target.classList.contains("btn-friend-add")) {
     const btn = e.target;
     const friendId = btn.getAttribute("data-id");
@@ -721,7 +715,7 @@ document.addEventListener("click", async (e) => {
       return;
     }
 
-    await Promise.all([loadFriendsSystem(), loadNotificationsSystem()]);
+    await loadFriendsSystem();
 
     const publicCard = document.getElementById("public-profile-card");
     if (publicCard && publicCard.style.display !== "none") {
@@ -729,7 +723,7 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  // 2. ACCEPT PERMINTAAN
+  // 2. ACCEPT FRIEND
   if (e.target.classList.contains("btn-friend-accept")) {
     const relId = e.target.getAttribute("data-id");
     const senderId = e.target.getAttribute("data-sender");
@@ -737,9 +731,7 @@ document.addEventListener("click", async (e) => {
     const { error } = await supabase.from("friendships").update({ status: "accepted" }).eq("id", relId);
 
     if (!error) {
-      await supabase.from("notifications").delete().eq("user_id", currentUserId).eq("type", "friend_request").eq("sender_id", senderId);
-
-      await Promise.all([loadFriendsSystem(), loadMyFriendsList(), loadNotificationsSystem()]);
+      await Promise.all([loadFriendsSystem(), loadMyFriendsList()]);
 
       const publicCard = document.getElementById("public-profile-card");
       if (publicCard && publicCard.style.display !== "none") {
@@ -750,7 +742,7 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  // 3. REJECT PERMINTAAN
+  // 3. REJECT FRIEND
   if (e.target.classList.contains("btn-friend-reject")) {
     const relId = e.target.getAttribute("data-id");
     const senderId = e.target.getAttribute("data-sender");
@@ -758,9 +750,7 @@ document.addEventListener("click", async (e) => {
     const { error } = await supabase.from("friendships").delete().eq("id", relId);
 
     if (!error) {
-      await supabase.from("notifications").delete().eq("user_id", currentUserId).eq("type", "friend_request").eq("sender_id", senderId);
-
-      await Promise.all([loadFriendsSystem(), loadNotificationsSystem()]);
+      await loadFriendsSystem();
 
       const publicCard = document.getElementById("public-profile-card");
       if (publicCard && publicCard.style.display !== "none") {
@@ -794,7 +784,7 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  // 5. BUKA CHATBOX
+  // 5. MESSAGE
   if (e.target.classList.contains("btn-friend-msg")) {
     const fId = e.target.getAttribute("data-id");
     const fName = e.target.getAttribute("data-name");
@@ -804,7 +794,7 @@ document.addEventListener("click", async (e) => {
 });
 
 // =========================================
-// 6. REALTIME CHATBOX & READ TICK
+// 6. CHAT WINDOW & MESSAGES
 // =========================================
 async function openChatWindow(friendId, friendName, friendAvatar) {
   activeChatFriendId = friendId;
@@ -813,12 +803,8 @@ async function openChatWindow(friendId, friendName, friendAvatar) {
   document.getElementById("chat-target-avatar").src = friendAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${friendName}`;
   chatWin.style.display = "flex";
 
-  await Promise.all([
-    supabase.from("direct_messages").update({ is_read: true }).eq("sender_id", friendId).eq("receiver_id", currentUserId).eq("is_read", false),
-    supabase.from("notifications").delete().eq("user_id", currentUserId).eq("sender_id", friendId).eq("type", "chat")
-  ]);
-
-  await Promise.all([loadChatMessages(), loadNotificationsSystem()]);
+  await supabase.from("direct_messages").update({ is_read: true }).eq("sender_id", friendId).eq("receiver_id", currentUserId).eq("is_read", false);
+  await loadChatMessages();
 }
 
 const closeChatBtn = document.getElementById("close-chat-btn");
@@ -913,85 +899,9 @@ if (chatTextInput) {
   });
 }
 
-// =========================================
-// 7. NOTIFIKASI & BADGE RED DOT
-// =========================================
-const notifToggleBtn = document.getElementById("notif-toggle-btn");
-const notifDropdown = document.getElementById("notif-dropdown-panel");
-const closeNotifBtn = document.getElementById("close-notif-btn");
-
-if (notifToggleBtn) {
-  notifToggleBtn.addEventListener("click", () => {
-    notifDropdown.style.display = notifDropdown.style.display === "none" ? "block" : "none";
-  });
-}
-
-if (closeNotifBtn) {
-  closeNotifBtn.addEventListener("click", () => {
-    notifDropdown.style.display = "none";
-  });
-}
-
-async function loadNotificationsSystem() {
-  const container = document.getElementById("notif-list-container");
-  const countBadge = document.getElementById("notif-badge-count");
-  if (!container || !currentUserId) return;
-
-  const { data: notifs, error } = await supabase
-    .from("notifications")
-    .select("*, employees!notifications_sender_id_fkey(name, avatar_url)")
-    .eq("user_id", currentUserId)
-    .order("created_at", { ascending: false });
-
-  if (error || !notifs || notifs.length === 0) {
-    container.innerHTML = `<p style="color: var(--text-sub); font-size: 12px; text-align: center; padding: 12px;">Tidak ada notifikasi baru.</p>`;
-    if (countBadge) countBadge.style.display = "none";
-    return;
-  }
-
-  const totalCount = notifs.reduce((acc, curr) => acc + (curr.unread_count || 1), 0);
-  if (countBadge) {
-    countBadge.textContent = totalCount;
-    countBadge.style.display = "flex";
-  }
-
-  container.innerHTML = "";
-  notifs.forEach(n => {
-    const sender = n.employees || {};
-    const item = document.createElement("div");
-    item.className = "notif-item";
-
-    let actionsHTML = "";
-    if (n.type === "friend_request") {
-      actionsHTML = `
-        <div class="notif-actions" style="margin-top: 8px;">
-          <button class="btn-friend-action btn-friend-accept" data-id="${n.id}" data-sender="${n.sender_id}">Accept</button>
-          <button class="btn-friend-action btn-friend-reject" data-id="${n.id}" data-sender="${n.sender_id}">Reject</button>
-        </div>
-      `;
-    }
-
-    item.innerHTML = `
-      <div class="notif-item-title" data-type="${n.type}" data-sender-id="${n.sender_id}" style="cursor: pointer;">${sender.name || 'Sistem'}: ${n.title}</div>
-      <div class="notif-item-body">${n.body}</div>
-      ${actionsHTML}
-    `;
-    
-    item.querySelector(".notif-item-title").addEventListener("click", async () => {
-      if (n.type === "chat" && n.sender_id) {
-        notifDropdown.style.display = "none";
-        openChatWindow(n.sender_id, sender.name || 'Anggota', sender.avatar_url || '');
-      } else if (n.sender_id) {
-        notifDropdown.style.display = "none";
-        switchTab("friends", false);
-        await openPublicProfile(n.sender_id);
-      }
-    });
-
-    container.appendChild(item);
-  });
-}
-
+// ==============================
+// 7. PROFILE EDITING & STATUS
+// ==============================
 const uploadAvatarFileInput = document.getElementById("upload-avatar-file");
 
 if (uploadAvatarFileInput) {
@@ -1108,7 +1018,6 @@ async function loadTodayStatus() {
   }
 }
 
-// MENGHAPUS TEKS (+50 / +10 POIN) PADA STATISTIK PRESENSI
 async function loadAttendanceHistory() {
   if (!attendanceHistory) return;
   attendanceHistory.innerHTML = "<p style='color: var(--text-sub);'>Memuat riwayat...</p>";
@@ -1314,7 +1223,7 @@ if (btnSavePoints) {
 }
 
 // ==============================
-// 10. ADMIN PANEL & KIOSK GENERATOR
+// 10. ADMIN PANEL & KIOSK
 // ==============================
 if (switchToAdminBtn) {
   switchToAdminBtn.addEventListener("click", async () => {
