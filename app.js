@@ -1230,7 +1230,7 @@ async function renderMyPokemonShowcase(userId) {
   container.innerHTML = "";
 
   if (!showcase || showcase.length === 0) {
-    container.innerHTML = `<div style="display:flex; height:100%; align-items:center; justify-content:center; color:white; font-size:12px; font-weight:700; text-shadow:0 2px 4px rgba(0,0,0,0.8);">🐾 Buka Pokédex untuk melepas Pokémon di sini!</div>`;
+    container.innerHTML = `<div style="display:flex; height:100%; align-items:center; justify-content:center; color:white; font-size:12px; font-weight:700; text-shadow:0 2px 4px rgba(0,0,0,0.8);">🐾 Buka Pokédex dan lepas Pokémon di sini!</div>`;
     return;
   }
 
