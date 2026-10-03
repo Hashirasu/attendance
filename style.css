@@ -430,7 +430,7 @@ body.light-mode .app-footer { background: rgba(226, 232, 240, 0.95); }
   }
 }
 
-/* BADGE NOTIFIKASI RED DOT ALAN IOS */
+/* BADGE NOTIFIKASI MERAH (RED DOT ALAN IOS) */
 .notif-badge {
   position: absolute;
   top: -4px;
@@ -450,7 +450,7 @@ body.light-mode .app-footer { background: rgba(226, 232, 240, 0.95); }
   border: 2px solid var(--bg-card);
 }
 
-/* FLOATING CHATBOX FULLSCREEN / RESPONSIVE FOR MOBILE */
+/* FLOATING CHATBOX BACKGROUND SOLID & RESPONSIVE HP */
 .floating-chat-window {
   position: fixed;
   bottom: 0;
@@ -458,14 +458,19 @@ body.light-mode .app-footer { background: rgba(226, 232, 240, 0.95); }
   width: 360px;
   height: 520px;
   max-height: calc(100dvh - 80px);
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
+  background: #1e293b !important; /* Background solid Dark Mode */
+  border: 1px solid #334155;
   border-radius: 16px 16px 0 0;
-  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
   z-index: 9999;
   transition: all 0.2s ease;
+}
+
+body.light-mode .floating-chat-window {
+  background: #ffffff !important; /* Background solid Light Mode */
+  border-color: #e2e8f0;
 }
 
 @media (max-width: 640px) {
@@ -482,12 +487,16 @@ body.light-mode .app-footer { background: rgba(226, 232, 240, 0.95); }
 
 .chat-header {
   padding: 12px 16px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: var(--glass-bg);
-  backdrop-filter: blur(10px);
+  background: #0f172a;
+}
+
+body.light-mode .chat-header {
+  background: #f8fafc;
+  border-bottom-color: #e2e8f0;
 }
 
 .chat-user-title {
@@ -495,6 +504,11 @@ body.light-mode .app-footer { background: rgba(226, 232, 240, 0.95); }
   align-items: center;
   gap: 10px;
   font-weight: 700;
+  color: #f8fafc;
+}
+
+body.light-mode .chat-user-title {
+  color: #0f172a;
 }
 
 .chat-user-title img {
@@ -511,10 +525,14 @@ body.light-mode .app-footer { background: rgba(226, 232, 240, 0.95); }
   display: flex;
   flex-direction: column;
   gap: 10px;
-  background: rgba(0, 0, 0, 0.05);
+  background: #0f172a !important; /* Dark solid area */
 }
 
-/* GELEMBUNG CHAT WARNA BIRU & ABU-ABU SENSITIF THEME */
+body.light-mode .chat-messages-body {
+  background: #f1f5f9 !important; /* Light solid area */
+}
+
+/* GELEMBUNG CHAT WARNA BIRU & ABU-ABU */
 .chat-bubble {
   max-width: 78%;
   padding: 8px 12px;
@@ -536,14 +554,14 @@ body.light-mode .app-footer { background: rgba(226, 232, 240, 0.95); }
 
 .chat-bubble.other {
   align-self: flex-start;
-  background: #374151; /* Dark Mode: Abu-abu agak gelap */
-  color: #f3f4f6;
+  background: #334155; /* Abu-abu agak gelap (Dark Mode) */
+  color: #f8fafc;
   border-bottom-left-radius: 2px;
 }
 
 body.light-mode .chat-bubble.other {
-  background: #e5e7eb; /* Light Mode: Abu-abu terang */
-  color: #1f2937;
+  background: #e2e8f0; /* Abu-abu terang (Light Mode) */
+  color: #0f172a;
 }
 
 .chat-meta {
@@ -559,27 +577,39 @@ body.light-mode .chat-bubble.other {
 .chat-status-tick {
   font-weight: bold;
 }
+
 .chat-status-tick.read {
-  color: #60a5fa; /* Biru terang indikator Read */
+  color: #60a5fa; /* Indikator Read Centang Dua Biru */
 }
 
 .chat-input-row {
   padding: 10px 12px;
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   gap: 8px;
-  background: var(--bg-card);
+  background: #1e293b;
+}
+
+body.light-mode .chat-input-row {
+  background: #ffffff;
+  border-top-color: #e2e8f0;
 }
 
 .chat-input {
   flex: 1;
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
+  background: #0f172a;
+  border: 1px solid #334155;
   border-radius: 20px;
   padding: 10px 16px;
-  color: var(--text-main);
+  color: #f8fafc;
   outline: none;
   font-size: 14px;
+}
+
+body.light-mode .chat-input {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
 }
 
 .btn-send-chat {

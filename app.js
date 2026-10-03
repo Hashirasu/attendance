@@ -353,7 +353,6 @@ async function loadUserProfile() {
     loadMyFriendsList()
   ]);
 
-  // AKTIFKAN SUPABASE REALTIME SUBSCRIPTION
   setupRealtimeListeners();
 
   if (window.initFeedSystem) {
@@ -430,20 +429,18 @@ async function loadUserAchievements() {
 }
 
 // ==========================================================
-// 4. SUPABASE REALTIME LISTENERS (FRIENDS, NOTIFS & CHAT)
+// 4. REALTIME LISTENERS (FRIENDSHIPS, NOTIFICATIONS, MESSAGES)
 // ==========================================================
 function setupRealtimeListeners() {
   if (!currentUserId) return;
 
-  // Realtime Pertemanan & Notifikasi
   supabase
-    .channel("public-realtime-channel")
+    .channel("global-app-realtime")
     .on("postgres_changes", { event: "*", schema: "public", table: "friendships" }, async () => {
       await Promise.all([loadFriendsSystem(), loadMyFriendsList()]);
       const publicCard = document.getElementById("public-profile-card");
       if (publicCard && publicCard.style.display !== "none") {
-        const urlParams = new URLSearchParams(window.location.hash.replace('#', '?'));
-        const activeProfileId = window.location.hash.replace('#profile-', '');
+        const activeProfileId = window.location.hash.replace("#profile-", "");
         if (activeProfileId) await openPublicProfile(activeProfileId);
       }
     })
@@ -460,7 +457,7 @@ function setupRealtimeListeners() {
 }
 
 // =========================================
-// 5. SISTEM FRIENDS, PROFIL & COUNTER LOGIC
+// 5. FRIENDS SYSTEM & PROFILE LOGIC
 // =========================================
 async function loadFriendsSystem() {
   const container = document.getElementById("search-friends-results");
@@ -533,7 +530,6 @@ async function loadFriendsSystem() {
   }
 }
 
-// HITUNG STATISTIK SOSIAL TARGET USER
 async function getUserSocialStats(targetUserId) {
   const { data: acceptedRel } = await supabase
     .from("friendships")
@@ -552,7 +548,6 @@ async function getUserSocialStats(targetUserId) {
   };
 }
 
-// BUKA PROFIL PUBLIK ANGGOTA LAIN & TAMPILKAN TOMBOL ADD
 async function openPublicProfile(targetUserId) {
   const publicCard = document.getElementById("public-profile-card");
   const searchContainer = document.getElementById("friends-search-container");
@@ -676,7 +671,7 @@ async function loadMyFriendsList() {
   });
 }
 
-// GLOBAL EVENT HANDLER UNTUK ADD / ACCEPT / REJECT / MESSAGE
+// HANDLER EVENT KLIK UNTUK ADD / ACCEPT / REJECT / MESSAGE
 document.addEventListener("click", async (e) => {
   const userInfoBox = e.target.closest(".friend-user-info");
   if (userInfoBox) {
@@ -687,7 +682,7 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  // 1. TAMBAH TEMAN (+ ADD)
+  // 1. TAMBAH TEMAN
   if (e.target.classList.contains("btn-friend-add")) {
     const btn = e.target;
     const friendId = btn.getAttribute("data-id");
@@ -718,7 +713,7 @@ document.addEventListener("click", async (e) => {
       body: `${currentEmployeeData ? currentEmployeeData.name : 'Seseorang'} ingin berteman dengan kamu.`
     });
 
-    if (notifErr) console.error("Gagal kirim notif:", notifErr);
+    if (notifErr) console.error("Gagal kirim notifikasi:", notifErr);
 
     await Promise.all([loadFriendsSystem(), loadNotificationsSystem()]);
 
@@ -728,7 +723,7 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  // 2. ACCEPT PERMINTAAN TEMAN
+  // 2. ACCEPT PERMINTAAN
   if (e.target.classList.contains("btn-friend-accept")) {
     const relId = e.target.getAttribute("data-id");
     const senderId = e.target.getAttribute("data-sender");
@@ -749,7 +744,7 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  // 3. REJECT PERMINTAAN TEMAN
+  // 3. REJECT PERMINTAAN
   if (e.target.classList.contains("btn-friend-reject")) {
     const relId = e.target.getAttribute("data-id");
     const senderId = e.target.getAttribute("data-sender");
@@ -770,7 +765,7 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  // 4. BUKA CHATBOX (MESSAGE)
+  // 4. BUKA CHATBOX
   if (e.target.classList.contains("btn-friend-msg")) {
     const fId = e.target.getAttribute("data-id");
     const fName = e.target.getAttribute("data-name");
@@ -780,7 +775,7 @@ document.addEventListener("click", async (e) => {
 });
 
 // =========================================
-// 6. REALTIME CHATBOX & INDIKATOR SENT/READ
+// 6. DIRECT MESSAGES REALTIME & READ TICK
 // =========================================
 async function openChatWindow(friendId, friendName, friendAvatar) {
   activeChatFriendId = friendId;
@@ -789,7 +784,6 @@ async function openChatWindow(friendId, friendName, friendAvatar) {
   document.getElementById("chat-target-avatar").src = friendAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${friendName}`;
   chatWin.style.display = "flex";
 
-  // Tandai semua pesan dari kawan ini sebagai 'READ' saat room chat dibuka
   await supabase
     .from("direct_messages")
     .update({ is_read: true })
@@ -810,7 +804,6 @@ async function loadChatMessages() {
   const body = document.getElementById("chat-messages-body");
   if (!body || !activeChatFriendId || !currentUserId) return;
 
-  // Otomatis update status read untuk pesan baru masuk dari lawan bicara yang sedang dibuka
   await supabase
     .from("direct_messages")
     .update({ is_read: true })
@@ -818,11 +811,16 @@ async function loadChatMessages() {
     .eq("receiver_id", currentUserId)
     .eq("is_read", false);
 
-  const { data: msgs } = await supabase
+  const { data: msgs, error } = await supabase
     .from("direct_messages")
     .select("*")
     .or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${activeChatFriendId}),and(sender_id.eq.${activeChatFriendId},receiver_id.eq.${currentUserId})`)
     .order("created_at", { ascending: true });
+
+  if (error) {
+    body.innerHTML = `<p style="font-size: 11px; color: #ef4444; text-align: center; margin: auto;">Gagal memuat pesan: ${error.message}</p>`;
+    return;
+  }
 
   if (!msgs || msgs.length === 0) {
     body.innerHTML = `<p style="font-size: 11px; color: var(--text-sub); text-align: center; margin: auto;">Belum ada pesan.</p>`;
@@ -834,7 +832,6 @@ async function loadChatMessages() {
     const isMine = m.sender_id === currentUserId;
     const timeStr = new Date(m.created_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
     
-    // Status tick: Sent ✓ atau Read ✓✓
     const statusTick = m.is_read 
       ? `<span class="chat-status-tick read" title="Dibaca">✓✓</span>` 
       : `<span class="chat-status-tick" title="Terkirim">✓</span>`;
@@ -886,7 +883,6 @@ if (chatTextInput) {
     }
   });
 
-  // Penanganan responsif scroll otomatis saat keyboard HP aktif
   chatTextInput.addEventListener("focus", () => {
     setTimeout(() => {
       const body = document.getElementById("chat-messages-body");
@@ -896,7 +892,7 @@ if (chatTextInput) {
 }
 
 // =========================================
-// 7. SISTEM NOTIFIKASI & BADGE RED DOT
+// 7. NOTIFIKASI & BADGE COUNT MERAH
 // =========================================
 const notifToggleBtn = document.getElementById("notif-toggle-btn");
 const notifDropdown = document.getElementById("notif-dropdown-panel");
@@ -927,13 +923,14 @@ async function loadNotificationsSystem() {
 
   if (error || !notifs || notifs.length === 0) {
     container.innerHTML = `<p style="color: var(--text-sub); font-size: 12px; text-align: center; padding: 12px;">Tidak ada notifikasi baru.</p>`;
-    countBadge.style.display = "none";
+    if (countBadge) countBadge.style.display = "none";
     return;
   }
 
-  // Tampilkan Badge Merah & Jumlah Angka (Gambar 1)
-  countBadge.textContent = notifs.length;
-  countBadge.style.display = "flex";
+  if (countBadge) {
+    countBadge.textContent = notifs.length;
+    countBadge.style.display = "flex";
+  }
 
   container.innerHTML = "";
   notifs.forEach(n => {
@@ -1736,7 +1733,7 @@ function initThemeToggle() {
       const isLight = document.body.classList.contains("light-mode");
 
       if (isLight) {
-        if (themeIcon) themeIcon.textContent = "☀️";
+        if (themeIcon) themeIcon.textContent = "☀️️";
         localStorage.setItem("app_theme", "light");
       } else {
         if (themeIcon) themeIcon.textContent = "🌙";
