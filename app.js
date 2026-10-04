@@ -1763,35 +1763,40 @@ function startAdminKioskQr() {
 
   if (kioskTimerInterval) clearInterval(kioskTimerInterval);
 
-  kioskQrObject = new QRCode(qrBox, {
-    text: "INIT",
-    width: 220,
-    height: 220,
-    colorDark: "#000000",
-    colorLight: "#ffffff",
-    correctLevel: QRCode.CorrectLevel.H
-  });
+  // Penambahan setTimeout (100ms) agar browser HP selesai membuat elemen DOM
+  setTimeout(() => {
+    kioskQrObject = new QRCode(qrBox, {
+      text: "INIT",
+      width: 200,
+      height: 200,
+      colorDark: "#000000",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.H
+    });
 
-  function updateKioskFrame() {
-    const nowUnix = Math.floor(Date.now() / 1000);
-    const block = Math.floor(nowUnix / 15);
-    const secondsRemaining = 15 - (nowUnix % 15);
+    function updateKioskFrame() {
+      const nowUnix = Math.floor(Date.now() / 1000);
+      const block = Math.floor(nowUnix / 15);
+      const secondsRemaining = 15 - (nowUnix % 15);
 
-    const baseUrl = window.location.origin + window.location.pathname;
-    const kioskUrl = `${baseUrl}?secret=${KIOSK_SECRET}&block=${block}`;
+      const baseUrl = window.location.origin + window.location.pathname;
+      const kioskUrl = `${baseUrl}?secret=${KIOSK_SECRET}&block=${block}`;
 
-    kioskQrObject.clear();
-    kioskQrObject.makeCode(kioskUrl);
+      if (kioskQrObject) {
+        kioskQrObject.clear();
+        kioskQrObject.makeCode(kioskUrl);
+      }
 
-    if (timerText) timerText.textContent = `Memperbarui dalam ${secondsRemaining}s`;
-    if (fillBar) {
-      const percentage = (secondsRemaining / 15) * 100;
-      fillBar.style.width = `${percentage}%`;
+      if (timerText) timerText.textContent = `Memperbarui dalam ${secondsRemaining}s`;
+      if (fillBar) {
+        const percentage = (secondsRemaining / 15) * 100;
+        fillBar.style.width = `${percentage}%`;
+      }
     }
-  }
 
-  updateKioskFrame();
-  kioskTimerInterval = setInterval(updateKioskFrame, 1000);
+    updateKioskFrame();
+    kioskTimerInterval = setInterval(updateKioskFrame, 1000);
+  }, 100);
 }
 
 if (adminFilterDate) adminFilterDate.addEventListener("change", loadAdminAttendance);
