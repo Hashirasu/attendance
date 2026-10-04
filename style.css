@@ -303,31 +303,63 @@ html, body {
   display: flex; 
   align-items: center; 
   gap: 10px; 
-  margin-bottom: 14px; 
+  margin-bottom: 16px; 
   width: 100%; 
   flex-wrap: nowrap;
 }
 
+/* Kapsul Poin Vihara */
 .points-pill { 
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   background: linear-gradient(135deg, #f59e0b, #d97706); 
-  color: white; 
-  padding: 8px 14px; 
-  border-radius: 20px; 
+  color: #ffffff; 
+  padding: 10px 16px; 
+  border-radius: 9999px; 
   font-weight: 800; 
   font-size: 13px; 
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); 
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35); 
   text-align: center;
   flex: 1;
   white-space: nowrap;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+/* Tombol Toko Vihara Elegan */
 #btn-open-shop-modal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   flex: 1;
-  text-align: center;
-  padding: 8px 14px;
+  padding: 10px 16px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b) !important;
+  color: #ffffff !important;
+  font-weight: 800;
+  font-size: 13px;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* CONTAINER EDIT BIO DI SAMPING BIO / DI BAWAH TOMBOL POIN & TOKO */
+#btn-open-shop-modal:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(245, 158, 11, 0.45);
+  filter: brightness(1.05);
+}
+
+#btn-open-shop-modal:active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* =========================================
+   BARIS 2: BIO & TOMBOL EDIT BIO
+========================================= */
 .profile-bio-container {
   display: flex;
   align-items: center;
@@ -335,20 +367,51 @@ html, body {
   gap: 12px;
   width: 100%;
   margin-top: 4px;
+  background: var(--input-bg);
+  padding: 10px 14px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--card-border);
 }
 
 .profile-display-bio {
   font-size: 13px;
   color: var(--text-main) !important;
   font-style: italic;
-  line-height: 1.5;
+  line-height: 1.4;
   flex: 1;
   margin: 0;
+  word-break: break-word;
 }
 
+/* Tombol Edit Bio Glassmorphic */
 #btn-open-edit-bio-modal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
   white-space: nowrap;
   flex-shrink: 0;
+  padding: 7px 14px;
+  border-radius: 9999px;
+  background: rgba(59, 130, 246, 0.15) !important;
+  color: #60a5fa !important;
+  border: 1px solid rgba(59, 130, 246, 0.35) !important;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
+}
+
+#btn-open-edit-bio-modal:hover {
+  background: rgba(59, 130, 246, 0.28) !important;
+  border-color: rgba(59, 130, 246, 0.5) !important;
+  color: #ffffff !important;
+}
+
+#btn-open-edit-bio-modal:active {
+  transform: scale(0.95);
 }
 
 .avatar-character-box { background: var(--input-bg); border: 1px solid var(--card-border); border-radius: var(--radius-lg); padding: 16px; text-align: center; display: flex; flex-direction: column; align-items: center; }

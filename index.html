@@ -378,33 +378,35 @@
       </section>
 
       <!-- TAB 5: PROFILE SAYA -->
-      <section id="tab-profile-view" class="tab-content" style="display: none;">
-        <div id="my-profile-banner" class="profile-page-header-banner">
-          <div class="profile-main-display">
-            <div class="profile-avatar-circle">
-              <img id="profile-page-avatar" src="https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png" alt="Avatar">
-              <label for="upload-avatar-file" class="avatar-edit-overlay" title="Ganti Foto Profil">📷</label>
-              <input type="file" id="upload-avatar-file" accept="image/*" style="display: none;">
-            </div>
+<section id="tab-profile-view" class="tab-content" style="display: none;">
+  <div id="my-profile-banner" class="profile-page-header-banner">
+    <div class="profile-main-display">
+      <div class="profile-avatar-circle">
+        <img id="profile-page-avatar" src="https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png" alt="Avatar">
+        <label for="upload-avatar-file" class="avatar-edit-overlay" title="Ganti Foto Profil">📷</label>
+        <input type="file" id="upload-avatar-file" accept="image/*" style="display: none;">
+      </div>
 
-            <h2 id="profile-page-name" class="profile-display-name">Member</h2>
-            <p id="profile-page-code" class="profile-display-code">MDV-0000</p>
+      <h2 id="profile-page-name" class="profile-display-name">Member</h2>
+      <p id="profile-page-code" class="profile-display-code">MDV-0000</p>
 
-            <div class="profile-badge-row">
-              <div class="points-pill">
-                🪙 <span id="profile-page-points">0</span> Poin Vihara
-              </div>
-              <button id="btn-open-shop-modal" class="secondary-button-sm" style="background: #f59e0b; color: white; border: none;">🛒 Toko Vihara</button>
-            </div>
-
-            <div class="profile-bio-container">
-              <p id="profile-page-bio" class="profile-display-bio">
-                "Halo, salam kenal ya!"
-              </p>
-              <button id="btn-open-edit-bio-modal" class="secondary-button-sm">✏ Edit Bio</button>
-            </div>
-          </div>
+      <!-- BARIS 1: TOMBOL POIN & TOKO VIHARA (SAMPING-SAMPINGAN, BENTUK CAPSULE/PILL) -->
+      <div class="profile-badge-row">
+        <div class="points-pill">
+          🪙 <span id="profile-page-points">0</span> Poin Vihara
         </div>
+        <button id="btn-open-shop-modal" type="button">🛒 Toko Vihara</button>
+      </div>
+
+      <!-- BARIS 2: BIO DISANDINGKAN DENGAN TOMBOL EDIT BIO -->
+      <div class="profile-bio-container">
+        <p id="profile-page-bio" class="profile-display-bio">
+          "Halo, salam kenal ya!"
+        </p>
+        <button id="btn-open-edit-bio-modal" type="button">✏️ Edit Bio</button>
+      </div>
+    </div>
+  </div>
 
         <!-- AREA KANDANG / PLAYGROUND POKEMON -->
         <div class="card-box" style="margin-top: 20px;">
