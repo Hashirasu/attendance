@@ -1006,3 +1006,29 @@ body.light-mode .app-footer { background: rgba(226, 232, 240, 0.95); }
     z-index: 10005;
   }
 }
+
+
+/* TAMBAHKAN DI PALING BAWAH STYLE.CSS */
+@media (max-width: 768px) {
+  .admin-view-kiosk,
+  .kiosk-card-display,
+  .qr-container-wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    min-height: 260px !important; /* Memastikan ada ruang tinggi pasti */
+    overflow: visible !important;
+  }
+
+  .qr-code-box {
+    width: 220px !important;
+    height: 220px !important;
+    min-width: 220px !important;
+    min-height: 220px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+}
