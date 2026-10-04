@@ -1223,7 +1223,7 @@ async function renderPokedexModal() {
 
       ${isOwned ? `
         <button class="btn-toggle-showcase secondary-button-sm" data-id="${poke.id}" style="width:100%; margin-top:4px; font-size:10px; ${isDisplayed ? 'background:#10b981; color:white;' : ''}">
-          ${isDisplayed ? '✨ Di Kandang' : '📌 Lepas ke Kandang'}
+          ${isDisplayed ? 'Di Kandang' : 'Lepas ke Kandang'}
         </button>
       ` : `
         <span style="font-size:9px; color:var(--text-sub); margin-top:4px; display:block;">🔒 Belum Dimiliki</span>
