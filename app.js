@@ -12,6 +12,12 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const KIOSK_SECRET = "VIHARA_ZEN_SECRET_2026";
 const DEFAULT_AVATAR = "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png";
 
+// Helper Ambil Nama Depan
+export function getFirstName(fullName) {
+  if (!fullName) return "Member";
+  return fullName.trim().split(" ")[0];
+}
+
 const loginSection = document.getElementById("login-section");
 const userSection = document.getElementById("user-section");
 const adminSection = document.getElementById("admin-section");
@@ -322,7 +328,9 @@ async function loadUserProfile() {
     currentEmployeeData = empData;
     currentUserRole = empData.role;
 
-    if (userNameDisplay) userNameDisplay.textContent = empData.name;
+    // Menampilkan Nama Depan di Topbar dan Profil
+    const firstName = getFirstName(empData.name);
+    if (userNameDisplay) userNameDisplay.textContent = firstName;
     if (userCodeEl) userCodeEl.textContent = `Kode: ${empData.employee_code}`;
 
     const profilePageAvatar = document.getElementById("profile-page-avatar");
@@ -336,7 +344,7 @@ async function loadUserProfile() {
       : DEFAULT_AVATAR;
 
     if (profilePageAvatar) profilePageAvatar.src = avatarUrl;
-    if (profilePageName) profilePageName.textContent = empData.name;
+    if (profilePageName) profilePageName.textContent = firstName;
     if (profilePageCode) profilePageCode.textContent = `Kode Anggota: ${empData.employee_code}`;
     if (profilePagePoints) profilePagePoints.textContent = empData.points || 0;
     if (profilePageBio) profilePageBio.textContent = `"${empData.bio || 'Halo, salam kenal ya!'}"`;
@@ -462,7 +470,7 @@ function setupRealtimeListeners() {
         if (activeProfileId) await openPublicProfile(activeProfileId);
       }
     })
-    // Realtime Chat & Read Status (Centang Dua Instan tanpa harus keluar/masuk box)
+    // Realtime Chat & Read Status
     .on("postgres_changes", { event: "*", schema: "public", table: "direct_messages" }, async (payload) => {
       const msg = payload.new || payload.old;
       if (!msg) return;
@@ -540,6 +548,8 @@ async function loadFriendsSystem() {
         (f.friend_id === currentUserId && f.user_id === u.id)
       );
 
+      const displayFirstName = getFirstName(u.name);
+
       let btnHTML = "";
       if (!rel) {
         btnHTML = `<button class="btn-friend-action btn-friend-add" data-id="${u.id}">+ Add</button>`;
@@ -548,15 +558,17 @@ async function loadFriendsSystem() {
           btnHTML = `<button class="btn-friend-action btn-friend-pending" disabled>Pending</button>`;
         } else {
           btnHTML = `
-            <button class="btn-friend-action btn-friend-accept" data-id="${rel.id}" data-sender="${rel.user_id}">Accept</button>
-            <button class="btn-friend-action btn-friend-reject" data-id="${rel.id}" data-sender="${rel.user_id}">Reject</button>
+            <div class="friend-action-container">
+              <button class="btn-friend-action btn-friend-accept" data-id="${rel.id}" data-sender="${rel.user_id}">Accept</button>
+              <button class="btn-friend-action btn-friend-reject" data-id="${rel.id}" data-sender="${rel.user_id}">Reject</button>
+            </div>
           `;
         }
       } else if (rel.status === "accepted") {
         btnHTML = `
           <div style="display: flex; gap: 6px;">
-            <button class="btn-friend-action btn-friend-msg" data-id="${u.id}" data-name="${u.name}" data-avatar="${u.avatar_url || ''}">Message</button>
-            <button class="btn-friend-unfollow" data-rel-id="${rel.id}" data-name="${u.name}" data-target-id="${u.id}">Unfollow</button>
+            <button class="btn-friend-action btn-friend-msg" data-id="${u.id}" data-name="${displayFirstName}" data-avatar="${u.avatar_url || ''}">Message</button>
+            <button class="btn-friend-unfollow" data-rel-id="${rel.id}" data-name="${displayFirstName}" data-target-id="${u.id}">Unfollow</button>
           </div>
         `;
       }
@@ -568,7 +580,7 @@ async function loadFriendsSystem() {
         <div class="friend-user-info" data-user-id="${u.id}">
           <img src="${avatar}" class="friend-avatar-mini" alt="Avatar" onerror="this.src='${DEFAULT_AVATAR}'">
           <div>
-            <div class="friend-name">${u.name}</div>
+            <div class="friend-name">${displayFirstName}</div>
             <div class="friend-code">Kode: ${u.employee_code}</div>
           </div>
         </div>
@@ -620,9 +632,10 @@ async function openPublicProfile(targetUserId) {
     .maybeSingle();
 
   const stats = await getUserSocialStats(targetUserId);
+  const displayFirstName = getFirstName(u.name);
 
   document.getElementById("public-avatar-img").src = (u.avatar_url && u.avatar_url.trim() !== "") ? u.avatar_url : DEFAULT_AVATAR;
-  document.getElementById("public-name-text").textContent = u.name;
+  document.getElementById("public-name-text").textContent = displayFirstName;
   document.getElementById("public-code-text").textContent = `Kode: ${u.employee_code}`;
   document.getElementById("public-bio-text").textContent = `"${u.bio || 'Halo, salam kenal!'}"`;
   document.getElementById("public-friends-count").textContent = stats.friendsCount;
@@ -639,15 +652,17 @@ async function openPublicProfile(targetUserId) {
         btnHTML = `<button class="btn-friend-action btn-friend-pending" style="padding: 10px 24px; font-size: 13px;" disabled>Pending</button>`;
       } else {
         btnHTML = `
-          <button class="btn-friend-action btn-friend-accept" style="padding: 10px 20px; font-size: 13px;" data-id="${rel.id}" data-sender="${rel.user_id}">Accept</button>
-          <button class="btn-friend-action btn-friend-reject" style="padding: 10px 20px; font-size: 13px;" data-id="${rel.id}" data-sender="${rel.user_id}">Reject</button>
+          <div class="friend-action-container">
+            <button class="btn-friend-action btn-friend-accept" style="padding: 10px 20px; font-size: 13px;" data-id="${rel.id}" data-sender="${rel.user_id}">Accept</button>
+            <button class="btn-friend-action btn-friend-reject" style="padding: 10px 20px; font-size: 13px;" data-id="${rel.id}" data-sender="${rel.user_id}">Reject</button>
+          </div>
         `;
       }
     } else if (rel.status === "accepted") {
       btnHTML = `
         <div style="display: flex; gap: 8px;">
-          <button class="btn-friend-action btn-friend-msg" style="padding: 10px 20px; font-size: 13px;" data-id="${u.id}" data-name="${u.name}" data-avatar="${u.avatar_url || ''}">Message</button>
-          <button class="btn-friend-unfollow" style="padding: 10px 20px; font-size: 13px;" data-rel-id="${rel.id}" data-name="${u.name}" data-target-id="${u.id}">Unfollow</button>
+          <button class="btn-friend-action btn-friend-msg" style="padding: 10px 20px; font-size: 13px;" data-id="${u.id}" data-name="${displayFirstName}" data-avatar="${u.avatar_url || ''}">Message</button>
+          <button class="btn-friend-unfollow" style="padding: 10px 20px; font-size: 13px;" data-rel-id="${rel.id}" data-name="${displayFirstName}" data-target-id="${u.id}">Unfollow</button>
         </div>
       `;
     }
@@ -736,6 +751,7 @@ async function loadMyFriendsList() {
     const u = (f.user_id === currentUserId) ? f.friend_emp : f.user_emp;
     if (!u) return;
 
+    const displayFirstName = getFirstName(u.name);
     const avatar = (u.avatar_url && u.avatar_url.trim() !== "") ? u.avatar_url : DEFAULT_AVATAR;
     const card = document.createElement("div");
     card.className = "friend-item-card";
@@ -743,13 +759,13 @@ async function loadMyFriendsList() {
       <div class="friend-user-info" data-user-id="${u.id}">
         <img src="${avatar}" class="friend-avatar-mini" alt="Avatar" onerror="this.src='${DEFAULT_AVATAR}'">
         <div>
-          <div class="friend-name">${u.name}</div>
+          <div class="friend-name">${displayFirstName}</div>
           <div class="friend-code">Kode: ${u.employee_code}</div>
         </div>
       </div>
       <div style="display: flex; gap: 6px;">
-        <button class="btn-friend-action btn-friend-msg" data-id="${u.id}" data-name="${u.name}" data-avatar="${avatar}">Message</button>
-        <button class="btn-friend-unfollow" data-rel-id="${f.id}" data-name="${u.name}" data-target-id="${u.id}">Unfollow</button>
+        <button class="btn-friend-action btn-friend-msg" data-id="${u.id}" data-name="${displayFirstName}" data-avatar="${avatar}">Message</button>
+        <button class="btn-friend-unfollow" data-rel-id="${f.id}" data-name="${displayFirstName}" data-target-id="${u.id}">Unfollow</button>
       </div>
     `;
     container.appendChild(card);
@@ -864,7 +880,7 @@ document.addEventListener("click", async (e) => {
 });
 
 // =========================================
-// 6. CHAT WINDOW & MESSAGES (REALTIME & READ TICK)
+// 6. CHAT WINDOW & MESSAGES
 // =========================================
 async function openChatWindow(friendId, friendName, friendAvatar) {
   activeChatFriendId = friendId;
@@ -873,7 +889,6 @@ async function openChatWindow(friendId, friendName, friendAvatar) {
   document.getElementById("chat-target-avatar").src = (friendAvatar && friendAvatar.trim() !== "") ? friendAvatar : DEFAULT_AVATAR;
   chatWin.style.display = "flex";
 
-  // Tandai pesan sebagai terbaca segera saat obrolan dibuka
   await supabase.from("direct_messages").update({ is_read: true }).eq("sender_id", friendId).eq("receiver_id", currentUserId).eq("is_read", false);
   await loadChatMessages();
 }
@@ -888,7 +903,6 @@ async function loadChatMessages() {
   const body = document.getElementById("chat-messages-body");
   if (!body || !activeChatFriendId || !currentUserId) return;
 
-  // Update status terbaca secara instan jika chat terbuka
   await supabase.from("direct_messages").update({ is_read: true }).eq("sender_id", activeChatFriendId).eq("receiver_id", currentUserId).eq("is_read", false);
 
   const { data: msgs, error } = await supabase
@@ -1286,7 +1300,7 @@ async function renderMyPokemonShowcase(userId) {
 }
 
 // ==============================
-// 9. TOKO VEHARA (2 TAB SYSTEM)
+// 9. TOKO VIHARA (2 TAB SYSTEM)
 // ==============================
 const btnOpenShopModal = document.getElementById("btn-open-shop-modal");
 const shopModal = document.getElementById("shop-modal");
@@ -1447,13 +1461,14 @@ document.addEventListener("click", async (e) => {
         container.innerHTML = "";
         logs.forEach(l => {
           const emp = l.employees || {};
+          const empFirstName = getFirstName(emp.name);
           const time = new Date(l.created_at).toLocaleString("id-ID");
           const isPending = l.status === "pending";
 
           container.innerHTML += `
             <div style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.1); font-size:12px; display:flex; justify-content:space-between; align-items:center;">
               <div>
-                <strong>${emp.name || 'Member'}</strong> (${emp.employee_code || '-'})<br>
+                <strong>${empFirstName}</strong> (${emp.employee_code || '-'})<br>
                 <span style="color:var(--text-sub);">Menukar: ${l.quantity}x (${l.total_points} Poin)</span><br>
                 <span style="font-size:10px; color:var(--text-sub);">${time}</span>
               </div>
@@ -1577,7 +1592,6 @@ async function startQrScanner() {
             alert("QR Code tidak valid.");
           }
         } catch (err) {
-          // Hanya cetak log di konsole agar tidak memunculkan alert ganda membingungkan
           console.warn("QR Scanner bypass / format non-URL:", err);
         }
       },
@@ -1622,7 +1636,7 @@ document.addEventListener("click", (e) => {
     const pointsModal = document.getElementById("manage-points-modal");
 
     if (targetIdEl) targetIdEl.value = empId;
-    if (targetNameEl) targetNameEl.textContent = `Anggota: ${empName}`;
+    if (targetNameEl) targetNameEl.textContent = `Anggota: ${getFirstName(empName)}`;
     if (amountEl) amountEl.value = "";
     if (reasonEl) reasonEl.value = "";
     if (msgEl) msgEl.textContent = "";
@@ -1955,7 +1969,7 @@ if (saveEditEmp) {
 }
 
 // ==============================
-// 13. ADVANCED EXCEL EXPORT
+// 13. ADVANCED EXCEL EXPORT (TETAP NAMA LENGKAP)
 // ==============================
 if (exportCsvBtn) {
   exportCsvBtn.addEventListener("click", async () => {
@@ -2010,7 +2024,7 @@ if (exportCsvBtn) {
 }
 
 // ==============================
-// 14. SINKRONISASI GOOGLE SHEETS
+// 14. SINKRONISASI GOOGLE SHEETS (TETAP NAMA LENGKAP)
 // ==============================
 const syncSheetsBtn = document.getElementById("sync-sheets-btn");
 

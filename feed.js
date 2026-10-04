@@ -1,423 +1,312 @@
-import { supabase } from "./app.js";
+import { supabase, getFirstName } from "./app.js";
 
-let quill = null;
+const DEFAULT_AVATAR = "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png";
 let currentUserId = null;
-let currentUserName = "Member";
 let currentUserRole = "user";
-let editingPostId = null;
+let quillEditor = null;
 
-let postsChannel = null;
-let commentsChannel = null;
-let quotesChannel = null;
+export async function initFeedSystem() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  currentUserId = user.id;
+
+  const { data: emp } = await supabase.from("employees").select("role").eq("id", currentUserId).single();
+  if (emp) currentUserRole = emp.role;
+
+  const editorContainer = document.getElementById("post-editor-container");
+  const canPost = currentUserRole === "admin" || currentUserRole === "adm1n" || currentUserRole === "pengurus";
+
+  if (editorContainer) {
+    if (canPost) {
+      editorContainer.style.display = "block";
+      initQuillEditor();
+    } else {
+      editorContainer.style.display = "none";
+    }
+  }
+
+  await loadRecentFeed();
+  await loadFullFeed();
+  setupFeedRealtime();
+}
 
 function initQuillEditor() {
-  const editorEl = document.getElementById("quill-editor");
-  if (!editorEl) return;
-  if (document.querySelector('.ql-toolbar')) return;
+  if (quillEditor || !document.getElementById("quill-editor")) return;
 
-  quill = new Quill('#quill-editor', {
-    theme: 'snow',
-    placeholder: 'Tulis isi pengumuman... Kamu bisa memasukkan foto via ikon gambar di toolbar.',
+  quillEditor = new Quill("#quill-editor", {
+    theme: "snow",
+    placeholder: "Tulis isi pengumuman atau postingan...",
     modules: {
       toolbar: [
         [{ 'header': [1, 2, false] }],
-        ['bold', 'italic', 'underline', 'strike'],
-        [{ 'color': [] }, { 'background': [] }],
-        [{ 'align': [] }],
-        ['link', 'image'],
+        ['bold', 'italic', 'underline'],
+        ['image', 'link'],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
         ['clean']
       ]
     }
   });
 }
 
-export async function initFeedSystem() {
-  initQuillEditor();
-
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return;
-
-  currentUserId = session.user.id;
-
-  const { data: empData, error } = await supabase
-    .from("employees")
-    .select("name, role")
-    .eq("id", currentUserId)
-    .single();
-
-  if (!error && empData) {
-    currentUserName = empData.name;
-    currentUserRole = empData.role;
-
-    const canUploadPost = (currentUserRole === "pengurus" || currentUserRole === "admin" || currentUserRole === "adm1n");
-    const postEditorContainer = document.getElementById("post-editor-container");
-
-    if (postEditorContainer) {
-      postEditorContainer.style.display = canUploadPost ? "block" : "none";
-    }
-
-    const canEditQuote = (currentUserRole === "admin" || currentUserRole === "adm1n");
-    const editQuoteBtn = document.getElementById("btn-edit-quote-trigger");
-
-    if (editQuoteBtn) {
-      editQuoteBtn.style.display = canEditQuote ? "inline-block" : "none";
-    }
-  }
-
-  await loadDailyQuote();
-  await loadFeedPosts();
-
-  setupRealtimeSubscriptions();
-}
-
-function setupRealtimeSubscriptions() {
-  if (postsChannel) supabase.removeChannel(postsChannel);
-  if (commentsChannel) supabase.removeChannel(commentsChannel);
-  if (quotesChannel) supabase.removeChannel(quotesChannel);
-
-  postsChannel = supabase
-    .channel('public:posts')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, () => {
-      loadFeedPosts();
-    })
-    .subscribe();
-
-  commentsChannel = supabase
-    .channel('public:comments')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, (payload) => {
-      if (payload.new && payload.new.post_id) {
-        loadCommentsForPost(payload.new.post_id);
-      } else {
-        loadFeedPosts();
-      }
-    })
-    .subscribe();
-
-  quotesChannel = supabase
-    .channel('public:daily_quotes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'daily_quotes' }, () => {
-      loadDailyQuote();
-    })
-    .subscribe();
-}
-
-window.initFeedSystem = initFeedSystem;
-
-async function loadDailyQuote() {
-  const quoteTextEl = document.getElementById("display-quote-text");
-  const quoteSourceEl = document.getElementById("display-quote-source");
-  if (!quoteTextEl || !quoteSourceEl) return;
-
-  const { data } = await supabase
-    .from("daily_quotes")
-    .select("quote_text, quote_source")
-    .eq("id", 1)
-    .maybeSingle();
-
-  if (data) {
-    quoteTextEl.textContent = `"${data.quote_text}"`;
-    quoteSourceEl.textContent = `— ${data.quote_source}`;
-  }
-}
-
-async function loadFeedPosts() {
-  const recentContainer = document.getElementById("recent-feed-container");
-  const fullContainer = document.getElementById("full-feed-container");
+async function loadRecentFeed() {
+  const container = document.getElementById("recent-feed-container");
+  if (!container) return;
 
   const { data: posts, error } = await supabase
     .from("posts")
-    .select("*, employees(avatar_url)")
-    .order("created_at", { ascending: false });
+    .select("*, employees(name, avatar_url, role)")
+    .order("created_at", { ascending: false })
+    .limit(3);
 
   if (error || !posts || posts.length === 0) {
-    const emptyHtml = "<p style='color: var(--text-sub); text-align: center; padding: 20px; background: var(--card-bg); border-radius: 16px;'>Belum ada postingan.</p>";
-    if (recentContainer) recentContainer.innerHTML = emptyHtml;
-    if (fullContainer) fullContainer.innerHTML = emptyHtml;
+    container.innerHTML = `<p style="color: var(--text-sub); text-align: center; padding: 20px;">Belum ada postingan terbaru.</p>`;
     return;
   }
 
-  if (recentContainer) {
-    recentContainer.innerHTML = "";
-    const recentPosts = posts.slice(0, 3);
-    recentPosts.forEach(post => {
-      recentContainer.appendChild(createPostCardElement(post));
-    });
-  }
-
-  if (fullContainer) {
-    fullContainer.innerHTML = "";
-    posts.forEach(post => {
-      fullContainer.appendChild(createPostCardElement(post));
-    });
+  container.innerHTML = "";
+  for (const p of posts) {
+    const card = await renderPostCard(p, false);
+    container.appendChild(card);
   }
 }
 
-function createPostCardElement(post) {
-  const postCard = document.createElement("div");
-  postCard.className = "post-card";
+async function loadFullFeed() {
+  const container = document.getElementById("full-feed-container");
+  if (!container) return;
 
-  const dateFormatted = new Date(post.created_at).toLocaleDateString("id-ID", {
-    day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
-  });
+  const { data: posts, error } = await supabase
+    .from("posts")
+    .select("*, employees(name, avatar_url, role)")
+    .order("created_at", { ascending: false });
 
-  const isManagement = (currentUserRole === "pengurus" || currentUserRole === "admin" || currentUserRole === "adm1n");
-  const isAuthorOrAdmin = (currentUserId === post.author_id || isManagement);
-  const displayAuthorName = isManagement ? post.author_name : "Humas Mudiviva";
+  if (error || !posts || posts.length === 0) {
+    container.innerHTML = `<p style="color: var(--text-sub); text-align: center; padding: 20px;">Belum ada postingan di forum.</p>`;
+    return;
+  }
 
-  const authorAvatarUrl = (post.employees && post.employees.avatar_url) 
-    ? post.employees.avatar_url 
-    : `https://api.dicebear.com/7.x/bottts/svg?seed=${post.author_name}`;
+  container.innerHTML = "";
+  for (const p of posts) {
+    const card = await renderPostCard(p, true);
+    container.appendChild(card);
+  }
+}
 
-  postCard.innerHTML = `
+async function renderPostCard(post, withComments = true) {
+  const emp = post.employees || {};
+  const authorFirstName = getFirstName(emp.name);
+  const avatar = (emp.avatar_url && emp.avatar_url.trim() !== "") ? emp.avatar_url : DEFAULT_AVATAR;
+  const postDate = new Date(post.created_at).toLocaleString("id-ID", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+
+  const isAuthor = post.author_id === currentUserId;
+  const isAdmin = currentUserRole === "admin" || currentUserRole === "adm1n" || currentUserRole === "pengurus";
+
+  const card = document.createElement("div");
+  card.className = "post-card";
+  card.setAttribute("data-post-id", post.id);
+
+  let actionsHTML = "";
+  if (isAuthor || isAdmin) {
+    actionsHTML = `
+      <div style="display:flex; gap:6px;">
+        <button class="btn-edit-post secondary-button-sm" data-id="${post.id}">✏️ Edit</button>
+        <button class="btn-delete-post secondary-button-sm" data-id="${post.id}" style="background:rgba(239, 68, 68, 0.2); color:#f87171; border:none;">🗑️ Hapus</button>
+      </div>
+    `;
+  }
+
+  let commentsContainerHTML = "";
+  if (withComments) {
+    commentsContainerHTML = `
+      <div class="comments-wrapper">
+        <h5 style="font-size: 12px; font-weight: 700; color: var(--text-sub); margin-bottom: 8px;">Komentar</h5>
+        <div class="comments-list-box" id="comments-box-${post.id}">
+          <p style="font-size: 11px; color: var(--text-sub);">Memuat komentar...</p>
+        </div>
+        <div class="comment-input-box">
+          <input type="text" class="comment-input" id="comment-input-${post.id}" placeholder="Tulis komentar...">
+          <button class="btn-send-comment" data-post-id="${post.id}">Kirim</button>
+        </div>
+      </div>
+    `;
+  }
+
+  card.innerHTML = `
     <div class="post-header">
       <div class="post-author-box">
-        <img src="${authorAvatarUrl}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1px solid var(--ios-blue);">
+        <img src="${avatar}" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover;" alt="Avatar" onerror="this.src='${DEFAULT_AVATAR}'">
         <div>
-          <div class="post-author-name">${displayAuthorName}</div>
-          <div class="post-date">${dateFormatted} WIB</div>
+          <div class="post-author-name">${authorFirstName}</div>
+          <div class="post-date">${postDate} WIB</div>
         </div>
       </div>
-      ${isAuthorOrAdmin ? `
-        <div class="flex-gap-8">
-          <button class="btn-edit-post secondary-button" style="padding: 2px 8px; font-size: 11px; color: #60a5fa;" data-id="${post.id}">Edit</button>
-          <button class="btn-delete-post secondary-button" style="padding: 2px 8px; font-size: 11px; color: #f87171;" data-id="${post.id}">Hapus</button>
-        </div>
-      ` : ''}
+      ${actionsHTML}
     </div>
-
-    <div class="post-title">${post.title}</div>
+    <h3 class="post-title">${post.title}</h3>
     <div class="post-body-content">${post.content}</div>
-
-    <div class="comments-wrapper">
-      <div id="comments-list-${post.id}" class="comments-list">
-        <p style="font-size: 11px; color: var(--text-sub);">Memuat komentar...</p>
-      </div>
-
-      <div class="comment-input-box">
-        <input type="text" id="comment-input-${post.id}" class="comment-input" placeholder="Tulis komentar...">
-        <button class="btn-send-comment" data-postid="${post.id}">Kirim</button>
-      </div>
-    </div>
+    ${commentsContainerHTML}
   `;
 
-  const editBtn = postCard.querySelector(".btn-edit-post");
-  if (editBtn) {
-    editBtn.addEventListener("click", () => {
-      editingPostId = post.id;
-      document.getElementById("edit-post-id-val").value = post.id;
-      document.getElementById("post-title-input").value = post.title;
-      quill.root.innerHTML = post.content;
-
-      document.getElementById("form-post-heading").textContent = "✏️ Edit Postingan Pengumuman";
-      document.getElementById("btn-submit-post").textContent = "💾 Simpan Perubahan";
-      document.getElementById("btn-cancel-edit-post").style.display = "inline-block";
-
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
+  if (withComments) {
+    loadPostComments(post.id, card.querySelector(`#comments-box-${post.id}`));
   }
 
-  const deleteBtn = postCard.querySelector(".btn-delete-post");
-  if (deleteBtn) {
-    deleteBtn.addEventListener("click", async () => {
-      if (confirm("Yakin ingin menghapus postingan ini?")) {
-        await supabase.from("posts").delete().eq("id", post.id);
-        await loadFeedPosts();
-      }
-    });
-  }
-
-  const sendCommentBtn = postCard.querySelector(`.btn-send-comment`);
-  if (sendCommentBtn) {
-    sendCommentBtn.addEventListener("click", async () => {
-      const input = postCard.querySelector(`#comment-input-${post.id}`);
-      const commentText = input.value.trim();
-      if (!commentText) return;
-
-      await supabase.from("comments").insert({
-        post_id: post.id,
-        user_id: currentUserId,
-        user_name: currentUserName,
-        comment_text: commentText
-      });
-
-      input.value = "";
-      await loadCommentsForPost(post.id, post.author_id);
-    });
-  }
-
-  loadCommentsForPost(post.id, post.author_id);
-  return postCard;
+  return card;
 }
 
-async function loadCommentsForPost(postId, postAuthorId = null) {
-  const commentListEls = document.querySelectorAll(`#comments-list-${postId}`);
-  if (!commentListEls || commentListEls.length === 0) return;
+async function loadPostComments(postId, boxElement) {
+  if (!boxElement) return;
 
-  const { data: comments } = await supabase
-    .from("comments")
-    .select("*, employees(avatar_url)")
+  const { data: comments, error } = await supabase
+    .from("post_comments")
+    .select("*, employees(name, avatar_url)")
     .eq("post_id", postId)
     .order("created_at", { ascending: true });
 
-  commentListEls.forEach(commentListEl => {
-    if (!comments || comments.length === 0) {
-      commentListEl.innerHTML = "<p style='font-size: 11px; color: var(--text-sub); margin-bottom: 8px;'>Belum ada komentar.</p>";
-      return;
-    }
+  if (error || !comments || comments.length === 0) {
+    boxElement.innerHTML = `<p style="font-size: 11px; color: var(--text-sub);">Belum ada komentar.</p>`;
+    return;
+  }
 
-    commentListEl.innerHTML = "";
-    comments.forEach(c => {
-      const canDeleteComment = (
-        currentUserId === c.user_id || 
-        currentUserId === postAuthorId || 
-        currentUserRole === "pengurus" || 
-        currentUserRole === "admin" || 
-        currentUserRole === "adm1n"
-      );
-
-      const cAvatar = (c.employees && c.employees.avatar_url) 
-        ? c.employees.avatar_url 
-        : `https://api.dicebear.com/7.x/bottts/svg?seed=${c.user_name}`;
-
-      const cItem = document.createElement("div");
-      cItem.className = "comment-item";
-      cItem.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <img src="${cAvatar}" style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover;">
-            <div class="comment-author">${c.user_name}</div>
-          </div>
-          ${canDeleteComment ? `<button class="btn-delete-comment" data-cid="${c.id}">Hapus</button>` : ''}
-        </div>
-        <div class="comment-text" style="padding-left: 30px;">${c.comment_text}</div>
-      `;
-
-      const delBtn = cItem.querySelector(".btn-delete-comment");
-      if (delBtn) {
-        delBtn.addEventListener("click", async () => {
-          if (confirm("Hapus komentar ini?")) {
-            await supabase.from("comments").delete().eq("id", c.id);
-            await loadCommentsForPost(postId, postAuthorId);
-          }
-        });
-      }
-
-      commentListEl.appendChild(cItem);
-    });
+  boxElement.innerHTML = "";
+  comments.forEach(c => {
+    const cEmp = c.employees || {};
+    const cFirstName = getFirstName(cEmp.name);
+    const item = document.createElement("div");
+    item.className = "comment-item";
+    item.innerHTML = `
+      <div class="comment-author">${cFirstName}</div>
+      <div class="comment-text">${c.comment_text}</div>
+    `;
+    boxElement.appendChild(item);
   });
 }
 
+// SUBMIT POST
 const btnSubmitPost = document.getElementById("btn-submit-post");
 const btnCancelEditPost = document.getElementById("btn-cancel-edit-post");
+const postTitleInput = document.getElementById("post-title-input");
+const editPostIdVal = document.getElementById("edit-post-id-val");
 
 if (btnSubmitPost) {
   btnSubmitPost.addEventListener("click", async () => {
-    const titleInput = document.getElementById("post-title-input");
-    const title = titleInput.value.trim();
-    const htmlContent = quill.root.innerHTML;
+    const title = postTitleInput.value.trim();
+    const content = quillEditor ? quillEditor.root.innerHTML.trim() : "";
+    const postId = editPostIdVal.value;
 
-    if (!title || quill.getText().trim().length === 0) {
-      alert("Judul dan isi pengumuman tidak boleh kosong!");
+    if (!title || !content || content === "<p><br></p>") {
+      alert("Judul dan isi postingan wajib diisi!");
       return;
     }
 
-    btnSubmitPost.textContent = "Mengunggah...";
     btnSubmitPost.disabled = true;
+    btnSubmitPost.textContent = "Mengunggah...";
 
-    if (editingPostId) {
-      const { error } = await supabase.from("posts").update({
-        title: title,
-        content: htmlContent
-      }).eq("id", editingPostId);
-
-      if (error) alert("Gagal update: " + error.message);
-      else resetPostForm();
+    if (postId) {
+      const { error } = await supabase.from("posts").update({ title, content }).eq("id", postId);
+      if (error) alert("Gagal update postingan: " + error.message);
     } else {
       const { error } = await supabase.from("posts").insert({
         author_id: currentUserId,
-        author_name: currentUserName,
-        title: title,
-        content: htmlContent
+        title,
+        content
       });
-
-      if (error) alert("Gagal mengunggah: " + error.message);
-      else resetPostForm();
+      if (error) alert("Gagal membuat postingan: " + error.message);
     }
 
+    postTitleInput.value = "";
+    if (quillEditor) quillEditor.setContents([]);
+    editPostIdVal.value = "";
+    if (btnCancelEditPost) btnCancelEditPost.style.display = "none";
+    btnSubmitPost.textContent = "🚀 Unggah Postingan";
     btnSubmitPost.disabled = false;
-    await loadFeedPosts();
-  });
-}
 
-function resetPostForm() {
-  editingPostId = null;
-  document.getElementById("edit-post-id-val").value = "";
-  document.getElementById("post-title-input").value = "";
-  if (quill) quill.setContents([]);
-  document.getElementById("form-post-heading").textContent = "📢 Buat Pengumuman / Postingan Baru";
-  document.getElementById("btn-submit-post").textContent = "🚀 Unggah Postingan";
-  if (btnCancelEditPost) btnCancelEditPost.style.display = "none";
+    await loadRecentFeed();
+    await loadFullFeed();
+  });
 }
 
 if (btnCancelEditPost) {
-  btnCancelEditPost.addEventListener("click", resetPostForm);
-}
-
-const btnRefreshFeed = document.getElementById("btn-refresh-feed");
-if (btnRefreshFeed) {
-  btnRefreshFeed.addEventListener("click", loadFeedPosts);
-}
-
-const btnEditQuoteTrigger = document.getElementById("btn-edit-quote-trigger");
-const editQuoteModal = document.getElementById("edit-quote-modal");
-const editQuoteTextInput = document.getElementById("edit-quote-text-input");
-const editQuoteSourceInput = document.getElementById("edit-quote-source-input");
-const cancelEditQuote = document.getElementById("cancel-edit-quote");
-const saveEditQuote = document.getElementById("save-edit-quote");
-const editQuoteModalMsg = document.getElementById("edit-quote-modal-msg");
-
-if (btnEditQuoteTrigger) {
-  btnEditQuoteTrigger.addEventListener("click", async () => {
-    const { data } = await supabase.from("daily_quotes").select("*").eq("id", 1).maybeSingle();
-    if (data) {
-      editQuoteTextInput.value = data.quote_text;
-      editQuoteSourceInput.value = data.quote_source;
-    }
-    editQuoteModalMsg.textContent = "";
-    editQuoteModal.style.display = "flex";
+  btnCancelEditPost.addEventListener("click", () => {
+    postTitleInput.value = "";
+    if (quillEditor) quillEditor.setContents([]);
+    editPostIdVal.value = "";
+    btnCancelEditPost.style.display = "none";
+    btnSubmitPost.textContent = "🚀 Unggah Postingan";
   });
 }
 
-if (cancelEditQuote) {
-  cancelEditQuote.addEventListener("click", () => editQuoteModal.style.display = "none");
-}
+// CLICK EVENT LISTENER POSTS
+document.addEventListener("click", async (e) => {
+  if (e.target.classList.contains("btn-send-comment")) {
+    const postId = e.target.getAttribute("data-post-id");
+    const inputEl = document.getElementById(`comment-input-${postId}`);
+    const text = inputEl ? inputEl.value.trim() : "";
 
-if (saveEditQuote) {
-  saveEditQuote.addEventListener("click", async () => {
-    const text = editQuoteTextInput.value.trim();
-    const source = editQuoteSourceInput.value.trim();
+    if (!text) return;
 
-    if (!text || !source) {
-      editQuoteModalMsg.textContent = "Kutipan dan sumber tidak boleh kosong!";
-      return;
-    }
-
-    saveEditQuote.textContent = "Menyimpan...";
-    const { error } = await supabase.from("daily_quotes").upsert({
-      id: 1,
-      quote_text: text,
-      quote_source: source,
-      updated_at: new Date().toISOString()
+    inputEl.value = "";
+    const { error } = await supabase.from("post_comments").insert({
+      post_id: postId,
+      author_id: currentUserId,
+      comment_text: text
     });
 
     if (error) {
-      editQuoteModalMsg.textContent = "Gagal menyimpan: " + error.message;
+      alert("Gagal mengirim komentar: " + error.message);
     } else {
-      editQuoteModal.style.display = "none";
-      await loadDailyQuote();
+      const box = document.getElementById(`comments-box-${postId}`);
+      if (box) await loadPostComments(postId, box);
     }
-    saveEditQuote.textContent = "Simpan";
+  }
+
+  if (e.target.classList.contains("btn-delete-post")) {
+    const postId = e.target.getAttribute("data-id");
+    if (confirm("Yakin hapus postingan ini?")) {
+      const { error } = await supabase.from("posts").delete().eq("id", postId);
+      if (!error) {
+        await loadRecentFeed();
+        await loadFullFeed();
+      } else {
+        alert("Gagal menghapus postingan: " + error.message);
+      }
+    }
+  }
+
+  if (e.target.classList.contains("btn-edit-post")) {
+    const postId = e.target.getAttribute("data-id");
+    const { data: p } = await supabase.from("posts").select("*").eq("id", postId).single();
+    if (p) {
+      editPostIdVal.value = p.id;
+      postTitleInput.value = p.title;
+      if (quillEditor) quillEditor.root.innerHTML = p.content;
+      if (btnCancelEditPost) btnCancelEditPost.style.display = "inline-block";
+      btnSubmitPost.textContent = "💾 Simpan Perubahan";
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+});
+
+const btnRefreshFeed = document.getElementById("btn-refresh-feed");
+if (btnRefreshFeed) {
+  btnRefreshFeed.addEventListener("click", async () => {
+    await loadRecentFeed();
+    await loadFullFeed();
   });
 }
 
-window.addEventListener("DOMContentLoaded", initFeedSystem);
+function setupFeedRealtime() {
+  supabase
+    .channel("feed-realtime")
+    .on("postgres_changes", { event: "*", schema: "public", table: "posts" }, async () => {
+      await loadRecentFeed();
+      await loadFullFeed();
+    })
+    .on("postgres_changes", { event: "*", schema: "public", table: "post_comments" }, async (payload) => {
+      const postId = payload.new ? payload.new.post_id : payload.old.post_id;
+      if (postId) {
+        const box = document.getElementById(`comments-box-${postId}`);
+        if (box) await loadPostComments(postId, box);
+      }
+    })
+    .subscribe();
+}

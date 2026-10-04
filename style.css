@@ -260,7 +260,7 @@ html, body {
 .ql-editor { color: var(--text-main) !important; }
 .ql-editor.ql-blank::before { color: var(--label-color) !important; font-style: italic !important; }
 
-/* PROFILE PAGE (HERO CARD TANPA BANNER GAMBAR) */
+/* PROFILE PAGE */
 .profile-page-header-banner {
   background: var(--card-bg) !important;
   border-radius: var(--radius-xl);
@@ -278,6 +278,7 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  width: 100%;
 }
 
 .profile-avatar-circle { position: relative; width: 100px; height: 100px; margin-bottom: 12px; }
@@ -297,17 +298,57 @@ html, body {
   margin-bottom: 12px;
 }
 
-.profile-badge-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-.points-pill { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 13px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); }
-.secondary-button-sm { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--card-border); padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; }
+/* PENYESUAIAN TOMBOL POIN & TOKO VIHARA (SAMPING-SAMPINGAN) */
+.profile-badge-row { 
+  display: flex; 
+  align-items: center; 
+  gap: 10px; 
+  margin-bottom: 14px; 
+  width: 100%; 
+  flex-wrap: nowrap;
+}
+
+.points-pill { 
+  background: linear-gradient(135deg, #f59e0b, #d97706); 
+  color: white; 
+  padding: 8px 14px; 
+  border-radius: 20px; 
+  font-weight: 800; 
+  font-size: 13px; 
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); 
+  text-align: center;
+  flex: 1;
+  white-space: nowrap;
+}
+
+#btn-open-shop-modal {
+  flex: 1;
+  text-align: center;
+  padding: 8px 14px;
+}
+
+/* CONTAINER EDIT BIO DI SAMPING BIO / DI BAWAH TOMBOL POIN & TOKO */
+.profile-bio-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin-top: 4px;
+}
 
 .profile-display-bio {
   font-size: 13px;
   color: var(--text-main) !important;
   font-style: italic;
   line-height: 1.5;
-  max-width: 450px;
-  margin-top: 6px;
+  flex: 1;
+  margin: 0;
+}
+
+#btn-open-edit-bio-modal {
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .avatar-character-box { background: var(--input-bg); border: 1px solid var(--card-border); border-radius: var(--radius-lg); padding: 16px; text-align: center; display: flex; flex-direction: column; align-items: center; }
@@ -338,10 +379,18 @@ html, body {
 .friend-name { font-size: 13px; font-weight: 700; color: var(--text-main); }
 .friend-code { font-size: 10px; color: var(--text-sub); }
 
-.btn-friend-action { padding: 6px 12px; font-size: 11px; font-weight: 700; border-radius: 8px; border: none; cursor: pointer; transition: all 0.2s ease; }
+/* CONTAINER TOMBOL ACCEPT & REJECT SAMPING-SAMPINGAN */
+.friend-action-container {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.btn-friend-action { padding: 6px 12px; font-size: 11px; font-weight: 700; border-radius: 8px; border: none; cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
 .btn-friend-add { background: var(--ios-blue); color: white; }
 .btn-friend-pending { background: rgba(255, 255, 255, 0.1); color: var(--text-sub); border: 1px solid var(--card-border); cursor: not-allowed; opacity: 0.6; }
-.btn-friend-accept { background: var(--ios-green); color: white; margin-right: 4px; }
+.btn-friend-accept { background: var(--ios-green); color: white; }
 .btn-friend-reject { background: var(--ios-red); color: white; }
 .btn-friend-msg { background: var(--ios-blue); color: white; }
 
@@ -537,6 +586,7 @@ body.light-mode .chat-input {
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .btn-friend-unfollow:hover {

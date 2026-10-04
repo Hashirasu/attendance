@@ -1,4 +1,4 @@
-import { supabase } from "./app.js";
+import { supabase, getFirstName } from "./app.js";
 
 // =========================================
 // 1. STARTER GRATIS 1 PER GEN (LOW TIER)
