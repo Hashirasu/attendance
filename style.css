@@ -317,7 +317,7 @@ html, body {
   background: linear-gradient(135deg, #f59e0b, #d97706); 
   color: #ffffff; 
   padding: 10px 16px; 
-  border-radius: 9999px; 
+  border-radius: 9999px !important; 
   font-weight: 800; 
   font-size: 13px; 
   box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35); 
@@ -335,7 +335,7 @@ html, body {
   gap: 6px;
   flex: 1;
   padding: 10px 16px;
-  border-radius: 9999px;
+  border-radius: 9999px !important;
   background: linear-gradient(135deg, #fbbf24, #f59e0b) !important;
   color: #ffffff !important;
   font-weight: 800;
@@ -392,7 +392,7 @@ html, body {
   white-space: nowrap;
   flex-shrink: 0;
   padding: 7px 14px;
-  border-radius: 9999px;
+  border-radius: 9999px !important;
   background: rgba(59, 130, 246, 0.15) !important;
   color: #60a5fa !important;
   border: 1px solid rgba(59, 130, 246, 0.35) !important;
@@ -411,6 +411,71 @@ html, body {
 }
 
 #btn-open-edit-bio-modal:active {
+  transform: scale(0.95);
+}
+
+/* =========================================
+   POKÉDEX & HABITAT STYLING (PILL BUTTONS)
+========================================= */
+
+/* Tombol Buka Pokédex Capsule */
+#btn-open-pokedex-modal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 9999px !important;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  color: #ffffff !important;
+  font-weight: 800;
+  font-size: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#btn-open-pokedex-modal:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.45);
+  filter: brightness(1.05);
+}
+
+#btn-open-pokedex-modal:active {
+  transform: translateY(0) scale(0.96);
+}
+
+/* Tombol Aksi Lepas / Pasang ke Kandang (Di dalam Pokédex) */
+.btn-toggle-showcase {
+  width: 100%;
+  padding: 7px 12px;
+  border-radius: 9999px !important;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid rgba(59, 130, 246, 0.4) !important;
+  background: rgba(59, 130, 246, 0.15) !important;
+  color: #60a5fa !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
+}
+
+.btn-toggle-showcase.active-showcase {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+}
+
+.btn-toggle-showcase:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.btn-toggle-showcase:active {
   transform: scale(0.95);
 }
 
