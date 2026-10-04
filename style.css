@@ -217,11 +217,48 @@ html, body {
 
 .chart-container-box { display: flex; flex-direction: row; align-items: flex-end; justify-content: space-around; gap: 12px; height: 160px; padding: 20px 10px 10px 10px; border-bottom: 2px solid var(--card-border); overflow-x: auto; width: 100%; }
 .kiosk-card-display { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px 20px; width: 100%; }
-.qr-container-wrapper { margin-top: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; width: 100%; }
-.qr-code-box { background: #ffffff; padding: 18px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25); display: flex; align-items: center; justify-content: center; margin: 0 auto; }
-.qr-code-box canvas { display: none !important; }
-.qr-code-box img { display: block !important; margin: 0 auto !important; width: 220px !important; height: 220px !important; }
-.kiosk-timer-bar { width: 220px; height: 6px; background: var(--input-border); border-radius: 3px; overflow: hidden; margin: 0 auto; }
+
+/* =========================================
+   PERBAIKAN QR CODE UNTUK HP & MOBILE (RESPONSIF)
+========================================= */
+.qr-container-wrapper { 
+  margin-top: 16px; 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  justify-content: center; 
+  gap: 12px; 
+  width: 100%; 
+}
+
+.qr-code-box { 
+  background: #ffffff !important; 
+  padding: 16px; 
+  border-radius: 20px; 
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); 
+  display: flex !important; 
+  align-items: center !important; 
+  justify-content: center !important; 
+  margin: 0 auto !important; 
+  width: min(220px, 75vw) !important; 
+  height: min(220px, 75vw) !important; 
+  box-sizing: border-box;
+}
+
+.qr-code-box canvas { 
+  display: none !important; 
+}
+
+.qr-code-box img { 
+  display: block !important; 
+  margin: 0 auto !important; 
+  max-width: 100% !important; 
+  height: auto !important; 
+  width: 100% !important; 
+  object-fit: contain;
+}
+
+.kiosk-timer-bar { width: 220px; max-width: 75vw; height: 6px; background: var(--input-border); border-radius: 3px; overflow: hidden; margin: 0 auto; }
 .kiosk-progress-fill { width: 100%; height: 100%; background: var(--ios-blue); transition: width 1s linear; }
 .kiosk-timer-text { font-size: 12px; font-weight: 600; color: var(--text-sub); text-align: center; }
 
