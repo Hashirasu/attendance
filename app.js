@@ -1749,8 +1749,11 @@ if (tabRekapBtn && tabKaryawanBtn && tabKioskBtn) {
     tabRekapBtn.classList.remove("active");
     tabKaryawanBtn.classList.remove("active");
     
+    setTimeout(() => {
     startAdminKioskQr();
-  });
+  }, 150);
+});
+
 }
 
 function startAdminKioskQr() {
