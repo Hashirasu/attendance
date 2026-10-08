@@ -1928,25 +1928,26 @@ async function loadAdminAttendanceChart() {
   const keys = Object.keys(groupedData);
   const maxCount = Math.max(...Object.values(groupedData), 1);
 
-  // Render Bar Chart dengan Horizontal Scroll
-  let chartHTML = `<div class="chart-scroll-wrapper" style="min-width: ${Math.max(keys.length * 55, 320)}px;">`;
+  
+  // Render Bar Chart dengan pelarasan ruang atas supaya tidak terpotong
+  let chartHTML = `<div class="chart-scroll-wrapper" style="min-width: ${Math.max(keys.length * 55, 320)}px; display: flex; align-items: flex-end; gap: 16px; height: 180px; padding-top: 30px; padding-bottom: 10px; box-sizing: border-box;">`;
 
   keys.forEach(k => {
     const count = groupedData[k];
-    const heightPercent = Math.round((count / maxCount) * 100);
+    // Kira peratusan ketinggian (Maksimum 85% supaya teks angka di atas tidak terpotong)
+    const heightPercent = Math.round((count / maxCount) * 85);
 
     chartHTML += `
-      <div class="chart-bar-item">
-        <span class="chart-bar-value">${count}</span>
-        <div class="chart-bar-fill" style="height: ${Math.max(heightPercent, 8)}%;"></div>
-        <span class="chart-bar-label">${k}</span>
+      <div class="chart-bar-item" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; position: relative;">
+        <span class="chart-bar-value" style="font-size: 11px; font-weight: bold; margin-bottom: 4px; color: var(--text-main, #fff); position: absolute; top: -22px;">${count}</span>
+        <div class="chart-bar-fill" style="height: ${Math.max(heightPercent, 8)}%; width: 100%; max-width: 32px; background: var(--primary, #3b82f6); border-radius: 4px 4px 0 0; transition: height 0.3s ease;"></div>
+        <span class="chart-bar-label" style="font-size: 11px; color: var(--text-sub, #94a3b8); margin-top: 6px;">${k}</span>
       </div>
     `;
   });
 
   chartHTML += `</div>`;
   container.innerHTML = chartHTML;
-}
 
 // Event Listeners Filter Grafik
 const chartFilterEl = document.getElementById("admin-chart-filter");

@@ -1062,21 +1062,23 @@ body.light-mode .app-footer { background: rgba(226, 232, 240, 0.95); }
 .chart-container-box {
   width: 100%;
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: visible; /* Ganti dari hidden ke visible */
+  padding-top: 15px;    /* Tambahkan ruang napas di atas */
   padding-bottom: 8px;
   -webkit-overflow-scrolling: touch;
 }
 
-/* Area Canvas / Visualisasi Bar */
+/* 2. Sesuaikan padding & box-sizing di wrapper */
 .chart-scroll-wrapper {
-  min-width: 480px; /* Lebar minimum agar batang & tanggal tidak saling impit di HP */
+  min-width: 480px; 
   display: flex;
   align-items: flex-end;
   justify-content: space-around;
-  height: 180px;
-  padding: 20px 10px 30px 10px;
+  height: 200px; /* Dinaikkan sedikit dari 180px ke 200px */
+  padding: 35px 10px 30px 10px; /* Padding atas dinaikkan dari 20px ke 35px */
   position: relative;
   border-bottom: 1px solid var(--glass-border, rgba(255,255,255,0.1));
+  box-sizing: border-box; /* Tambahkan ini agar height menghitung padding */
 }
 
 .chart-bar-item {
@@ -1095,6 +1097,7 @@ body.light-mode .app-footer { background: rgba(226, 232, 240, 0.95); }
   font-weight: 700;
   color: #60a5fa;
   margin-bottom: 4px;
+  white-space: nowrap;
 }
 
 .chart-bar-fill {
