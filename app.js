@@ -1935,12 +1935,12 @@ async function loadAdminAttendanceChart() {
   keys.forEach(k => {
     const count = groupedData[k];
     // Kira peratusan ketinggian (Maksimum 85% supaya teks angka di atas tidak terpotong)
-    const heightPercent = Math.round((count / maxCount) * 85);
+    const heightPercent = Math.round((count / maxCount) * 75);
 
     chartHTML += `
       <div class="chart-bar-item" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; position: relative;">
         <span class="chart-bar-value" style="font-size: 11px; font-weight: bold; margin-bottom: 4px; color: var(--text-main, #fff); position: absolute; top: -22px;">${count}</span>
-        <div class="chart-bar-fill" style="height: ${Math.max(heightPercent, 8)}%; width: 100%; max-width: 32px; background: var(--primary, #3b82f6); border-radius: 4px 4px 0 0; transition: height 0.3s ease;"></div>
+        <div class="chart-bar-fill" style="height: ${Math.max(heightPercent, 6)}%; width: 100%; max-width: 32px; background: var(--primary, #3b82f6); border-radius: 4px 4px 0 0; transition: height 0.3s ease;"></div>
         <span class="chart-bar-label" style="font-size: 11px; color: var(--text-sub, #94a3b8); margin-top: 6px;">${k}</span>
       </div>
     `;
