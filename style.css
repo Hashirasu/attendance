@@ -1053,3 +1053,70 @@ body.light-mode .app-footer { background: rgba(226, 232, 240, 0.95); }
     justify-content: center !important;
   }
 }
+
+
+
+
+
+/* Kontainer Grafik Utama dengan Scroll Horizontal di HP */
+.chart-container-box {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 8px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Area Canvas / Visualisasi Bar */
+.chart-scroll-wrapper {
+  min-width: 480px; /* Lebar minimum agar batang & tanggal tidak saling impit di HP */
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  height: 180px;
+  padding: 20px 10px 30px 10px;
+  position: relative;
+  border-bottom: 1px solid var(--glass-border, rgba(255,255,255,0.1));
+}
+
+.chart-bar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  max-width: 42px;
+  height: 100%;
+  justify-content: flex-end;
+  position: relative;
+}
+
+.chart-bar-value {
+  font-size: 11px;
+  font-weight: 700;
+  color: #60a5fa;
+  margin-bottom: 4px;
+}
+
+.chart-bar-fill {
+  width: 100%;
+  background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
+  border-radius: 6px 6px 0 0;
+  transition: height 0.3s ease;
+  min-height: 4px;
+}
+
+.chart-bar-label {
+  position: absolute;
+  bottom: -24px;
+  font-size: 10px;
+  color: var(--text-sub, #94a3b8);
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.custom-input-sm {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border-radius: 8px;
+}

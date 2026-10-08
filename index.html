@@ -499,18 +499,24 @@
 
         <div id="admin-view-rekap">
           <div class="card-box" style="margin-bottom: 16px;">
-            <div class="flex-between-center" style="margin-bottom: 12px;">
-              <h3 class="section-heading">Grafik Kehadiran</h3>
+            <div class="flex-between-center" style="margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <h3 class="section-heading">Grafik Kehadiran</h3>
+            <div style="display: flex; gap: 8px; align-items: center;">
+            <!-- Input tanggal/bulan yang muncul dinamis -->
+              <input type="date" id="admin-chart-date-picker" class="custom-input-sm" style="display: none; padding: 4px 8px; font-size: 11px;">
+              <input type="month" id="admin-chart-month-picker" class="custom-input-sm" style="display: none; padding: 4px 8px; font-size: 11px;">
+    
+            <!-- Filter Utama (Pilihan Hari Ini sudah dihapus) -->
               <select id="admin-chart-filter" class="custom-select-sm">
-                <option value="day">Hari Ini</option>
-                <option value="week">Minggu Ini</option>
-                <option value="month" selected>Bulan Ini</option>
+                <option value="week" selected>Minggu Ini</option>
+                <option value="month">Bulan Ini</option>
                 <option value="year">Tahun Ini</option>
               </select>
             </div>
-            <div id="admin-chart-container" class="chart-container-box">
-              <p style="font-size: 12px; color: var(--text-sub); margin: auto;">Memuat grafik...</p>
-            </div>
+          </div>
+          <div id="admin-chart-container" class="chart-container-box">
+  <p style="font-size: 12px; color: var(--text-sub); margin: auto;">Memuat grafik...</p>
+</div>
           </div>
 
           <div class="card-box" style="margin-bottom: 16px;">

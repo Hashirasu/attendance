@@ -1836,46 +1836,122 @@ async function loadAdminAttendance() {
   });
 }
 
-async function loadAdminChart() {
-  if (!adminChartContainer) return;
-  adminChartContainer.innerHTML = "<p style='font-size: 12px; color: var(--text-sub); margin: auto;'>Memuat grafik...</p>";
+// Function render Grafik Kehadiran Admin (Versi Perbaikan)
+async function loadAdminAttendanceChart() {
+  const container = document.getElementById("admin-chart-container");
+  const filterType = document.getElementById("admin-chart-filter")?.value || "week";
+  const datePicker = document.getElementById("admin-chart-date-picker");
+  const monthPicker = document.getElementById("admin-chart-month-picker");
 
-  const filterType = adminChartFilter ? adminChartFilter.value : "month";
-  const { data } = await supabase.from("attendance").select("attendance_date, status");
-  if (!data) return;
+  if (!container) return;
 
-  const grouped = {};
-  data.forEach(row => {
-    let key = row.attendance_date;
-    if (filterType === "month") key = row.attendance_date.substring(0, 7);
-    else if (filterType === "year") key = row.attendance_date.substring(0, 4);
+  // Atur visibilitas pemilih tanggal/bulan
+  if (filterType === "week") {
+    if (datePicker) datePicker.style.display = "inline-block";
+    if (monthPicker) monthPicker.style.display = "none";
+  } else if (filterType === "month") {
+    if (datePicker) datePicker.style.display = "none";
+    if (monthPicker) monthPicker.style.display = "inline-block";
+  } else {
+    if (datePicker) datePicker.style.display = "none";
+    if (monthPicker) monthPicker.style.display = "none";
+  }
 
-    if (!grouped[key]) grouped[key] = { total: 0 };
-    grouped[key].total++;
-  });
+  container.innerHTML = `<p style="font-size: 12px; color: var(--text-sub); text-align: center; margin: 40px auto;">Memuat grafik...</p>`;
 
-  const keys = Object.keys(grouped).sort().slice(-7);
-  if (keys.length === 0) {
-    adminChartContainer.innerHTML = "<p style='font-size: 12px; color: var(--text-sub); margin: auto;'>Belum ada data.</p>";
+  const now = new Date();
+  let startDate, endDate;
+
+  if (filterType === "week") {
+    // Ambil tanggal dari input picker tanpa merusak object Date asli
+    const baseDate = (datePicker && datePicker.value) ? new Date(datePicker.value + "T00:00:00") : new Date();
+    const day = baseDate.getDay();
+    const diffToMonday = baseDate.getDate() - day + (day === 0 ? -6 : 1);
+
+    startDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), diffToMonday, 0, 0, 0);
+    endDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + 6, 23, 59, 59, 999);
+  } else if (filterType === "month") {
+    let year = now.getFullYear();
+    let month = now.getMonth();
+
+    if (monthPicker && monthPicker.value) {
+      const [pYear, pMonth] = monthPicker.value.split("-");
+      year = parseInt(pYear, 10);
+      month = parseInt(pMonth, 10) - 1;
+    }
+
+    startDate = new Date(year, month, 1, 0, 0, 0);
+    endDate = new Date(year, month + 1, 0, 23, 59, 59, 999);
+  } else if (filterType === "year") {
+    startDate = new Date(now.getFullYear(), 0, 1, 0, 0, 0);
+    endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
+  }
+
+  const { data: records, error } = await supabase
+    .from("attendance")
+    .select("created_at, status")
+    .gte("created_at", startDate.toISOString())
+    .lte("created_at", endDate.toISOString());
+
+  if (error || !records || records.length === 0) {
+    container.innerHTML = `<p style="font-size: 12px; color: var(--text-sub); text-align: center; margin: 40px auto;">Tidak ada data kehadiran pada periode ini.</p>`;
     return;
   }
 
-  const max = Math.max(...keys.map(k => grouped[k].total), 5);
-  adminChartContainer.innerHTML = "";
+  // Pengelompokan Data
+  const groupedData = {};
+
+  records.forEach(r => {
+    const d = new Date(r.created_at);
+    let key;
+    if (filterType === "year") {
+      key = d.toLocaleString("id-ID", { month: "short" });
+    } else {
+      // Format tanggal ringkas DD/MM agar tidak berantakan di HP
+      const dayStr = String(d.getDate()).padStart(2, '0');
+      const monthStr = String(d.getMonth() + 1).padStart(2, '0');
+      key = `${dayStr}/${monthStr}`;
+    }
+    groupedData[key] = (groupedData[key] || 0) + 1;
+  });
+
+  const keys = Object.keys(groupedData);
+  const maxCount = Math.max(...Object.values(groupedData), 1);
+
+  // Render Grafik dengan Scroll Horizontal Wrapper
+  let chartHTML = `<div class="chart-scroll-wrapper" style="min-width: ${Math.max(keys.length * 55, 320)}px;">`;
 
   keys.forEach(k => {
-    const total = grouped[k].total;
-    const heightPercentage = Math.round((total / max) * 100);
-    const wrapper = document.createElement("div");
-    wrapper.style.cssText = "display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; min-width: 32px;";
-    wrapper.innerHTML = `
-      <div style="font-size: 11px; font-weight: 700; color: #60a5fa; margin-bottom: 4px;">${total}</div>
-      <div style="width: 100%; max-width: 24px; height: ${Math.max(heightPercentage, 12)}%; background: linear-gradient(180deg, #3b82f6, #1d4ed8); border-radius: 6px 6px 0 0;"></div>
-      <div style="font-size: 10px; color: var(--text-sub); margin-top: 6px; white-space: nowrap; font-weight: 600;">${k}</div>
+    const count = groupedData[k];
+    const heightPercent = Math.round((count / maxCount) * 100);
+
+    chartHTML += `
+      <div class="chart-bar-item">
+        <span class="chart-bar-value">${count}</span>
+        <div class="chart-bar-fill" style="height: ${Math.max(heightPercent, 8)}%;"></div>
+        <span class="chart-bar-label">${k}</span>
+      </div>
     `;
-    adminChartContainer.appendChild(wrapper);
   });
+
+  chartHTML += `</div>`;
+  container.innerHTML = chartHTML;
 }
+
+// Event Listeners Filter Grafik
+const chartFilterEl = document.getElementById("admin-chart-filter");
+const chartDatePickerEl = document.getElementById("admin-chart-date-picker");
+const chartMonthPickerEl = document.getElementById("admin-chart-month-picker");
+
+if (chartFilterEl) chartFilterEl.addEventListener("change", loadAdminAttendanceChart);
+if (chartDatePickerEl) chartDatePickerEl.addEventListener("change", loadAdminAttendanceChart);
+if (chartMonthPickerEl) chartMonthPickerEl.addEventListener("change", loadAdminAttendanceChart);
+
+// Panggil Otomatis saat Buka Tab Admin
+function initAdminTab() {
+  loadAdminAttendanceChart();
+}
+
 
 async function loadEmployeeManagement() {
   if (!adminEmployeeList) return;
