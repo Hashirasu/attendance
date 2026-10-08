@@ -1948,6 +1948,7 @@ async function loadAdminAttendanceChart() {
 
   chartHTML += `</div>`;
   container.innerHTML = chartHTML;
+}
 
 // Event Listeners Filter Grafik
 const chartFilterEl = document.getElementById("admin-chart-filter");
