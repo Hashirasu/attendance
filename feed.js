@@ -7,7 +7,11 @@ let quillEditor = null;
 
 export async function initFeedSystem() {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
+  if (!user) {
+    currentUserId = null;
+    currentUserRole = "user";
+    return;
+  }
   currentUserId = user.id;
 
   // 1. Ambil Role Pengguna Langsung
@@ -111,7 +115,14 @@ async function loadFullFeed() {
 
 async function renderPostCard(post, withComments = true) {
   const emp = post.employees || {};
-  const authorFirstName = getFirstName(emp.name);
+  const authorRole = emp.role || "user";
+
+  // Penentuan Nama Penulis: Jika bukan admin/adm1n/pengurus, maka tampilkan "Humas Mudiviva"
+  let authorDisplayName = "Humas Mudiviva";
+  if (authorRole === "admin" || authorRole === "adm1n" || authorRole === "pengurus") {
+    authorDisplayName = getFirstName(emp.name);
+  }
+
   const avatar = (emp.avatar_url && emp.avatar_url.trim() !== "") ? emp.avatar_url : DEFAULT_AVATAR;
   const postDate = new Date(post.created_at).toLocaleString("id-ID", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 
@@ -122,12 +133,19 @@ async function renderPostCard(post, withComments = true) {
   card.className = "post-card";
   card.setAttribute("data-post-id", post.id);
 
+  // Tombol Edit & Hapus dengan styling modern dan rapi
   let actionsHTML = "";
   if (isAuthor || isAdmin) {
     actionsHTML = `
-      <div style="display:flex; gap:6px;">
-        <button class="btn-edit-post secondary-button-sm" data-id="${post.id}">✏️ Edit</button>
-        <button class="btn-delete-post secondary-button-sm" data-id="${post.id}" style="background:rgba(239, 68, 68, 0.2); color:#f87171; border:none;">🗑️ Hapus</button>
+      <div class="post-action-buttons" style="display: flex; gap: 8px; align-items: center;">
+        <button class="btn-edit-post" data-id="${post.id}" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.15); background: rgba(255, 255, 255, 0.05); color: #e2e8f0; cursor: pointer; transition: all 0.2s ease;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+          Edit
+        </button>
+        <button class="btn-delete-post" data-id="${post.id}" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.12); color: #f87171; cursor: pointer; transition: all 0.2s ease;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          Hapus
+        </button>
       </div>
     `;
   }
@@ -149,12 +167,12 @@ async function renderPostCard(post, withComments = true) {
   }
 
   card.innerHTML = `
-    <div class="post-header">
-      <div class="post-author-box">
+    <div class="post-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <div class="post-author-box" style="display: flex; align-items: center; gap: 10px;">
         <img src="${avatar}" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover;" alt="Avatar" onerror="this.src='${DEFAULT_AVATAR}'">
         <div>
-          <div class="post-author-name">${authorFirstName}</div>
-          <div class="post-date">${postDate} WIB</div>
+          <div class="post-author-name" style="font-weight: 700; font-size: 14px;">${authorDisplayName}</div>
+          <div class="post-date" style="font-size: 11px; color: var(--text-sub);">${postDate} WIB</div>
         </div>
       </div>
       ${actionsHTML}
@@ -259,8 +277,12 @@ if (btnCancelEditPost) {
 }
 
 document.addEventListener("click", async (e) => {
-  if (e.target.classList.contains("btn-send-comment")) {
-    const postId = e.target.getAttribute("data-post-id");
+  const targetEdit = e.target.closest(".btn-edit-post");
+  const targetDelete = e.target.closest(".btn-delete-post");
+  const targetComment = e.target.closest(".btn-send-comment");
+
+  if (targetComment) {
+    const postId = targetComment.getAttribute("data-post-id");
     const inputEl = document.getElementById(`comment-input-${postId}`);
     const text = inputEl ? inputEl.value.trim() : "";
 
@@ -279,8 +301,8 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  if (e.target.classList.contains("btn-delete-post")) {
-    const postId = e.target.getAttribute("data-id");
+  if (targetDelete) {
+    const postId = targetDelete.getAttribute("data-id");
     if (confirm("Yakin hapus postingan ini?")) {
       const { error } = await supabase.from("posts").delete().eq("id", postId);
       if (!error) {
@@ -290,8 +312,8 @@ document.addEventListener("click", async (e) => {
     }
   }
 
-  if (e.target.classList.contains("btn-edit-post")) {
-    const postId = e.target.getAttribute("data-id");
+  if (targetEdit) {
+    const postId = targetEdit.getAttribute("data-id");
     const { data: p } = await supabase.from("posts").select("*").eq("id", postId).single();
     if (p) {
       editPostIdVal.value = p.id;
