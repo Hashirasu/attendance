@@ -1730,6 +1730,7 @@ if (tabRekapBtn && tabKaryawanBtn && tabKioskBtn) {
     tabKaryawanBtn.classList.remove("active");
     tabKioskBtn.classList.remove("active");
     if (kioskTimerInterval) clearInterval(kioskTimerInterval);
+    loadAdminAttendanceChart();
   });
 
   tabKaryawanBtn.addEventListener("click", async () => {
@@ -1837,6 +1838,7 @@ async function loadAdminAttendance() {
 }
 
 // Function render Grafik Kehadiran Admin (Versi Perbaikan)
+// Function render Grafik Kehadiran Admin (Fix Query & Auto Load)
 async function loadAdminAttendanceChart() {
   const container = document.getElementById("admin-chart-container");
   const filterType = document.getElementById("admin-chart-filter")?.value || "week";
@@ -1845,7 +1847,15 @@ async function loadAdminAttendanceChart() {
 
   if (!container) return;
 
-  // Atur visibilitas pemilih tanggal/bulan
+  // Set nilai default hari ini (WIB) jika input date masih kosong
+  const today = new Date();
+  const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(today); // YYYY-MM-DD
+  const monthStr = todayStr.substring(0, 7); // YYYY-MM
+
+  if (datePicker && !datePicker.value) datePicker.value = todayStr;
+  if (monthPicker && !monthPicker.value) monthPicker.value = monthStr;
+
+  // Atur visibilitas input date/month
   if (filterType === "week") {
     if (datePicker) datePicker.style.display = "inline-block";
     if (monthPicker) monthPicker.style.display = "none";
@@ -1859,58 +1869,58 @@ async function loadAdminAttendanceChart() {
 
   container.innerHTML = `<p style="font-size: 12px; color: var(--text-sub); text-align: center; margin: 40px auto;">Memuat grafik...</p>`;
 
-  const now = new Date();
-  let startDate, endDate;
+  let startStr, endStr;
 
   if (filterType === "week") {
-    // Ambil tanggal dari input picker tanpa merusak object Date asli
-    const baseDate = (datePicker && datePicker.value) ? new Date(datePicker.value + "T00:00:00") : new Date();
+    const val = (datePicker && datePicker.value) ? datePicker.value : todayStr;
+    const [y, m, d] = val.split("-").map(Number);
+    const baseDate = new Date(y, m - 1, d);
+
     const day = baseDate.getDay();
     const diffToMonday = baseDate.getDate() - day + (day === 0 ? -6 : 1);
 
-    startDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), diffToMonday, 0, 0, 0);
-    endDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + 6, 23, 59, 59, 999);
+    const monday = new Date(y, m - 1, diffToMonday);
+    const sunday = new Date(y, m - 1, diffToMonday + 6);
+
+    startStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(monday);
+    endStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(sunday);
   } else if (filterType === "month") {
-    let year = now.getFullYear();
-    let month = now.getMonth();
+    const val = (monthPicker && monthPicker.value) ? monthPicker.value : monthStr;
+    const [y, m] = val.split("-").map(Number);
+    
+    const firstDay = new Date(y, m - 1, 1);
+    const lastDay = new Date(y, m, 0);
 
-    if (monthPicker && monthPicker.value) {
-      const [pYear, pMonth] = monthPicker.value.split("-");
-      year = parseInt(pYear, 10);
-      month = parseInt(pMonth, 10) - 1;
-    }
-
-    startDate = new Date(year, month, 1, 0, 0, 0);
-    endDate = new Date(year, month + 1, 0, 23, 59, 59, 999);
+    startStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(firstDay);
+    endStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(lastDay);
   } else if (filterType === "year") {
-    startDate = new Date(now.getFullYear(), 0, 1, 0, 0, 0);
-    endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
+    startStr = `${today.getFullYear()}-01-01`;
+    endStr = `${today.getFullYear()}-12-31`;
   }
 
+  // QUERY PRESISI MENGGUNAKAN KOLOM ATTENDANCE_DATE (STRING YYYY-MM-DD)
   const { data: records, error } = await supabase
     .from("attendance")
-    .select("created_at, status")
-    .gte("created_at", startDate.toISOString())
-    .lte("created_at", endDate.toISOString());
+    .select("attendance_date, status")
+    .gte("attendance_date", startStr)
+    .lte("attendance_date", endStr);
 
   if (error || !records || records.length === 0) {
-    container.innerHTML = `<p style="font-size: 12px; color: var(--text-sub); text-align: center; margin: 40px auto;">Tidak ada data kehadiran pada periode ini.</p>`;
+    container.innerHTML = `<p style="font-size: 12px; color: var(--text-sub); text-align: center; margin: 40px auto;">Tidak ada data kehadiran pada periode ini (${startStr} s.d ${endStr}).</p>`;
     return;
   }
 
-  // Pengelompokan Data
+  // Pengelompokan Data Sesuai Format Sumbu X Ringkas
   const groupedData = {};
 
   records.forEach(r => {
-    const d = new Date(r.created_at);
+    const [y, m, d] = r.attendance_date.split("-");
     let key;
     if (filterType === "year") {
-      key = d.toLocaleString("id-ID", { month: "short" });
+      const dateObj = new Date(y, m - 1, d);
+      key = dateObj.toLocaleString("id-ID", { month: "short" });
     } else {
-      // Format tanggal ringkas DD/MM agar tidak berantakan di HP
-      const dayStr = String(d.getDate()).padStart(2, '0');
-      const monthStr = String(d.getMonth() + 1).padStart(2, '0');
-      key = `${dayStr}/${monthStr}`;
+      key = `${d}/${m}`;
     }
     groupedData[key] = (groupedData[key] || 0) + 1;
   });
@@ -1918,7 +1928,7 @@ async function loadAdminAttendanceChart() {
   const keys = Object.keys(groupedData);
   const maxCount = Math.max(...Object.values(groupedData), 1);
 
-  // Render Grafik dengan Scroll Horizontal Wrapper
+  // Render Bar Chart dengan Horizontal Scroll
   let chartHTML = `<div class="chart-scroll-wrapper" style="min-width: ${Math.max(keys.length * 55, 320)}px;">`;
 
   keys.forEach(k => {
