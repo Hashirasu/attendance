@@ -1932,16 +1932,20 @@ async function loadAdminAttendanceChart() {
   // Render Bar Chart dengan pelarasan ruang atas supaya tidak terpotong
   let chartHTML = `<div class="chart-scroll-wrapper" style="min-width: ${Math.max(keys.length * 55, 320)}px; display: flex; align-items: flex-end; gap: 16px; height: 180px; padding-top: 30px; padding-bottom: 10px; box-sizing: border-box;">`;
 
+  // Render Bar Chart (Perbaikan Posisi Angka)
+  let chartHTML = `<div class="chart-scroll-wrapper" style="min-width: ${Math.max(keys.length * 55, 320)}px; display: flex; align-items: flex-end; gap: 16px; height: 190px; padding-top: 35px; padding-bottom: 10px; box-sizing: border-box;">`;
+
   keys.forEach(k => {
     const count = groupedData[k];
-    // Kira peratusan ketinggian (Maksimum 85% supaya teks angka di atas tidak terpotong)
+    // Batasi tinggi maksimal ke 70% agar ruang atas selalu muat untuk teks angka
     const heightPercent = Math.round((count / maxCount) * 70);
     const barHeight = Math.max(heightPercent, 6);
 
     chartHTML += `
       <div class="chart-bar-item" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; position: relative;">
-        <span class="chart-bar-value" style="font-size: 11px; font-weight: bold; margin-bottom: 4px; color: var(--text-main, #fff); position: absolute; top: -22px;">${count}</span>
-        <div class="chart-bar-fill" style="height: ${Math.max(heightPercent, 6)}%; width: 100%; max-width: 32px; background: var(--primary, #3b82f6); border-radius: 4px 4px 0 0; transition: height 0.3s ease;"></div>
+        <!-- Angka ditaruh tepat di atas tiang tanpa position: absolute/top negatif agar tidak terpotong overflow -->
+        <span class="chart-bar-value" style="font-size: 11px; font-weight: 800; color: #60a5fa; margin-bottom: 6px; white-space: nowrap; z-index: 2;">${count}</span>
+        <div class="chart-bar-fill" style="height: ${barHeight}%; width: 100%; max-width: 32px; background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%); border-radius: 6px 6px 0 0; transition: height 0.3s ease;"></div>
         <span class="chart-bar-label" style="font-size: 11px; color: var(--text-sub, #94a3b8); margin-top: 6px;">${k}</span>
       </div>
     `;
@@ -1949,7 +1953,6 @@ async function loadAdminAttendanceChart() {
 
   chartHTML += `</div>`;
   container.innerHTML = chartHTML;
-}
 
 // Event Listeners Filter Grafik
 const chartFilterEl = document.getElementById("admin-chart-filter");
