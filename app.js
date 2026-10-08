@@ -1928,9 +1928,7 @@ async function loadAdminAttendanceChart() {
   const keys = Object.keys(groupedData);
   const maxCount = Math.max(...Object.values(groupedData), 1);
 
-  
-  // Render Bar Chart dengan pelarasan ruang atas supaya tidak terpotong
-  let chartHTML = `<div class="chart-scroll-wrapper" style="min-width: ${Math.max(keys.length * 55, 320)}px; display: flex; align-items: flex-end; gap: 16px; height: 180px; padding-top: 30px; padding-bottom: 10px; box-sizing: border-box;">`;
+
 
   // Render Bar Chart (Perbaikan Posisi Angka)
   let chartHTML = `<div class="chart-scroll-wrapper" style="min-width: ${Math.max(keys.length * 55, 320)}px; display: flex; align-items: flex-end; gap: 16px; height: 190px; padding-top: 35px; padding-bottom: 10px; box-sizing: border-box;">`;
