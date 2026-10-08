@@ -2254,3 +2254,22 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 initThemeToggle();
+
+
+// Fitur Toggle View/Unview Password (Login & Register)
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest(".btn-toggle-password");
+  if (btn) {
+    const targetId = btn.getAttribute("data-target");
+    const input = document.getElementById(targetId);
+    if (input) {
+      if (input.type === "password") {
+        input.type = "text";
+        btn.textContent = "🙈";
+      } else {
+        input.type = "password";
+        btn.textContent = "👁️";
+      }
+    }
+  }
+});
