@@ -1709,7 +1709,7 @@ if (switchToAdminBtn) {
     if (adminSection) adminSection.style.display = "block";
     if (adminFilterDate) adminFilterDate.value = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
     await loadAdminAttendance();
-    await loadAdminChart();
+    await loadAdminAttendanceChart();
   });
 }
 
@@ -1807,7 +1807,7 @@ function startAdminKioskQr() {
 
 if (adminFilterDate) adminFilterDate.addEventListener("change", loadAdminAttendance);
 if (adminFilterStatus) adminFilterStatus.addEventListener("change", loadAdminAttendance);
-if (adminChartFilter) adminChartFilter.addEventListener("change", loadAdminChart);
+if (adminChartFilter) adminChartFilter.addEventListener("change", loadAdminAttendanceChart);
 
 async function loadAdminAttendance() {
   if (!adminAttendanceList) return;
