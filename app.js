@@ -272,7 +272,13 @@ if (authMainButton) {
 async function handleLogout() {
   if (kioskTimerInterval) clearInterval(kioskTimerInterval);
   await supabase.auth.signOut();
-  showLoginSection();
+  
+  // Bersihkan cache & session browser agar akun lama tidak tersisa
+  localStorage.clear();
+  sessionStorage.clear();
+
+  // Reload halaman secara bersih
+  window.location.reload(true);
 }
 
 if (logoutBtn) logoutBtn.addEventListener("click", handleLogout);
