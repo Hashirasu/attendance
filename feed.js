@@ -10,22 +10,29 @@ export async function initFeedSystem() {
   if (!user) return;
   currentUserId = user.id;
 
-  const { data: emp } = await supabase.from("employees").select("role").eq("id", currentUserId).single();
+  // 1. Ambil Role Pengguna Langsung
+  const { data: emp } = await supabase
+    .from("employees")
+    .select("role")
+    .eq("id", currentUserId)
+    .maybeSingle();
+
   if (emp) currentUserRole = emp.role;
 
+  // 2. Tampilkan/Sembunyikan Form Upload
   const editorContainer = document.getElementById("post-editor-container");
-  const canPost = currentUserRole === "admin" || currentUserRole === "adm1n" || currentUserRole === "pengurus";
+  const isManagement = (currentUserRole === "admin" || currentUserRole === "adm1n" || currentUserRole === "pengurus");
 
   if (editorContainer) {
-    if (canPost) {
+    if (isManagement) {
       editorContainer.style.display = "block";
-      // Gunakan setTimeout agar kontainer Quill selesai di-render DOM terlebih dahulu
       setTimeout(() => initQuillEditor(), 100);
     } else {
       editorContainer.style.display = "none";
     }
   }
 
+  // 3. Muat Postingan Langsung Tanpa Perlu Refresh
   await loadRecentFeed();
   await loadFullFeed();
   setupFeedRealtime();
@@ -33,26 +40,30 @@ export async function initFeedSystem() {
 
 function initQuillEditor() {
   const container = document.getElementById("quill-editor");
-  if (!container || quillEditor) return;
+  if (!container) return;
 
-  // Bersihkan jika sudah ada toolbar sebelumnya
+  // Bersihkan editor lama jika sudah diinisialisasi
   const parent = container.parentElement;
-  const existingToolbar = parent.querySelector('.ql-toolbar');
-  if (existingToolbar) existingToolbar.remove();
+  if (parent) {
+    const existingToolbar = parent.querySelector('.ql-toolbar');
+    if (existingToolbar) existingToolbar.remove();
+  }
 
-  quillEditor = new Quill("#quill-editor", {
-    theme: "snow",
-    placeholder: "Tulis isi pengumuman atau postingan...",
-    modules: {
-      toolbar: [
-        [{ 'header': [1, 2, false] }],
-        ['bold', 'italic', 'underline'],
-        ['image', 'link'],
-        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-        ['clean']
-      ]
-    }
-  });
+  if (!quillEditor) {
+    quillEditor = new Quill("#quill-editor", {
+      theme: "snow",
+      placeholder: "Tulis isi pengumuman atau postingan...",
+      modules: {
+        toolbar: [
+          [{ 'header': [1, 2, false] }],
+          ['bold', 'italic', 'underline'],
+          ['image', 'link'],
+          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+          ['clean']
+        ]
+      }
+    });
+  }
 }
 
 async function loadRecentFeed() {
@@ -105,7 +116,7 @@ async function renderPostCard(post, withComments = true) {
   const postDate = new Date(post.created_at).toLocaleString("id-ID", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 
   const isAuthor = post.author_id === currentUserId;
-  const isAdmin = currentUserRole === "admin" || currentUserRole === "adm1n" || currentUserRole === "pengurus";
+  const isAdmin = (currentUserRole === "admin" || currentUserRole === "adm1n" || currentUserRole === "pengurus");
 
   const card = document.createElement("div");
   card.className = "post-card";
@@ -188,7 +199,7 @@ async function loadPostComments(postId, boxElement) {
   });
 }
 
-// SUBMIT POST
+// SUBMIT POSTINGAN
 const btnSubmitPost = document.getElementById("btn-submit-post");
 const btnCancelEditPost = document.getElementById("btn-cancel-edit-post");
 const postTitleInput = document.getElementById("post-title-input");
@@ -229,7 +240,7 @@ if (btnSubmitPost) {
       await loadRecentFeed();
       await loadFullFeed();
     } catch (err) {
-      alert("Gagal mengunggah postingan: " + err.message);
+      alert("Gagal posting: " + err.message);
     } finally {
       btnSubmitPost.textContent = "🚀 Unggah Postingan";
       btnSubmitPost.disabled = false;
@@ -262,9 +273,7 @@ document.addEventListener("click", async (e) => {
       comment_text: text
     });
 
-    if (error) {
-      alert("Gagal mengirim komentar: " + error.message);
-    } else {
+    if (!error) {
       const box = document.getElementById(`comments-box-${postId}`);
       if (box) await loadPostComments(postId, box);
     }
@@ -277,8 +286,6 @@ document.addEventListener("click", async (e) => {
       if (!error) {
         await loadRecentFeed();
         await loadFullFeed();
-      } else {
-        alert("Gagal menghapus postingan: " + error.message);
       }
     }
   }
