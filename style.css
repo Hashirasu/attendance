@@ -245,9 +245,30 @@ html, body {
   box-sizing: border-box;
 }
 
-.qr-code-box canvas { 
-  display: none !important; 
+/* Sembunyikan canvas HANYA jika img sudah berhasil dibuat, atau biarkan tampil dua-duanya dengan rapi */
+.qr-code-box canvas,
+.qr-code-box img { 
+  display: block !important; 
+  margin: 0 auto !important; 
+  max-width: 100% !important; 
+  height: auto !important; 
 }
+
+/* Sesuaikan wadah agar fleksibel mengikuti ukuran gambar QR */
+.qr-code-box { 
+  background: #ffffff !important; 
+  padding: 16px; 
+  border-radius: 20px; 
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); 
+  display: flex !important; 
+  align-items: center !important; 
+  justify-content: center !important; 
+  margin: 0 auto !important; 
+  width: fit-content !important; 
+  height: auto !important; 
+  box-sizing: border-box;
+}
+
 
 .qr-code-box img { 
   display: block !important; 
