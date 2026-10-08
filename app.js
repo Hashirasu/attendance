@@ -1935,7 +1935,8 @@ async function loadAdminAttendanceChart() {
   keys.forEach(k => {
     const count = groupedData[k];
     // Kira peratusan ketinggian (Maksimum 85% supaya teks angka di atas tidak terpotong)
-    const heightPercent = Math.round((count / maxCount) * 75);
+    const heightPercent = Math.round((count / maxCount) * 70);
+    const barHeight = Math.max(heightPercent, 6);
 
     chartHTML += `
       <div class="chart-bar-item" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; position: relative;">
