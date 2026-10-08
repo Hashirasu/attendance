@@ -19,7 +19,8 @@ export async function initFeedSystem() {
   if (editorContainer) {
     if (canPost) {
       editorContainer.style.display = "block";
-      initQuillEditor();
+      // Gunakan setTimeout agar kontainer Quill selesai di-render DOM terlebih dahulu
+      setTimeout(() => initQuillEditor(), 100);
     } else {
       editorContainer.style.display = "none";
     }
@@ -31,7 +32,13 @@ export async function initFeedSystem() {
 }
 
 function initQuillEditor() {
-  if (quillEditor || !document.getElementById("quill-editor")) return;
+  const container = document.getElementById("quill-editor");
+  if (!container || quillEditor) return;
+
+  // Bersihkan jika sudah ada toolbar sebelumnya
+  const parent = container.parentElement;
+  const existingToolbar = parent.querySelector('.ql-toolbar');
+  if (existingToolbar) existingToolbar.remove();
 
   quillEditor = new Quill("#quill-editor", {
     theme: "snow",
@@ -201,27 +208,32 @@ if (btnSubmitPost) {
     btnSubmitPost.disabled = true;
     btnSubmitPost.textContent = "Mengunggah...";
 
-    if (postId) {
-      const { error } = await supabase.from("posts").update({ title, content }).eq("id", postId);
-      if (error) alert("Gagal update postingan: " + error.message);
-    } else {
-      const { error } = await supabase.from("posts").insert({
-        author_id: currentUserId,
-        title,
-        content
-      });
-      if (error) alert("Gagal membuat postingan: " + error.message);
+    try {
+      if (postId) {
+        const { error } = await supabase.from("posts").update({ title, content }).eq("id", postId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("posts").insert({
+          author_id: currentUserId,
+          title,
+          content
+        });
+        if (error) throw error;
+      }
+
+      postTitleInput.value = "";
+      if (quillEditor) quillEditor.setContents([]);
+      editPostIdVal.value = "";
+      if (btnCancelEditPost) btnCancelEditPost.style.display = "none";
+
+      await loadRecentFeed();
+      await loadFullFeed();
+    } catch (err) {
+      alert("Gagal mengunggah postingan: " + err.message);
+    } finally {
+      btnSubmitPost.textContent = "🚀 Unggah Postingan";
+      btnSubmitPost.disabled = false;
     }
-
-    postTitleInput.value = "";
-    if (quillEditor) quillEditor.setContents([]);
-    editPostIdVal.value = "";
-    if (btnCancelEditPost) btnCancelEditPost.style.display = "none";
-    btnSubmitPost.textContent = "🚀 Unggah Postingan";
-    btnSubmitPost.disabled = false;
-
-    await loadRecentFeed();
-    await loadFullFeed();
   });
 }
 
@@ -231,11 +243,10 @@ if (btnCancelEditPost) {
     if (quillEditor) quillEditor.setContents([]);
     editPostIdVal.value = "";
     btnCancelEditPost.style.display = "none";
-    btnSubmitPost.textContent = "🚀 Unggah Postingan";
+    if (btnSubmitPost) btnSubmitPost.textContent = "🚀 Unggah Postingan";
   });
 }
 
-// CLICK EVENT LISTENER POSTS
 document.addEventListener("click", async (e) => {
   if (e.target.classList.contains("btn-send-comment")) {
     const postId = e.target.getAttribute("data-post-id");
@@ -280,7 +291,7 @@ document.addEventListener("click", async (e) => {
       postTitleInput.value = p.title;
       if (quillEditor) quillEditor.root.innerHTML = p.content;
       if (btnCancelEditPost) btnCancelEditPost.style.display = "inline-block";
-      btnSubmitPost.textContent = "💾 Simpan Perubahan";
+      if (btnSubmitPost) btnSubmitPost.textContent = "💾 Simpan Perubahan";
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
@@ -302,7 +313,7 @@ function setupFeedRealtime() {
       await loadFullFeed();
     })
     .on("postgres_changes", { event: "*", schema: "public", table: "post_comments" }, async (payload) => {
-      const postId = payload.new ? payload.new.post_id : payload.old.post_id;
+      const postId = payload.new ? payload.new.post_id : payload.old ? payload.old.post_id : null;
       if (postId) {
         const box = document.getElementById(`comments-box-${postId}`);
         if (box) await loadPostComments(postId, box);
@@ -310,3 +321,5 @@ function setupFeedRealtime() {
     })
     .subscribe();
 }
+
+window.initFeedSystem = initFeedSystem;
