@@ -23,7 +23,7 @@ export async function initFeedSystem() {
 
   if (emp) currentUserRole = emp.role;
 
-  // 2. Tampilkan/Sembunyikan Form Upload
+  // 2. Tampilkan/Sembunyikan Form Upload & Tombol Edit Quote
   const editorContainer = document.getElementById("post-editor-container");
   const isManagement = (currentUserRole === "admin" || currentUserRole === "adm1n" || currentUserRole === "pengurus");
 
@@ -36,7 +36,13 @@ export async function initFeedSystem() {
     }
   }
 
-  // 3. Muat Postingan Langsung Tanpa Perlu Refresh
+  const editQuoteBtn = document.getElementById("btn-edit-quote-trigger");
+  if (editQuoteBtn) {
+    editQuoteBtn.style.display = isManagement ? "inline-block" : "none";
+  }
+
+  // 3. Muat Data
+  await loadDailyQuote();
   await loadRecentFeed();
   await loadFullFeed();
   setupFeedRealtime();
@@ -46,7 +52,6 @@ function initQuillEditor() {
   const container = document.getElementById("quill-editor");
   if (!container) return;
 
-  // Bersihkan editor lama jika sudah diinisialisasi
   const parent = container.parentElement;
   if (parent) {
     const existingToolbar = parent.querySelector('.ql-toolbar');
@@ -70,6 +75,29 @@ function initQuillEditor() {
   }
 }
 
+// =========================================
+// 1. DAILY QUOTE (PERENUNGAN HARIAN)
+// =========================================
+async function loadDailyQuote() {
+  const quoteTextEl = document.getElementById("display-quote-text");
+  const quoteSourceEl = document.getElementById("display-quote-source");
+  if (!quoteTextEl || !quoteSourceEl) return;
+
+  const { data } = await supabase
+    .from("daily_quotes")
+    .select("quote_text, quote_source")
+    .eq("id", 1)
+    .maybeSingle();
+
+  if (data) {
+    quoteTextEl.textContent = `"${data.quote_text}"`;
+    quoteSourceEl.textContent = `— ${data.quote_source}`;
+  }
+}
+
+// =========================================
+// 2. FEED & POSTS
+// =========================================
 async function loadRecentFeed() {
   const container = document.getElementById("recent-feed-container");
   if (!container) return;
@@ -115,27 +143,24 @@ async function loadFullFeed() {
 
 async function renderPostCard(post, withComments = true) {
   const emp = post.employees || {};
-  const authorRole = emp.role || "user";
-
-  // Penentuan Nama Penulis: Jika bukan admin/adm1n/pengurus, maka tampilkan "Humas Mudiviva"
-  let authorDisplayName = "Humas Mudiviva";
-  if (authorRole === "admin" || authorRole === "adm1n" || authorRole === "pengurus") {
-    authorDisplayName = getFirstName(emp.name);
-  }
+  
+  // LOGIKA PRIVASI NAMA PENULIS:
+  // Hanya Pengurus, Admin, dan Adm1n yang bisa melihat Nama Asli pembuat postingan.
+  // Jika yang melihat adalah Member biasa (user), tampilkan "Humas Mudiviva".
+  const isViewerManagement = (currentUserRole === "admin" || currentUserRole === "adm1n" || currentUserRole === "pengurus");
+  const authorDisplayName = isViewerManagement ? getFirstName(emp.name) : "Humas Mudiviva";
 
   const avatar = (emp.avatar_url && emp.avatar_url.trim() !== "") ? emp.avatar_url : DEFAULT_AVATAR;
   const postDate = new Date(post.created_at).toLocaleString("id-ID", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 
   const isAuthor = post.author_id === currentUserId;
-  const isAdmin = (currentUserRole === "admin" || currentUserRole === "adm1n" || currentUserRole === "pengurus");
 
   const card = document.createElement("div");
   card.className = "post-card";
   card.setAttribute("data-post-id", post.id);
 
-  // Tombol Edit & Hapus dengan styling modern dan rapi
   let actionsHTML = "";
-  if (isAuthor || isAdmin) {
+  if (isAuthor || isViewerManagement) {
     actionsHTML = `
       <div class="post-action-buttons" style="display: flex; gap: 8px; align-items: center;">
         <button class="btn-edit-post" data-id="${post.id}" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.15); background: rgba(255, 255, 255, 0.05); color: #e2e8f0; cursor: pointer; transition: all 0.2s ease;">
@@ -217,7 +242,9 @@ async function loadPostComments(postId, boxElement) {
   });
 }
 
-// SUBMIT POSTINGAN
+// =========================================
+// 3. EVENT HANDLER POSTINGAN & QUOTES
+// =========================================
 const btnSubmitPost = document.getElementById("btn-submit-post");
 const btnCancelEditPost = document.getElementById("btn-cancel-edit-post");
 const postTitleInput = document.getElementById("post-title-input");
@@ -273,6 +300,61 @@ if (btnCancelEditPost) {
     editPostIdVal.value = "";
     btnCancelEditPost.style.display = "none";
     if (btnSubmitPost) btnSubmitPost.textContent = "🚀 Unggah Postingan";
+  });
+}
+
+// EVENT HANDLER EDIT DAILY QUOTE
+const btnEditQuoteTrigger = document.getElementById("btn-edit-quote-trigger");
+const editQuoteModal = document.getElementById("edit-quote-modal");
+const editQuoteTextInput = document.getElementById("edit-quote-text-input");
+const editQuoteSourceInput = document.getElementById("edit-quote-source-input");
+const cancelEditQuote = document.getElementById("cancel-edit-quote");
+const saveEditQuote = document.getElementById("save-edit-quote");
+const editQuoteModalMsg = document.getElementById("edit-quote-modal-msg");
+
+if (btnEditQuoteTrigger) {
+  btnEditQuoteTrigger.addEventListener("click", async () => {
+    const { data } = await supabase.from("daily_quotes").select("*").eq("id", 1).maybeSingle();
+    if (data) {
+      if (editQuoteTextInput) editQuoteTextInput.value = data.quote_text;
+      if (editQuoteSourceInput) editQuoteSourceInput.value = data.quote_source;
+    }
+    if (editQuoteModalMsg) editQuoteModalMsg.textContent = "";
+    if (editQuoteModal) editQuoteModal.style.display = "flex";
+  });
+}
+
+if (cancelEditQuote) {
+  cancelEditQuote.addEventListener("click", () => {
+    if (editQuoteModal) editQuoteModal.style.display = "none";
+  });
+}
+
+if (saveEditQuote) {
+  saveEditQuote.addEventListener("click", async () => {
+    const text = editQuoteTextInput.value.trim();
+    const source = editQuoteSourceInput.value.trim();
+
+    if (!text || !source) {
+      if (editQuoteModalMsg) editQuoteModalMsg.textContent = "Kutipan dan sumber wajib diisi!";
+      return;
+    }
+
+    saveEditQuote.textContent = "Menyimpan...";
+    const { error } = await supabase.from("daily_quotes").upsert({
+      id: 1,
+      quote_text: text,
+      quote_source: source,
+      updated_at: new Date().toISOString()
+    });
+
+    if (error) {
+      if (editQuoteModalMsg) editQuoteModalMsg.textContent = "Gagal menyimpan: " + error.message;
+    } else {
+      if (editQuoteModal) editQuoteModal.style.display = "none";
+      await loadDailyQuote();
+    }
+    saveEditQuote.textContent = "Simpan";
   });
 }
 
@@ -347,6 +429,9 @@ function setupFeedRealtime() {
         const box = document.getElementById(`comments-box-${postId}`);
         if (box) await loadPostComments(postId, box);
       }
+    })
+    .on("postgres_changes", { event: "*", schema: "public", table: "daily_quotes" }, async () => {
+      await loadDailyQuote();
     })
     .subscribe();
 }
