@@ -801,5 +801,28 @@
 
   <script type="module" src="app.js"></script>
   <script type="module" src="feed.js"></script>
+  <!-- MODAL EDIT PERENUNGAN HARIAN -->
+<div id="edit-quote-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+  <div style="background: var(--bg-card, #1e293b); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 24px; width: 90%; max-width: 480px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);">
+    <h3 style="margin-top: 0; font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 16px;">✏️ Edit Perenungan Harian</h3>
+    
+    <div style="margin-bottom: 14px;">
+      <label style="display: block; font-size: 12px; color: var(--text-sub, #94a3b8); margin-bottom: 6px;">Isi Kutipan / Quote</label>
+      <textarea id="edit-quote-text-input" rows="4" style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 14px; resize: vertical;" placeholder="Tulis quote perenungan..."></textarea>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <label style="display: block; font-size: 12px; color: var(--text-sub, #94a3b8); margin-bottom: 6px;">Sumber / Ayat / Tokoh</label>
+      <input type="text" id="edit-quote-source-input" style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 14px;" placeholder="Contoh: Dhammapada, Yamakavagga">
+    </div>
+
+    <div id="edit-quote-modal-msg" style="font-size: 12px; color: #f87171; margin-bottom: 12px;"></div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 10px;">
+      <button type="button" id="cancel-edit-quote" style="padding: 8px 16px; border-radius: 8px; background: rgba(255,255,255,0.1); border: none; color: #fff; cursor: pointer; font-weight: 600;">Batal</button>
+      <button type="button" id="save-edit-quote" style="padding: 8px 16px; border-radius: 8px; background: var(--primary, #3b82f6); border: none; color: #fff; cursor: pointer; font-weight: 600;">Simpan</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

@@ -243,7 +243,7 @@ async function loadPostComments(postId, boxElement) {
 }
 
 // =========================================
-// 3. EVENT HANDLER POSTINGAN & QUOTES
+// 3. EVENT HANDLERS (POSTS & DAILY QUOTE)
 // =========================================
 const btnSubmitPost = document.getElementById("btn-submit-post");
 const btnCancelEditPost = document.getElementById("btn-cancel-edit-post");
@@ -303,44 +303,53 @@ if (btnCancelEditPost) {
   });
 }
 
-// EVENT HANDLER EDIT DAILY QUOTE
-const btnEditQuoteTrigger = document.getElementById("btn-edit-quote-trigger");
-const editQuoteModal = document.getElementById("edit-quote-modal");
-const editQuoteTextInput = document.getElementById("edit-quote-text-input");
-const editQuoteSourceInput = document.getElementById("edit-quote-source-input");
-const cancelEditQuote = document.getElementById("cancel-edit-quote");
-const saveEditQuote = document.getElementById("save-edit-quote");
-const editQuoteModalMsg = document.getElementById("edit-quote-modal-msg");
-
-if (btnEditQuoteTrigger) {
-  btnEditQuoteTrigger.addEventListener("click", async () => {
+// EVENT DELEGATION GLOBAL UNTUK EDIT QUOTE, CANCEL, SIMPAN & ACTIONS POSTINGAN
+document.addEventListener("click", async (e) => {
+  // 1. TRIGGER OPEN EDIT QUOTE MODAL
+  const triggerBtn = e.target.closest("#btn-edit-quote-trigger");
+  if (triggerBtn) {
     const { data } = await supabase.from("daily_quotes").select("*").eq("id", 1).maybeSingle();
+    const editQuoteTextInput = document.getElementById("edit-quote-text-input");
+    const editQuoteSourceInput = document.getElementById("edit-quote-source-input");
+    const editQuoteModalMsg = document.getElementById("edit-quote-modal-msg");
+    const editQuoteModal = document.getElementById("edit-quote-modal");
+
     if (data) {
-      if (editQuoteTextInput) editQuoteTextInput.value = data.quote_text;
-      if (editQuoteSourceInput) editQuoteSourceInput.value = data.quote_source;
+      if (editQuoteTextInput) editQuoteTextInput.value = data.quote_text || "";
+      if (editQuoteSourceInput) editQuoteSourceInput.value = data.quote_source || "";
     }
     if (editQuoteModalMsg) editQuoteModalMsg.textContent = "";
     if (editQuoteModal) editQuoteModal.style.display = "flex";
-  });
-}
+    return;
+  }
 
-if (cancelEditQuote) {
-  cancelEditQuote.addEventListener("click", () => {
+  // 2. CANCEL EDIT QUOTE
+  const cancelQuoteBtn = e.target.closest("#cancel-edit-quote");
+  if (cancelQuoteBtn) {
+    const editQuoteModal = document.getElementById("edit-quote-modal");
     if (editQuoteModal) editQuoteModal.style.display = "none";
-  });
-}
+    return;
+  }
 
-if (saveEditQuote) {
-  saveEditQuote.addEventListener("click", async () => {
-    const text = editQuoteTextInput.value.trim();
-    const source = editQuoteSourceInput.value.trim();
+  // 3. SAVE EDIT QUOTE
+  const saveQuoteBtn = e.target.closest("#save-edit-quote");
+  if (saveQuoteBtn) {
+    const editQuoteTextInput = document.getElementById("edit-quote-text-input");
+    const editQuoteSourceInput = document.getElementById("edit-quote-source-input");
+    const editQuoteModalMsg = document.getElementById("edit-quote-modal-msg");
+    const editQuoteModal = document.getElementById("edit-quote-modal");
+
+    const text = editQuoteTextInput ? editQuoteTextInput.value.trim() : "";
+    const source = editQuoteSourceInput ? editQuoteSourceInput.value.trim() : "";
 
     if (!text || !source) {
       if (editQuoteModalMsg) editQuoteModalMsg.textContent = "Kutipan dan sumber wajib diisi!";
       return;
     }
 
-    saveEditQuote.textContent = "Menyimpan...";
+    saveQuoteBtn.textContent = "Menyimpan...";
+    saveQuoteBtn.disabled = true;
+
     const { error } = await supabase.from("daily_quotes").upsert({
       id: 1,
       quote_text: text,
@@ -348,17 +357,19 @@ if (saveEditQuote) {
       updated_at: new Date().toISOString()
     });
 
+    saveQuoteBtn.textContent = "Simpan";
+    saveQuoteBtn.disabled = false;
+
     if (error) {
       if (editQuoteModalMsg) editQuoteModalMsg.textContent = "Gagal menyimpan: " + error.message;
     } else {
       if (editQuoteModal) editQuoteModal.style.display = "none";
       await loadDailyQuote();
     }
-    saveEditQuote.textContent = "Simpan";
-  });
-}
+    return;
+  }
 
-document.addEventListener("click", async (e) => {
+  // 4. ACTIONS POSTINGAN (KOMENTAR, EDIT, HAPUS)
   const targetEdit = e.target.closest(".btn-edit-post");
   const targetDelete = e.target.closest(".btn-delete-post");
   const targetComment = e.target.closest(".btn-send-comment");
