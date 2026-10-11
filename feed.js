@@ -271,6 +271,7 @@ if (btnSubmitPost) {
       } else {
         const { error } = await supabase.from("posts").insert({
           author_id: currentUserId,
+          author_name = authorName,
           title,
           content
         });

@@ -246,15 +246,21 @@ html, body {
 }
 
 /* Sembunyikan canvas HANYA jika img sudah berhasil dibuat, atau biarkan tampil dua-duanya dengan rapi */
-.qr-code-box canvas,
+/* Sembunyikan canvas karena kita hanya butuh gambar <img> yang dihasilkan qrcode.js */
+.qr-code-box canvas { 
+  display: none !important; 
+}
+
 .qr-code-box img { 
   display: block !important; 
   margin: 0 auto !important; 
   max-width: 100% !important; 
   height: auto !important; 
+  width: 100% !important; 
+  object-fit: contain;
 }
 
-/* Sesuaikan wadah agar fleksibel mengikuti ukuran gambar QR */
+/* Wadah QR Code Kiosk */
 .qr-code-box { 
   background: #ffffff !important; 
   padding: 16px; 
@@ -264,19 +270,9 @@ html, body {
   align-items: center !important; 
   justify-content: center !important; 
   margin: 0 auto !important; 
-  width: fit-content !important; 
-  height: auto !important; 
+  width: 220px !important; 
+  height: 220px !important; 
   box-sizing: border-box;
-}
-
-
-.qr-code-box img { 
-  display: block !important; 
-  margin: 0 auto !important; 
-  max-width: 100% !important; 
-  height: auto !important; 
-  width: 100% !important; 
-  object-fit: contain;
 }
 
 .kiosk-timer-bar { width: 220px; max-width: 75vw; height: 6px; background: var(--input-border); border-radius: 3px; overflow: hidden; margin: 0 auto; }
