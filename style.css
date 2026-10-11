@@ -270,9 +270,7 @@ html, body {
   object-fit: contain !important;
 }
 
-/* Sembunyikan canvas jika elemen img ikut dirender (mencegah QR double di PC) */
-.qr-code-box img + canvas,
-.qr-code-box canvas + img {
+.qr-code-box canvas:has(+ img[src]) {
   display: none !important;
 }
 

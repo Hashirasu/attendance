@@ -269,6 +269,8 @@ if (btnSubmitPost) {
         const { error } = await supabase.from("posts").update({ title, content }).eq("id", postId);
         if (error) throw error;
       } else {
+
+        const authorName = "Humas Mudiviva";
         const { error } = await supabase.from("posts").insert({
           author_id: currentUserId,
           author_name: authorName,
