@@ -247,10 +247,7 @@ html, body {
 
 /* Sembunyikan canvas HANYA jika img sudah berhasil dibuat, atau biarkan tampil dua-duanya dengan rapi */
 /* Sembunyikan canvas karena kita hanya butuh gambar <img> yang dihasilkan qrcode.js */
-.qr-code-box canvas { 
-  display: none !important; 
-}
-
+.qr-code-box canvas,
 .qr-code-box img { 
   display: block !important; 
   margin: 0 auto !important; 
